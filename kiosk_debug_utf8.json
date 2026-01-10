@@ -1,0 +1,36 @@
+﻿--- SCHOOLS ---
+[
+  {
+    "id": "2e584fb8-9d43-42fc-a9fa-72b294bf5887",
+    "name": "DH Thunder",
+    "slug": "dhthunder",
+    "active": true
+  },
+  {
+    "id": "ffe810d9-c8a3-4617-a21e-d8c8d6c6120e",
+    "name": "Knights High School",
+    "slug": "schoolcrestinteractive",
+    "active": true
+  },
+  {
+    "id": "beefc221-e118-448b-ba8d-9f49e4e3f129",
+    "name": "Knights High School",
+    "slug": "sbnbn",
+    "active": true
+  },
+  {
+    "id": "b0c255c8-6547-411c-a27c-82ecdc0f8c36",
+    "name": "read school",
+    "slug": "read.com",
+    "active": true
+  },
+  {
+    "id": "7b8d9352-d09b-4896-ae82-2b0b52194493",
+    "name": "My New Test School",
+    "slug": "my-test-school-1767397496114",
+    "active": true
+  }
+]
+
+--- RECENT ADMINS ---
+null
