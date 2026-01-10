@@ -236,6 +236,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                     name="photo_file"
                     label="Program Hero Media"
                     description="Upload a team photo or highlight video"
+                    recommendation="Recommended: 1280x720px (16:9 ratio)"
                     currentMediaUrl={formData.photo_url}
                     currentMediaType={formData.media_type}
                     onMediaChange={(url, type) => setFormData(prev => ({ ...prev, photo_url: url || '', media_type: type }))}

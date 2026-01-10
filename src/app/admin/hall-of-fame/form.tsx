@@ -131,6 +131,7 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
 
             <ImageUpload 
                 currentImageUrl={formData.photo_url}
+                recommendation="Recommended: 600x800px (3:4 ratio)"
                 onImageSelect={(file) => {
                   if (file) {
                     const reader = new FileReader()
@@ -148,6 +149,7 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
 
             <VideoUpload 
                 currentVideoUrl={formData.video_url}
+                recommendation="Recommended: 1080p MP4 (Max 20MB)"
                 onVideoSelect={(file) => {
                   if (file) {
                     const url = URL.createObjectURL(file)

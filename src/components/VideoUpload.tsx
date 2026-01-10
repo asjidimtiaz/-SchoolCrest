@@ -11,6 +11,7 @@ interface VideoUploadProps {
   className?: string
   name?: string
   required?: boolean
+  recommendation?: string
 }
 
 export default function VideoUpload({ 
@@ -20,7 +21,8 @@ export default function VideoUpload({
   description = "Drag and drop or click to upload video",
   className = "",
   name = "video_file",
-  required = false
+  required = false,
+  recommendation
 }: VideoUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentVideoUrl || null)
   const [isDragging, setIsDragging] = useState(false)
@@ -154,6 +156,9 @@ export default function VideoUpload({
             <div>
               <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight leading-none mb-1">{description}</p>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Supports MP4, MOV (Max 20MB)</p>
+              {recommendation && (
+                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest animate-pulse mt-1">{recommendation}</p>
+              )}
             </div>
           </div>
         )}

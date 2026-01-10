@@ -250,6 +250,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         name="logo_file"
                         label="Official School Logo"
                         description="Upload PNG or JPG (Transparent recommended)"
+                        recommendation="Recommended: 512x512px (Circle/Square)"
                         currentMediaUrl={previewData.logo_url}
                         onFileSelect={handleLogoSelect}
                         className="h-full"
@@ -417,6 +418,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                     name="background_file"
                     label="Background Media"
                     description="Upload an image or video for the landing page background"
+                    recommendation="Recommended: 1920x1080px (16:9 ratio)"
                     currentMediaUrl={previewData.background_url}
                     currentMediaType={previewData.background_type}
                     onMediaChange={handleBackgroundMediaChange}
@@ -538,7 +540,10 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                                // @ts-ignore
                                <img src={previewData[`sponsor_logo_${i}`]} className="h-full w-full object-contain p-2" />
                            ) : (
-                               <span className="text-gray-300 text-xs font-bold">+ Upload</span>
+                               <div className="flex flex-col items-center">
+                                   <span className="text-gray-300 text-xs font-bold">+ Upload</span>
+                                   <span className="text-[7px] text-blue-500 font-black uppercase mt-1">400x200px</span>
+                               </div>
                            )}
                            
                            {/* Hidden Input to persist existing URL if not changed (Action uses these) */}
@@ -579,7 +584,10 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                                // @ts-ignore
                                 <img src={previewData[`gallery_image_${i}`]} className="h-full w-full object-cover" />
                            ) : (
-                                <span className="text-gray-300 text-xs font-bold">+ Upload</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-gray-300 text-xs font-bold">+ Upload</span>
+                                    <span className="text-[7px] text-blue-500 font-black uppercase mt-1">800x600px</span>
+                                </div>
                            )}
                         </div>
                     </div>

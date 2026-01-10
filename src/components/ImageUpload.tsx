@@ -11,6 +11,7 @@ interface ImageUploadProps {
   className?: string
   name?: string
   required?: boolean
+  recommendation?: string
 }
 
 export default function ImageUpload({ 
@@ -20,7 +21,8 @@ export default function ImageUpload({
   description = "Drag and drop or click to upload",
   className = "",
   name = "photo_file",
-  required = false
+  required = false,
+  recommendation
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
   const [isDragging, setIsDragging] = useState(false)
@@ -146,6 +148,9 @@ export default function ImageUpload({
             <div>
               <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight leading-none mb-1">{description}</p>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Supports PNG, JPG (Max 5MB)</p>
+              {recommendation && (
+                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest animate-pulse mt-1">{recommendation}</p>
+              )}
             </div>
           </div>
         )}

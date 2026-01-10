@@ -13,6 +13,7 @@ interface MediaUploadProps {
   className?: string
   name?: string
   required?: boolean
+  recommendation?: string
 }
 
 export default function MediaUpload({ 
@@ -24,7 +25,8 @@ export default function MediaUpload({
   description = "Upload a photo or video",
   className = "",
   name = "media_file",
-  required = false
+  required = false,
+  recommendation
 }: MediaUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentMediaUrl || null)
   const [mediaType, setMediaType] = useState<'image' | 'video'>(currentMediaType)
@@ -186,6 +188,9 @@ export default function MediaUpload({
             <div>
               <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight leading-none mb-1">{description}</p>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Supports IMG & Video (Max 50MB)</p>
+              {recommendation && (
+                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest animate-pulse mt-1">{recommendation}</p>
+              )}
             </div>
           </div>
         )}
