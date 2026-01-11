@@ -4,6 +4,7 @@ import { useBranding } from "@/context/BrandingContext";
 import { useEffect, useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSchool } from "@/context/SchoolContext";
+import Image from "next/image";
 
 interface ScreensaverProps {
   onStart: () => void;
@@ -25,12 +26,19 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
   );
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 🔒 Fetch latest branding data from DB to ensure Kiosk is always up to date
   useEffect(() => {
     if (!school?.id) return;
 
     async function loadFreshBranding() {
+      const sanitize = (url?: string | null) => (url?.startsWith('blob:') ? '' : url || '');
       // Fetch fresh data from schools table
       const { data, error } = await supabase
         .from("schools")
@@ -39,19 +47,22 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
         .single();
         
       if (!error && data) {
+         const bgUrl = sanitize(data.background_url);
          setBgConfig({
-            url: data.background_url,
+            url: bgUrl,
             type: data.background_type as 'image' | 'video'
          });
          
-         if (data.background_type === 'image' && data.background_url) {
-             setImages([data.background_url]);
+         if (data.background_type === 'image' && bgUrl) {
+             setImages([bgUrl]);
          } else {
              setImages([]);
          }
 
          // Process Sponsors
-         const newSponsors = [data.sponsor_logo_1, data.sponsor_logo_2, data.sponsor_logo_3].filter(Boolean) as string[];
+         const newSponsors = [data.sponsor_logo_1, data.sponsor_logo_2, data.sponsor_logo_3]
+            .map(url => sanitize(url))
+            .filter(Boolean) as string[];
          setSponsors(newSponsors);
       } else {
          // Fallback to initial context if fetch fails or no data
@@ -63,7 +74,7 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
     }
 
     loadFreshBranding();
-  }, [school?.id, branding]);
+  }, [school?.id, branding.backgroundUrl, branding.backgroundType]);
 
   // 🔁 Image rotation
   useEffect(() => {
@@ -84,7 +95,7 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
   }, []);
 
   // 🔒 Final guard (prevents flash / crash)
-  if (!branding) return null;
+  if (!mounted || !branding) return null;
 
   const isVideoBackground =
     bgConfig.type === "video" && bgConfig.url;
@@ -96,7 +107,7 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
       onClick={onStart}
       onTouchStart={onStart}
     >
-      {/* 🎥 Background Video */}
+      {/* 🎥 Background Video or 🖼️ Optimized Images */}
       {isVideoBackground ? (
         <div className="absolute inset-0 z-0">
           <video
@@ -107,29 +118,34 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
             className="w-full h-full object-cover"
             src={bgConfig.url || ""}
           />
-          {/* Overlay to ensure text readability over video */}
           <div className="absolute inset-0 bg-black/40" />
         </div>
       ) : (
         <>
-          {/* 🖼️ Background Images with Cross-fade */}
           {images.length > 0 ? (
             images.map((img, i) => (
               <div
                 key={img}
-                className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+                className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
                 style={{
-                  backgroundImage: `url(${img})`,
                   opacity: index === i ? 1 : 0,
                   zIndex: 0,
                 }}
-              />
+              >
+                <Image
+                  src={img}
+                  alt={`Background ${i + 1}`}
+                  fill
+                  priority={i === 0 || i === index} // Priority for initial and current image
+                  className="object-cover"
+                  quality={85}
+                  sizes="100vw"
+                />
+              </div>
             ))
           ) : (
-            // Fallback if no images and no video
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900" />
           )}
-          {/* 🌑 Gradient Overlay for Text Readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 z-10" />
         </>
       )}
@@ -137,11 +153,15 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
       {/* 🎨 Content */}
       <div className="relative z-30 flex flex-col items-center animate-fade-in text-white">
         {branding.logoUrl && (
-          <img
-            src={branding.logoUrl}
-            alt={branding.name}
-            className="h-40 w-40 object-cover rounded-full mb-8 drop-shadow-2xl bg-white/10 backdrop-blur-sm p-2"
-          />
+          <div className="relative h-40 w-64 mb-4 drop-shadow-2xl">
+            <Image
+              src={branding.logoUrl}
+              alt={branding.name}
+              fill
+              priority
+              className="object-contain"
+            />
+          </div>
         )}
 
         <h1
@@ -152,14 +172,14 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
         </h1>
 
         {branding.tagline && (
-          <p className="text-2xl mb-16 text-center text-gray-200 drop-shadow-md max-w-2xl px-4">
+          <p className="text-2xl mb-10 text-center text-gray-200 drop-shadow-md max-w-2xl px-4">
             {branding.tagline}
           </p>
         )}
 
         <div className="animate-bounce-slow">
           <div
-            className="px-12 py-6 rounded-full text-3xl font-black tracking-widest uppercase shadow-[0_0_50px_rgba(255,255,255,0.3)] transform hover:scale-105 transition-transform backdrop-blur-md border-4"
+            className="px-10 py-5 rounded-full text-3xl font-black tracking-widest uppercase shadow-[0_0_50px_rgba(255,255,255,0.3)] transform hover:scale-105 transition-transform backdrop-blur-md border-4"
             style={{
               borderColor: branding.primaryColor,
               backgroundColor: `${branding.secondaryColor}40`, // 25% opacity
@@ -172,16 +192,18 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
 
         {/* 🤝 Sponsors - Below Touch to Start */}
         {sponsors.length > 0 && (
-            <div className="mt-5 flex flex-col items-center gap-2">
+            <div className="mt-4 flex flex-col items-center gap-2">
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/60">Powered By</p>
                 <div className="flex items-center gap-4 bg-black/30 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 shadow-2xl">
                     {sponsors.map((logo, i) => (
-                        <img 
-                            key={i} 
-                            src={logo} 
-                            alt={`Sponsor ${i+1}`} 
-                            className="h-10 w-10 rounded-full object-cover bg-white shadow-lg border-2 border-white/20"
-                        />
+                        <div key={i} className="relative h-14 w-14 rounded-full overflow-hidden border-2 border-white/20 shadow-lg bg-white">
+                            <Image 
+                                src={logo} 
+                                alt={`Sponsor ${i+1}`} 
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
                     ))}
                 </div>
             </div>

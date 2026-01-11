@@ -26,9 +26,6 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
             <div>
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none">{team.name}</h1>
                 <div className="flex items-center gap-3 mt-3">
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100/50">
-                        {team.sport_category}
-                    </span>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em]">
                         {team.gender} Athletics
                     </span>
@@ -46,7 +43,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
                         </div>
                         <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">New Season</h2>
                     </div>
-                    <SeasonForm team_id={team.id} />
+                    <SeasonForm team_id={team.id} schoolId={school.id} />
                  </div>
             </div>
 
@@ -56,7 +53,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
                     <h2 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Season History</h2>
                     <div className="h-px bg-gray-100 flex-1 mx-6" />
                 </div>
-                <SeasonsManager seasons={seasons} teamId={team.id} teamName={team.name} />
+                <SeasonsManager seasons={seasons} teamId={team.id} teamName={team.name} schoolId={school.id} />
             </div>
        </div>
     </div>

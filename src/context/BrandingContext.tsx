@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 
 type Branding = {
   name: string
@@ -22,8 +22,19 @@ export function BrandingProvider({
   branding: Branding
   children: React.ReactNode
 }) {
+  const value = useMemo(() => branding, [
+    branding.name,
+    branding.logoUrl,
+    branding.tagline,
+    branding.primaryColor,
+    branding.secondaryColor,
+    branding.accentColor,
+    branding.backgroundUrl,
+    branding.backgroundType
+  ])
+
   return (
-    <BrandingContext.Provider value={branding}>
+    <BrandingContext.Provider value={value}>
       {children}
     </BrandingContext.Provider>
   )
@@ -35,14 +46,16 @@ export function useBranding() {
     throw new Error('useBranding must be used within BrandingProvider')
   }
 
+  const sanitize = (url?: string) => (url?.startsWith('blob:') ? '' : url)
+
   // Safe Defaults for production stability
   return {
     ...context,
+    logoUrl: sanitize(context.logoUrl),
+    backgroundUrl: sanitize(context.backgroundUrl),
     primaryColor: context.primaryColor || '#000000',
     secondaryColor: context.secondaryColor || '#ffffff',
     accentColor: context.accentColor || '#3b82f6',
     name: context.name || 'School Crest Kiosk',
-    backgroundUrl: context.backgroundUrl || '',
-    backgroundType: context.backgroundType || 'image',
   }
 }

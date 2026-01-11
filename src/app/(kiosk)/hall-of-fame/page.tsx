@@ -18,7 +18,7 @@ export default async function HallOfFamePage() {
     tagline: school.tagline,
     primaryColor: school.primary_color || '#000000',
     secondaryColor: school.secondary_color || '#ffffff',
-    accentColor: school.accentColor || '#3b82f6', // Ensure this exists in your type or schema
+    accentColor: school.accent_color || '#3b82f6', // Ensure this exists in your type or schema
     backgroundUrl: school.background_url,
     backgroundType: school.background_type as 'image' | 'video'
   }
@@ -43,7 +43,7 @@ function InternalHallOfFamePage({ inductees, branding }: { inductees: any[], bra
             <BrandingBackground />
             <KioskHeader pageTitle="Hall of Fame Legends" />
 
-            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-20 flex flex-col pt-10 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-20 flex flex-col pt-0 overflow-y-auto custom-scrollbar">
                 {/* Content Wrapper */}
                 <div className="w-full flex-1 pb-32">
                     <HallOfFameGrid initialData={inductees} />
@@ -52,7 +52,7 @@ function InternalHallOfFamePage({ inductees, branding }: { inductees: any[], bra
 
             {/* Centered Bottom Back Button */}
             <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center pointer-events-none">
-                <div className="pointer-events-auto transition-all hover:scale-105 active:scale-95 duration-200">
+                <div className="pointer-events-auto active:scale-95 transition-all duration-200">
                     <BackButton label="Back to Menu" className="px-10 py-3.5 text-sm font-black shadow-[0_15px_30px_rgba(0,0,0,0.12)] bg-white text-slate-900 border border-gray-100 rounded-full" />
                 </div>
             </div>

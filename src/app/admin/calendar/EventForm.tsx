@@ -59,7 +59,7 @@ export default function EventForm({ event, schoolId, isEdit = false }: EventForm
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                    placeholder="e.g. Varsity Basketball vs. Central High"
+                    placeholder="e.g. Basketball vs. Central High"
                 />
             </div>
 
@@ -84,7 +84,7 @@ export default function EventForm({ event, schoolId, isEdit = false }: EventForm
                         className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
                     >
                         <option value="General">General</option>
-                        <option value="Sports">Sports</option>
+                        <option value="Athletics">Athletics</option>
                         <option value="Academic">Academic</option>
                         <option value="Arts">Arts</option>
                         <option value="Holiday">Holiday</option>

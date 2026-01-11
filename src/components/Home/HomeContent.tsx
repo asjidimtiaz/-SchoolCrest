@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import { useBranding } from '@/context/BrandingContext'
 import { Trophy, Users, Calendar, Info, ArrowRight, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
@@ -53,10 +55,10 @@ export default function HomeContent() {
                     <Link 
                         key={item.href} 
                         href={item.href}
-                        className="group relative flex items-center p-5 bg-white rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                        className="group relative flex items-center p-5 bg-white rounded-[2rem] shadow-lg active:scale-95 transition-all duration-200 overflow-hidden"
                          style={{ 
                             animationDelay: `${idx * 100}ms`,
-                            borderLeft: `8px solid ${branding.secondaryColor}`
+                            borderLeft: `8px solid ${branding.accentColor}`
                         }}
                     >
                         {/* 🎨 Hover Gradient Effect */}
@@ -67,7 +69,7 @@ export default function HomeContent() {
 
                         {/* Icon Container - Colored Background */}
                         <div 
-                            className="w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center shadow-lg mr-5 group-hover:scale-105 transition-transform duration-500"
+                            className="w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center shadow-lg mr-5"
                             style={{ backgroundColor: branding.primaryColor }}
                         >
                             <Icon size={40} strokeWidth={2} className="text-white" />
@@ -83,8 +85,8 @@ export default function HomeContent() {
                              </p>
                         </div>
 
-                         {/* Arrow Indicator */}
-                         <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 text-slate-400 group-hover:text-slate-900">
+                         {/* Arrow Indicator - simplified for Kiosk */}
+                         <div className="ml-auto text-slate-400 group-active:text-slate-900 transition-colors">
                             <ArrowRight size={28} />
                          </div>
                     </Link>
@@ -94,7 +96,8 @@ export default function HomeContent() {
       </div>
 
       {/* 🎹 Institutional Footer */}
-      <footer className="px-16 py-6 flex justify-center items-center">
+      <footer className="px-16 py-6 flex flex-col justify-center items-center gap-2">
+          <div className="h-0.5 w-12 rounded-full" style={{ backgroundColor: branding.accentColor }} />
           <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Touch any card to navigate</p>
       </footer>
     </main>

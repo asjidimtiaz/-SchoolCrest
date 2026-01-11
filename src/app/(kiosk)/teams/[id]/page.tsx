@@ -31,24 +31,23 @@ export default async function TeamDetailPage({
   return (
     <main className="min-h-screen bg-gray-50">
          {/* Hero Header */}
-        <div className="relative bg-gray-900 text-white py-16 px-8 overflow-hidden">
-             {/* Background Blur */}
+         <div className="relative bg-black text-white py-16 px-8 overflow-hidden min-h-[400px] flex items-center justify-center">
+             {/* Background Image with optimized visibility */}
              {heroPhotoUrl && (
-                <div 
-                    className="absolute inset-0 bg-cover bg-center opacity-30 blur-xl scale-110"
-                    style={{ backgroundImage: `url(${heroPhotoUrl})` }}
-                />
+                <>
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center opacity-50 blur-lg scale-105"
+                        style={{ backgroundImage: `url(${heroPhotoUrl})` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+                </>
              )}
              
             <div className="relative max-w-5xl mx-auto flex flex-col items-center text-center">
-                <BackButton href="/teams" label="Back to Teams" />
-                <div className="mt-8 relative z-10 w-full flex flex-col items-center">
+                <div className="mt-4 relative z-10 w-full flex flex-col items-center">
                     <div className="flex items-center justify-center gap-4 mb-4">
                         <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold uppercase tracking-widest text-white">
                             {team.gender}
-                        </span>
-                        <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold uppercase tracking-widest text-white">
-                            {team.sport_category}
                         </span>
                     </div>
                     
@@ -81,9 +80,9 @@ export default async function TeamDetailPage({
 
              <div className="space-y-6">
                 {seasons.map((season) => (
-                    <div key={season.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:shadow-md transition-shadow">
-                        {/* Media Section (Year + Photo) */}
-                        <div className="flex-shrink-0 flex flex-col gap-3 w-full md:w-48">
+                    <div key={season.id} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-10 relative overflow-hidden group hover:shadow-xl transition-all duration-500">
+                        {/* Media Section (Year + Photo) - ENLARGED */}
+                        <div className="flex-shrink-0 flex flex-col gap-3 w-full lg:w-1/3">
                             <div className="relative aspect-video rounded-xl bg-gray-50 overflow-hidden border border-gray-100">
                                 {season.photo_url || team.photo_url ? (
                                     <img 
@@ -114,6 +113,19 @@ export default async function TeamDetailPage({
                                  </div>
                              </div>
 
+                             {/* Yearly Summary - REFINED LAYOUT */}
+                             {season.summary && (
+                                 <div className="mb-8 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                     <div className="flex items-center gap-2 mb-3">
+                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                                         <h4 className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Season Narrative</h4>
+                                     </div>
+                                     <p className="text-base text-slate-600 leading-relaxed font-medium">
+                                         {season.summary}
+                                     </p>
+                                 </div>
+                             )}
+
                              {/* Achievements */}
                              {(season.achievements?.length > 0) && (
                                  <div>
@@ -140,11 +152,11 @@ export default async function TeamDetailPage({
                              )}
 
                              {/* Individual Accomplishments */}
-                             {(season as any).individual_accomplishments && (
+                             {season.individual_accomplishments && (
                                  <div className="pt-4">
                                      <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-2">Individual Championships & Honors</h4>
                                      <div className="whitespace-pre-line text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                         {(season as any).individual_accomplishments}
+                                         {season.individual_accomplishments}
                                      </div>
                                  </div>
                              )}
@@ -182,6 +194,13 @@ export default async function TeamDetailPage({
                     </div>
                 )}
              </div>
+        </div>
+        
+        {/* Centered Bottom Back Button */}
+        <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center pointer-events-none">
+            <div className="pointer-events-auto transition-all hover:scale-105 active:scale-95 duration-200">
+                <BackButton href="/teams" label="Back to Teams" className="px-10 py-3.5 text-sm font-black shadow-[0_15px_30px_rgba(0,0,0,0.12)] bg-white text-slate-900 border border-gray-100 rounded-full" />
+            </div>
         </div>
     </main>
   )

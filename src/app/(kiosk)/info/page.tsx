@@ -1,7 +1,7 @@
 import { getSchool } from '@/lib/getSchool'
 import { getScreensaverImages } from '@/lib/getScreensaverImages'
 import BackButton from '@/components/BackButton'
-import { MapPin, Phone, Mail, Share2, Info, ImageIcon, Facebook, Instagram, Globe } from 'lucide-react'
+import { MapPin, Phone, Mail, Share2, Info, ImageIcon, Facebook, Instagram, Globe, Quote } from 'lucide-react'
 
 import BrandingProviderWrapper from '@/components/BrandingProviderWrapper'
 import BrandingBackground from '@/components/BrandingBackground'
@@ -135,10 +135,52 @@ function InternalInfoPage({ school, branding, galleryImages }: { school: any, br
                                 <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase italic">Our Story</h2>
                             </div>
                             
-                            <div className="prose prose-slate max-w-none relative z-10">
-                                <p className="text-slate-700 font-medium text-xl lg:text-2xl leading-[1.6] italic indent-6">
-                                    "{school.about_text || `Welcome to ${school.name}! We are dedicated to providing a supportive and enriching educational environment for all our students.`}"
-                                </p>
+                            <div className="space-y-8 relative z-10">
+                                {school.about_text && (
+                                    <div className={`relative ${school.about_text_show_marks ? 'pl-10' : ''}`}>
+                                        {school.about_text_show_marks && (
+                                            <div 
+                                                className="absolute left-0 top-0 text-3xl opacity-10"
+                                                style={{ color: branding.primaryColor }}
+                                            >
+                                                <Quote size={28} strokeWidth={3} fill="currentColor" />
+                                            </div>
+                                        )}
+                                        <p className={`text-slate-600 font-medium text-lg leading-relaxed ${school.about_text_show_marks ? 'italic font-bold text-slate-800' : ''}`}>
+                                            {school.about_text_show_marks ? `"${school.about_text}"` : school.about_text}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {school.about_quote && (
+                                    <div className="relative pl-12 py-4 group/quote">
+                                        <div 
+                                            className="absolute left-0 top-0 text-6xl opacity-20 transition-opacity group-hover/quote:opacity-40"
+                                            style={{ color: branding.primaryColor }}
+                                        >
+                                            <Quote size={48} strokeWidth={3} fill="currentColor" />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <p className="text-slate-900 font-black text-2xl lg:text-3xl leading-snug tracking-tight italic">
+                                                {school.about_quote_show_marks ? `"${school.about_quote}"` : school.about_quote}
+                                            </p>
+                                            {school.about_quote_author && (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-0.5 w-8 rounded-full opacity-30" style={{ backgroundColor: branding.primaryColor }} />
+                                                    <p className="text-sm font-black uppercase tracking-widest text-slate-400">
+                                                        {school.about_quote_author}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!school.about_text && !school.about_quote && (
+                                     <p className="text-slate-600 font-medium text-lg leading-relaxed">
+                                        Welcome to {school.name}! We are dedicated to providing a supportive and enriching educational environment for all our students.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

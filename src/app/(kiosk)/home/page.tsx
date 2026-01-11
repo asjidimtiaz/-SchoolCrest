@@ -13,7 +13,7 @@ export default async function Home() {
     tagline: school.tagline,
     primaryColor: school.primary_color || '#000000',
     secondaryColor: school.secondary_color || '#ffffff',
-    accentColor: school.accentColor || '#3b82f6',
+    accentColor: school.accent_color || '#3b82f6',
     backgroundUrl: school.background_url,
     backgroundType: school.background_type as 'image' | 'video'
   }

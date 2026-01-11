@@ -7,6 +7,7 @@ import { Team } from '@/lib/getTeams'
 import { Save, Users, ChevronRight, User, Film, Plus, ArrowRight } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 import RosterManager from './RosterManager'
+import { supabaseClient } from '@/lib/supabaseClient'
 
 interface TeamFormProps {
   team?: Team
@@ -23,23 +24,26 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
   const [state, formAction, isPending] = useActionState(isEdit ? updateTeam : createTeam, initialState as any)
   const [step, setStep] = useState<1 | 2>(1)
   const [createdData, setCreatedData] = useState<{ teamId: string, seasonId: string, teamName: string, seasonYear: number } | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [customError, setCustomError] = useState('')
 
   // Live Preview State
   const [formData, setFormData] = useState({
     name: team?.name || '',
     gender: team?.gender || 'Boys',
-    // Default category to Varsity if not present, but we won't show it
-    sport_category: team?.sport_category || 'Varsity',
+    sport_category: team?.sport_category || '',
     head_coach: team?.head_coach || '',
     photo_url: team?.photo_url || '',
     media_type: team?.media_type || 'image' as 'image' | 'video',
     
     // New Season Fields (for Creation)
     season_year: new Date().getFullYear().toString(),
+    season_photo_url: '',
     wc_state: false,
     wc_region: false,
     wc_individual: false,
-    individual_accomplishments: ''
+    individual_accomplishments: '',
+    summary: ''
   })
 
   useEffect(() => {
@@ -115,8 +119,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
         <input type="hidden" name="school_id" value={schoolId} />
         {isEdit && <input type="hidden" name="id" value={team?.id} />}
         <input type="hidden" name="media_type" value={formData.media_type} />
-        {/* Force 'Varsity' if creating new, or keep existing for edits */}
-        <input type="hidden" name="sport_category" value={formData.sport_category} />
+        <input type="hidden" name="sport_category" value={formData.sport_category || 'Athletics'} />
 
         <div className="glass-card p-6 rounded-2xl border-none space-y-5">
             {!isEdit && (
@@ -156,7 +159,6 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                     </div>
                 </div>
                 
-                {/* Year Input - Only show for NEW teams (initial season) */}
                 {!isEdit && (
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Season Year</label>
@@ -186,68 +188,155 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                 />
             </div>
 
-            {/* Championship Toggles (Only for New Team creation flow) */}
             {!isEdit && (
-                <div className="pt-4 border-t border-gray-100 space-y-4">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Championships Won This Season</label>
-                    <div className="flex flex-wrap gap-4">
-                        {['State', 'Region', 'Individual'].map((type) => (
-                             <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                                    formData[`wc_${type.toLowerCase()}` as keyof typeof formData] 
-                                    ? 'bg-black border-black text-white' 
-                                    : 'bg-white border-gray-200 group-hover:border-gray-300 text-transparent'
-                                }`}>
-                                    <input 
-                                        type="checkbox" 
-                                        name={`wc_${type.toLowerCase()}`}
-                                        checked={!!formData[`wc_${type.toLowerCase()}` as keyof typeof formData]}
-                                        onChange={handleChange}
-                                        className="hidden"
-                                    />
-                                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="transform scale-90">
-                                        <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                </div>
-                                <span className="text-xs font-bold text-gray-700 select-none">{type}</span>
-                            </label>
-                        ))}
+                <div className="pt-6 border-t border-gray-100/50 space-y-6">
+                    <div>
+                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-black mb-1">Historical Archive</h2>
+                        <p className="text-[10px] font-medium text-gray-400">Initialize the program with its first recorded season.</p>
                     </div>
 
-                    {/* Individual Details */}
-                    {formData.wc_individual && (
-                         <div className="space-y-1.5 animate-slide-up">
-                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Individual Names & Events (One per line)</label>
-                            <textarea
-                                name="individual_accomplishments"
-                                value={formData.individual_accomplishments}
-                                onChange={handleChange}
-                                rows={3}
-                                className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-medium text-sm shadow-soft resize-none"
-                                placeholder="John Doe - 100m Dash&#10;Jane Smith - High Jump"
-                            />
+                    <div className="space-y-4">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Season Achievements</label>
+                        <div className="flex flex-wrap gap-4">
+                            {['State', 'Region', 'Individual'].map((type) => (
+                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                                        formData[`wc_${type.toLowerCase()}` as keyof typeof formData] 
+                                        ? 'bg-black border-black text-white' 
+                                        : 'bg-white border-gray-200 group-hover:border-gray-300 text-transparent'
+                                    }`}>
+                                        <input 
+                                            type="checkbox" 
+                                            name={`wc_${type.toLowerCase()}`}
+                                            checked={!!formData[`wc_${type.toLowerCase()}` as keyof typeof formData]}
+                                            onChange={handleChange}
+                                            className="hidden"
+                                        />
+                                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="transform scale-90">
+                                            <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-700 select-none">{type}</span>
+                                </label>
+                            ))}
                         </div>
-                    )}
+
+                        {formData.wc_individual && (
+                            <div className="space-y-1.5 animate-slide-up">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Individual Names & Events (One per line)</label>
+                                <textarea
+                                    name="individual_accomplishments"
+                                    value={formData.individual_accomplishments}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-medium text-sm shadow-soft resize-none"
+                                    placeholder="John Doe - 100m Dash\nJane Smith - High Jump"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-1.5 pt-2">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Yearly Summary / Season Narrative</label>
+                        <textarea
+                            name="summary"
+                            value={formData.summary}
+                            onChange={handleChange}
+                            rows={4}
+                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-medium text-sm shadow-soft resize-none"
+                            placeholder="Provide a detailed summary of the season, major highlights, and the team's journey..."
+                        />
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100">
+                        <MediaUpload 
+                            name="season_photo_input"
+                            label="Season Team Photo"
+                            description="The specific team photo for this year (appears on cards and timeline)"
+                            currentMediaUrl={formData.season_photo_url}
+                            onFileSelect={async (file) => {
+                                if (!file) return;
+                                setUploading(true);
+                                setCustomError('');
+                                try {
+                                    const uploadFormData = new FormData();
+                                    uploadFormData.append('file', file);
+                                    uploadFormData.append('schoolId', schoolId);
+                                    uploadFormData.append('folder', 'seasons');
+                                    
+                                    const res = await fetch('/api/upload', {
+                                        method: 'POST',
+                                        body: uploadFormData
+                                    });
+                                    
+                                    if (!res.ok) {
+                                        const errData = await res.json();
+                                        throw new Error(errData.error || 'Upload failed');
+                                    }
+                                    
+                                    const { url } = await res.json();
+                                    setFormData(prev => ({ ...prev, season_photo_url: url }));
+                                    // Also set program photo if it's the first one
+                                    if (!formData.photo_url) {
+                                        setFormData(prev => ({ ...prev, photo_url: url }));
+                                    }
+                                } catch (err: any) {
+                                    setCustomError("Upload failed: " + err.message);
+                                } finally {
+                                    setUploading(false);
+                                }
+                            }}
+                        />
+                        <input type="hidden" name="season_photo_url" value={formData.season_photo_url} />
+                    </div>
                 </div>
             )}
 
             <div className="space-y-4 pt-2">
                  <MediaUpload 
-                    name="photo_file"
-                    label="Program Hero Media"
-                    description="Upload a team photo or highlight video"
-                    recommendation="Recommended: 1280x720px (16:9 ratio)"
+                    name="photo_file_input"
+                    label="Program Cover Media (Optional)"
+                    description="Upload a general team photo or highlight video"
+                    recommendation="Recommended: 1280x720px (Best for historical archive)"
                     currentMediaUrl={formData.photo_url}
                     currentMediaType={formData.media_type}
                     onMediaChange={(url, type) => setFormData(prev => ({ ...prev, photo_url: url || '', media_type: type }))}
+                    onFileSelect={async (file) => {
+                        if (!file) return;
+                        setUploading(true);
+                        setCustomError('');
+                        try {
+                            const uploadFormData = new FormData();
+                            uploadFormData.append('file', file);
+                            uploadFormData.append('schoolId', schoolId);
+                            uploadFormData.append('folder', 'teams');
+                            
+                            const res = await fetch('/api/upload', {
+                                method: 'POST',
+                                body: uploadFormData
+                            });
+                            
+                            if (!res.ok) {
+                                const errData = await res.json();
+                                throw new Error(errData.error || 'Upload failed');
+                            }
+                            
+                            const { url } = await res.json();
+                            setFormData(prev => ({ ...prev, photo_url: url }));
+                        } catch (err: any) {
+                            setCustomError("Upload failed: " + err.message);
+                        } finally {
+                            setUploading(false);
+                        }
+                    }}
                  />
                  <input type="hidden" name="existing_photo_url" value={formData.photo_url || ''} />
             </div>
         </div>
 
-        {state?.error && (
+        {(state?.error || customError) && (
           <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up">
-            {state.error}
+            {state?.error || customError}
           </div>
         )}
 
@@ -261,16 +350,15 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
             </button>
             <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || uploading}
                 className="flex items-center gap-2 px-6 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 text-[11px] uppercase tracking-widest"
             >
-                {isPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
-                {isPending ? 'Processing...' : isEdit ? 'Update Program' : 'Next: Manage Roster'}
+                {uploading ? <Plus className="animate-spin" size={14} /> : isPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
+                {uploading ? 'Uploading Media...' : isPending ? 'Processing...' : isEdit ? 'Update Program' : 'Next: Manage Roster'}
             </button>
         </div>
       </form>
 
-      {/* 🔮 Preview Side-bar */}
       <div className="xl:w-64 space-y-4 sticky top-8">
         <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Program Preview</h2>
         
@@ -310,12 +398,10 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                     </p>
                 </div>
 
-                <div className="pt-3 border-t border-gray-50 flex justify-between items-center">
-                    <span className="px-3 py-0.5 bg-gray-50 text-[8px] font-black uppercase tracking-widest rounded-full text-gray-500 border border-gray-100">
-                        {isEdit ? (formData.sport_category || 'Year') : (formData.season_year || 'Year')}
-                    </span>
+                <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-[10px] font-bold text-gray-400">
+                    {isEdit ? 'Program' : (formData.season_year || 'Year')}
                     {formData.head_coach && (
-                        <span className="text-[8px] font-bold text-gray-400 truncate max-w-[100px]">
+                        <span className="truncate max-w-[100px]">
                             {formData.head_coach}
                         </span>
                     )}

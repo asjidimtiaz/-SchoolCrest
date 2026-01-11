@@ -59,8 +59,8 @@ export async function createTeam(prevState: any, formData: FormData) {
 
     const name = formData.get("name") as string;
     const gender = formData.get("gender") as string;
-    // Default to 'Varsity' if not explicitly provided (e.g. from UI refactor)
-    const sport_category = (formData.get("sport_category") as string) || 'Varsity';
+    // Use 'Athletics' as fallback if category is missing (legacy support)
+    const sport_category = (formData.get("sport_category") as string) || 'Athletics';
     const head_coach = formData.get("head_coach") as string;
     const school_id = formData.get("school_id") as string;
     const media_type = formData.get("media_type") as string || 'image';
@@ -85,29 +85,8 @@ export async function createTeam(prevState: any, formData: FormData) {
     // Note: The new column needs to exist in DB
     const individual_accomplishments = formData.get("individual_accomplishments") as string || '';
 
+    // photo_url should now come from existing_photo_url as it's uploaded client-side
     let photo_url = formData.get("existing_photo_url") as string || '';
-    const photoFile = formData.get("photo_file") as File | null;
-
-    if (photoFile && photoFile.size > 0 && typeof photoFile !== 'string') {
-        const fileExt = photoFile.name.split('.').pop();
-        // Use consistent pathing
-        const safeFilePath = `teams/${school_id}/${Date.now()}_${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('school-assets')
-            .upload(safeFilePath, photoFile);
-
-        if (uploadError) {
-            console.error('Error uploading team media:', uploadError.message);
-            return { error: "Failed to upload media: " + uploadError.message };
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('school-assets')
-            .getPublicUrl(safeFilePath);
-        
-        photo_url = publicUrl;
-    }
 
     // 1. Upsert/Find Team (Program)
     // We want to avoid duplicates if user just adds a season to existing program
@@ -152,6 +131,8 @@ export async function createTeam(prevState: any, formData: FormData) {
     const achievements: string[] = [];
     if (isState) achievements.push("State Champions");
     if (isRegion) achievements.push("Region Champions");
+    
+    const season_photo_url = formData.get("season_photo_url") as string || '';
 
     const { data: seasonData, error: seasonError } = await supabase.from("team_seasons").insert({
         team_id: teamId,
@@ -159,8 +140,10 @@ export async function createTeam(prevState: any, formData: FormData) {
         record: '', // Optional start
         coach: head_coach, // Default to program coach
         achievements: achievements,
-        individual_accomplishments: individual_accomplishments, // Requires schema update
-        roster: []
+        individual_accomplishments: individual_accomplishments,
+        summary: formData.get("summary") as string || '',
+        roster: [],
+        photo_url: season_photo_url
     }).select().single();
 
     if (seasonError) {
@@ -195,31 +178,7 @@ export async function updateTeam(prevState: any, formData: FormData) {
     const media_type = formData.get("media_type") as string || 'image';
     const school_id = formData.get("school_id") as string; // Ensure this is passed!
 
-    let photo_url = formData.get("existing_photo_url") as string || '';
-    const photoFile = formData.get("photo_file") as File | null;
-    
-    if (photoFile && photoFile.size > 0 && typeof photoFile !== 'string') {
-        // Fallback for school_id if missing in update (shouldn't happen if form has it)
-        // If missing, we might need to fetch it or just use 'teams/unknown/...'?
-        // Let's assume passed.
-        const safeSchoolId = school_id || 'unknown'; 
-        const fileExt = photoFile.name.split('.').pop();
-        const safeFilePath = `teams/${safeSchoolId}/${Date.now()}_${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('school-assets')
-            .upload(safeFilePath, photoFile);
-
-        if (uploadError) {
-             return { error: "Failed to upload media: " + uploadError.message };
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('school-assets')
-            .getPublicUrl(safeFilePath);
-        
-        photo_url = publicUrl;
-    }
+    const photo_url = formData.get("existing_photo_url") as string || '';
 
     const { error } = await supabase
       .from("teams")
@@ -268,11 +227,12 @@ export async function upsertSeason(prevState: any, formData: FormData) {
     const id = formData.get("id") as string | null;
     const team_id = formData.get("team_id") as string;
     const year = parseInt(formData.get("year") as string);
-    const record = formData.get("record") as string;
     const coach = formData.get("coach") as string;
-    const achievements = (formData.get("achievements") as string)
+    const record = formData.get("record") as string;
+    const achievements = (formData.get("achievements") as string || '')
       .split("\n")
       .filter(Boolean);
+    const summary = formData.get("summary") as string || '';
 
     const rosterRaw = formData.get("roster") as string;
     let roster = rosterRaw;
@@ -287,28 +247,9 @@ export async function upsertSeason(prevState: any, formData: FormData) {
         console.warn('Roster is not valid JSON, storing as string/text');
     }
 
-    let photo_url = formData.get("existing_photo_url") as string || '';
-    const photoFile = formData.get("photo_file") as File | null;
+    const photo_url = formData.get("existing_photo_url") as string || '';
 
-    if (photoFile && photoFile.size > 0 && typeof photoFile !== 'string') {
-        const fileExt = photoFile.name.split('.').pop();
-        const safeFilePath = `seasons/${team_id}/${Date.now()}_${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('school-assets')
-            .upload(safeFilePath, photoFile);
-
-        if (uploadError) {
-             console.error('Error uploading season media:', uploadError.message);
-             return { error: "Failed to upload media: " + uploadError.message };
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('school-assets')
-            .getPublicUrl(safeFilePath);
-        
-        photo_url = publicUrl;
-    }
+    const individual_accomplishments = formData.get("individual_accomplishments") as string || '';
 
     const payload = {
       team_id,
@@ -317,7 +258,9 @@ export async function upsertSeason(prevState: any, formData: FormData) {
       coach,
       achievements,
       roster,
+      summary,
       photo_url,
+      individual_accomplishments,
     };
 
     let result;

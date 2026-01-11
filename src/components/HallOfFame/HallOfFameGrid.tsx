@@ -34,26 +34,26 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
   return (
     <>
       {/* 🔍 Search and Filters */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
+      <div className="my-6 flex flex-col md:flex-row gap-4 sticky top-0 z-40">
         <div className="relative flex-1">
           <input
             type="text"
             placeholder="Search legends..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-8 py-3 bg-white border border-gray-200 rounded-[2.5rem] shadow-xl text-xl font-bold text-slate-900 outline-none transition-all placeholder:text-slate-400"
+            className="w-full px-6 py-2.5 bg-white border border-gray-200 rounded-[2rem] shadow-xl text-lg font-bold text-slate-900 outline-none transition-all placeholder:text-slate-400"
           />
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
             {searchTerm && (
               <button 
                 onClick={() => setSearchTerm('')}
-                className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             )}
-            <div className="w-[1px] h-6 bg-slate-200" />
-            <Trophy size={18} className="text-slate-400" />
+            <div className="w-[1px] h-5 bg-slate-200" />
+            <Trophy size={16} className="text-slate-400" />
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
       </div>
 
       {/* 🖼️ Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 pb-32">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32">
         {filteredData.map((inductee) => (
           <InducteeCard
             key={inductee.id}

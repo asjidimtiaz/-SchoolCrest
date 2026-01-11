@@ -17,7 +17,8 @@ import {
   Globe,
   Hash,
   Facebook,
-  Instagram
+  Instagram,
+  Pipette
 } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 
@@ -59,7 +60,11 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     sponsor_logo_3: school.sponsor_logo_3 || '',
     gallery_image_1: getGalleryVal(1), 
     gallery_image_2: getGalleryVal(2),
-    gallery_image_3: getGalleryVal(3)
+    gallery_image_3: getGalleryVal(3),
+    about_quote: school.about_quote || '',
+    about_quote_author: school.about_quote_author || '',
+    about_quote_show_marks: school.about_quote_show_marks || false,
+    about_text_show_marks: school.about_text_show_marks || false
   })
 
   // State for action result
@@ -108,11 +113,15 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     if (file) {
       const objectUrl = URL.createObjectURL(file)
       setPreviewData(prev => ({ ...prev, logo_url: objectUrl }))
+      // Store file for later upload
+      setPendingFiles(prev => ({ ...prev, logo_file: file }));
     } else {
-        // If cleared, revert to initial or empty? 
-        // Logic: if cleared, we might want to show nothing or revert. 
-        // Ideally we should probably track 'isDirty' but for preview simple cache is fine.
         setPreviewData(prev => ({ ...prev, logo_url: '' }))
+        setPendingFiles(prev => {
+            const next = { ...prev };
+            delete next.logo_file;
+            return next;
+        });
     }
   }
 
@@ -123,6 +132,16 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
       background_url: url || '', 
       background_type: type 
     }))
+  }
+
+  // Handle Background File Selection (separate from URL preview)
+  const handleBackgroundFileSelect = (file: File | null) => {
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      const type = file.type.startsWith('video/') ? 'video' : 'image';
+      setPreviewData(prev => ({ ...prev, background_url: objectUrl, background_type: type }));
+      setPendingFiles(prev => ({ ...prev, background_file: file }));
+    }
   }
 
   // Custom submit handler: upload files via API, then call server action
@@ -140,7 +159,13 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
         const uploadFormData = new FormData()
         uploadFormData.append('file', file)
         uploadFormData.append('schoolId', school.id)
-        uploadFormData.append('folder', fieldName.includes('sponsor') ? 'sponsors' : 'gallery')
+        
+        let folder = 'gallery'
+        if (fieldName.includes('sponsor')) folder = 'sponsors'
+        if (fieldName === 'logo_file') folder = 'logos'
+        if (fieldName === 'background_file') folder = 'backgrounds'
+        
+        uploadFormData.append('folder', folder)
         
         const res = await fetch('/api/upload', {
           method: 'POST',
@@ -149,7 +174,18 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
         
         if (res.ok) {
           const { url } = await res.json()
-          formData.set(`uploaded_${fieldName}`, url)
+          // Map field names to their expected uploaded keys in action
+          const keyMap: Record<string, string> = {
+            'logo_file': 'uploaded_logo_url',
+            'background_file': 'uploaded_background_url',
+            'sponsor_logo_1': 'uploaded_sponsor_logo_1',
+            'sponsor_logo_2': 'uploaded_sponsor_logo_2',
+            'sponsor_logo_3': 'uploaded_sponsor_logo_3',
+            'gallery_image_1': 'uploaded_gallery_image_1',
+            'gallery_image_2': 'uploaded_gallery_image_2',
+            'gallery_image_3': 'uploaded_gallery_image_3',
+          }
+          formData.set(keyMap[fieldName] || `uploaded_${fieldName}`, url)
         }
       }
 
@@ -217,16 +253,77 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                     />
                 </div>
 
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                    <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">About Text</label>
+                <div className="col-span-1 md:col-span-2 space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">About Text</label>
+                        <textarea
+                            name="about_text"
+                            defaultValue={school.about_text}
+                            onChange={handleChange}
+                            rows={3}
+                            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-600 placeholder:text-gray-300 resize-none"
+                            placeholder="A brief description of your institution..."
+                        />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
+                        const newValue = !previewData.about_text_show_marks;
+                        setPreviewData(prev => ({ ...prev, about_text_show_marks: newValue }));
+                    }}>
+                        <input 
+                            type="hidden" 
+                            name="about_text_show_marks" 
+                            value={String(previewData.about_text_show_marks)} 
+                        />
+                        <div className={`w-10 h-6 rounded-full transition-colors relative ${previewData.about_text_show_marks ? 'bg-black' : 'bg-gray-200'}`}>
+                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${previewData.about_text_show_marks ? 'left-5' : 'left-1'}`} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-widest text-gray-900">Show Double Quotes for About Text</p>
+                            <p className="text-[10px] text-gray-400 font-bold">Wrap main description in visual quote marks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Featured Quote (Optional)</label>
                     <textarea
-                        name="about_text"
-                        defaultValue={school.about_text}
+                        name="about_quote"
+                        value={previewData.about_quote}
                         onChange={handleChange}
-                        rows={3}
-                        className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-600 placeholder:text-gray-300 resize-none"
-                        placeholder="A brief description of your institution..."
+                        rows={2}
+                        className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300 resize-none italic"
+                        placeholder="e.g. Shaping the leaders of tomorrow."
                     />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Quote Author</label>
+                    <input
+                        name="about_quote_author"
+                        value={previewData.about_quote_author}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300"
+                        placeholder="e.g. John Doe, Principal"
+                    />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {
+                    const newValue = !previewData.about_quote_show_marks;
+                    setPreviewData(prev => ({ ...prev, about_quote_show_marks: newValue }));
+                }}>
+                    <input 
+                        type="hidden" 
+                        name="about_quote_show_marks" 
+                        value={String(previewData.about_quote_show_marks)} 
+                    />
+                    <div className={`w-10 h-6 rounded-full transition-colors relative ${previewData.about_quote_show_marks ? 'bg-black' : 'bg-gray-200'}`}>
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${previewData.about_quote_show_marks ? 'left-5' : 'left-1'}`} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-gray-900">Show Double Quotes</p>
+                        <p className="text-[10px] text-gray-400 font-bold">Wrap featured quote in visual quote marks</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -274,7 +371,16 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                          If formData.get('logo_url') is null/empty, it will overwrite with empty string!
                          So we MUST provide the existing logo_url as a hidden input.
                       */}
-                      <input type="hidden" name="logo_url" value={previewData.logo_url} />
+                      {/* Only send persistent URL, never blob string. If database current has a blob, send empty to clear it. */}
+                      <input 
+                        type="hidden" 
+                        name="logo_url" 
+                        value={
+                          previewData.logo_url.startsWith('blob:') 
+                            ? (school.logo_url && !school.logo_url.startsWith('blob:') ? school.logo_url : '') 
+                            : previewData.logo_url
+                        } 
+                      />
                 </div>
 
                 {/* Color Palette */}
@@ -292,15 +398,17 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                             <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/50 group hover:bg-white hover:border-gray-200 transition-all">
                                 <div 
                                     onClick={() => primaryRef.current?.click()}
-                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer"
+                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer group/picker"
                                     style={{ backgroundColor: previewData.primary_color }}
                                 >
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/picker:bg-black/20 transition-colors">
+                                        <Pipette size={14} className="text-white drop-shadow-md" />
+                                    </div>
                                     <input 
                                         type="color" 
                                         ref={primaryRef}
                                         value={previewData.primary_color}
-                                        onChange={handleChange}
-                                        name="primary_color_picker" // Changing name to avoid conflict
+                                        onChange={(e) => setPreviewData(prev => ({ ...prev, primary_color: e.target.value }))}
                                         className="absolute inset-0 opacity-0 cursor-pointer"
                                     />
                                 </div>
@@ -328,15 +436,17 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                              <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/50 group hover:bg-white hover:border-gray-200 transition-all">
                                 <div 
                                     onClick={() => secondaryRef.current?.click()}
-                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer"
+                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer group/picker"
                                     style={{ backgroundColor: previewData.secondary_color }}
                                 >
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/picker:bg-black/20 transition-colors">
+                                        <Pipette size={14} className="text-white drop-shadow-md" />
+                                    </div>
                                     <input 
                                         type="color" 
                                         ref={secondaryRef}
                                         value={previewData.secondary_color}
-                                        onChange={handleChange}
-                                        name="secondary_color_picker"
+                                        onChange={(e) => setPreviewData(prev => ({ ...prev, secondary_color: e.target.value }))}
                                         className="absolute inset-0 opacity-0 cursor-pointer"
                                     />
                                 </div>
@@ -364,15 +474,17 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                              <div className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50/50 group hover:bg-white hover:border-gray-200 transition-all">
                                 <div 
                                     onClick={() => accentRef.current?.click()}
-                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer"
+                                    className="relative w-12 h-12 rounded-lg shadow-sm border border-black/5 overflow-hidden flex-shrink-0 cursor-pointer group/picker"
                                     style={{ backgroundColor: previewData.accent_color }}
                                 >
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/picker:bg-black/20 transition-colors">
+                                        <Pipette size={14} className="text-white drop-shadow-md" />
+                                    </div>
                                     <input 
                                         type="color" 
                                         ref={accentRef}
                                         value={previewData.accent_color}
-                                        onChange={handleChange}
-                                        name="accent_color_picker"
+                                        onChange={(e) => setPreviewData(prev => ({ ...prev, accent_color: e.target.value }))}
                                         className="absolute inset-0 opacity-0 cursor-pointer"
                                     />
                                 </div>
@@ -422,8 +534,17 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                     currentMediaUrl={previewData.background_url}
                     currentMediaType={previewData.background_type}
                     onMediaChange={handleBackgroundMediaChange}
+                    onFileSelect={handleBackgroundFileSelect}
                 />
-                <input type="hidden" name="existing_background_url" value={previewData.background_url || ''} />
+                <input 
+                    type="hidden" 
+                    name="existing_background_url" 
+                    value={
+                        (previewData.background_url && !previewData.background_url.startsWith('blob:')) 
+                            ? previewData.background_url 
+                            : (school.background_url && !school.background_url.startsWith('blob:') ? school.background_url : '')
+                    } 
+                />
                 <input type="hidden" name="background_type" value={previewData.background_type} />
             </div>
         </section>
@@ -531,6 +652,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                                 name={`sponsor_file_${i}`} 
                                 className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                                 accept="image/*" 
+                                title=""
                                 onChange={(e) => handleFilePreview(e, `sponsor_logo_${i}`)}
                            />
                            
@@ -576,6 +698,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                                 name={`gallery_file_${i}`} 
                                 className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                                 accept="image/*"
+                                title=""
                                 onChange={(e) => handleFilePreview(e, `gallery_image_${i}`)}
                            />
                            

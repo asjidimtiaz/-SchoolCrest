@@ -9,7 +9,7 @@ import { X, Trophy } from 'lucide-react'
 export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWithTeam[] }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedYear, setSelectedYear] = useState<string>('All')
-  const [selectedSport, setSelectedSport] = useState<string>('All')
+  const [selectedProgram, setSelectedProgram] = useState<string>('All')
   const branding = useBranding()
   
   // Extract unique filters
@@ -18,12 +18,10 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
     return ['All', ...uniqueYears.map(String)]
   }, [initialData])
 
-  const sports = useMemo(() => {
-    // Assuming sport_category holds the sport name like "Basketball", "Football"
-    // Or should we use team.name? team.name might be "Boys Basketball". 
-    // Let's us sport_category for high level filter.
-    const uniqueSports = Array.from(new Set(initialData.map(s => s.team.sport_category))).sort()
-    return ['All', ...uniqueSports]
+  const programs = useMemo(() => {
+    // Use team.name (Program Name) for filtering instead of sport_category
+    const uniquePrograms = Array.from(new Set(initialData.map(s => s.team.name))).sort()
+    return ['All', ...uniquePrograms]
   }, [initialData])
 
   const filteredData = initialData.filter(season => {
@@ -33,29 +31,29 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
     // Filter by Year
     const matchesYear = selectedYear === 'All' || season.year.toString() === selectedYear
 
-    // Filter by Sport
-    const matchesSport = selectedSport === 'All' || season.team.sport_category === selectedSport
+    // Filter by Program
+    const matchesProgram = selectedProgram === 'All' || season.team.name === selectedProgram
 
-    return matchesSearch && matchesYear && matchesSport;
+    return matchesSearch && matchesYear && matchesProgram;
   });
 
   return (
     <>
       {/* 🔍 Unified Search & Filter Toolbar */}
-      <div className="mb-12 flex justify-center sticky top-4 z-40">
-        <div className="bg-white p-2 rounded-full shadow-2xl border border-gray-200/50 flex items-center max-w-4xl w-full gap-2 backdrop-blur-md bg-white/90">
+      <div className="my-6 flex justify-center sticky top-0 z-40">
+        <div className="bg-white p-1.5 rounded-full shadow-2xl border border-gray-200/50 flex items-center max-w-4xl w-full gap-2 backdrop-blur-md bg-white/90">
             
             {/* 1. Search Section (Flexible) */}
-            <div className="flex-1 flex items-center px-4 md:px-6 h-12">
-                <div className="text-gray-400 mr-4">
-                    <Trophy size={20} />
+            <div className="flex-1 flex items-center px-4 md:px-5 h-10">
+                <div className="text-gray-400 mr-3">
+                    <Trophy size={18} />
                 </div>
                 <input
                     type="text"
                     placeholder="Search teams..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-slate-900 placeholder:text-slate-400 h-full w-full"
+                    className="flex-1 bg-transparent border-none outline-none text-base font-bold text-slate-900 placeholder:text-slate-400 h-full w-full"
                 />
                 {searchTerm && (
                     <button 
@@ -71,11 +69,11 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
             <div className="w-px h-8 bg-gray-200 flex-shrink-0" />
 
             {/* 2. Year Filter (Select) */}
-            <div className="relative flex-shrink-0 min-w-[120px] md:min-w-[160px] h-12 flex items-center justify-center px-2">
+            <div className="relative flex-shrink-0 min-w-[100px] md:min-w-[140px] h-10 flex items-center justify-center px-2">
                 <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
-                    className="appearance-none bg-transparent border-none outline-none font-black text-sm uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
+                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
                 >
                     {years.map(year => (
                         <option key={year} value={year}>
@@ -83,8 +81,6 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
                         </option>
                     ))}
                 </select>
-                {/* Custom chevron if needed, or rely on browser default for simplicity/native feel, 
-                    but "appearance-none" removes it. Let's add a custom one. */}
                 <div className="absolute right-4 pointer-events-none text-slate-400">
                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -95,33 +91,33 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
             {/* Divider */}
             <div className="w-px h-8 bg-gray-200 flex-shrink-0" />
 
-            {/* 3. Sport Filter (Select) */}
-            <div className="relative flex-shrink-0 min-w-[120px] md:min-w-[180px] h-12 flex items-center justify-center px-2">
+            {/* 3. Program Filter (Select) */}
+            <div className="relative flex-shrink-0 min-w-[100px] md:min-w-[160px] h-10 flex items-center justify-center px-2">
                  <select
-                    value={selectedSport}
-                    onChange={(e) => setSelectedSport(e.target.value)}
-                    className="appearance-none bg-transparent border-none outline-none font-black text-sm uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
+                    value={selectedProgram}
+                    onChange={(e) => setSelectedProgram(e.target.value)}
+                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
                 >
-                    {sports.map(sport => (
-                        <option key={sport} value={sport}>
-                            {sport === 'All' ? 'All Sports' : sport}
+                    {programs.map(program => (
+                        <option key={program} value={program}>
+                            {program === 'All' ? 'All Programs' : program}
                         </option>
                     ))}
                 </select>
-                <div className="absolute right-4 pointer-events-none text-slate-400">
+                <div className="absolute right-2 pointer-events-none text-slate-400">
                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                      </svg>
                 </div>
             </div>
 
-            {/* Action/Submit Button (Optional visual anchor) */}
+            {/* Action/Submit Button - Circular Branded Anchor */}
             <div className="flex-shrink-0 p-1">
                 <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg skew-x-[-10deg]"
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg"
                     style={{ backgroundColor: branding.primaryColor }}
                 >
-                    <Trophy size={18} strokeWidth={2.5} className="skew-x-[10deg]" />
+                    <Trophy size={18} strokeWidth={2.5} />
                 </div>
             </div>
 
@@ -129,7 +125,7 @@ export default function TeamsGrid({ initialData }: { initialData: TeamSeasonWith
       </div>
 
       {/* 🖼️ Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 pb-32">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32">
         {filteredData.map((season) => (
           <SeasonCard
             key={season.id}

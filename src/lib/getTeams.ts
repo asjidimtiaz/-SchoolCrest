@@ -19,8 +19,9 @@ export interface TeamSeason {
   coach: string
   achievements: string[]
   individual_accomplishments?: string
+  summary?: string
+  photo_url?: string | null
   roster: any // JSONB
-  photo_url: string | null
 }
 
 export async function getTeams(schoolId: string): Promise<Team[]> {

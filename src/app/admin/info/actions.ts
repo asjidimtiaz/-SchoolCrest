@@ -44,6 +44,10 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     const name = formData.get('name') as string
     const tagline = formData.get('tagline') as string
     const about_text = formData.get('about_text') as string
+    const about_quote = formData.get('about_quote') as string
+    const about_quote_author = formData.get('about_quote_author') as string
+    const about_quote_show_marks = formData.get('about_quote_show_marks') === 'true'
+    const about_text_show_marks = formData.get('about_text_show_marks') === 'true'
     const primary_color = formData.get('primary_color') as string
     const secondary_color = formData.get('secondary_color') as string
     const accent_color = formData.get('accent_color') as string
@@ -53,7 +57,7 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     const calendar_url = formData.get('calendar_url') as string
 
     // Handle Logo Upload
-    let logo_url = formData.get('logo_url') as string
+    let logo_url = formData.get('uploaded_logo_url') as string || formData.get('logo_url') as string
     const logoFile = formData.get('logo_file') as File | null
 
     if (logoFile && logoFile.size > 0 && typeof logoFile !== 'string') {
@@ -78,7 +82,7 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     }
 
     // Handle Background Media Upload
-    let background_url = formData.get('existing_background_url') as string || ''
+    let background_url = formData.get('uploaded_background_url') as string || formData.get('existing_background_url') as string || ''
     const background_type = formData.get('background_type') as string || 'image'
     const backgroundFile = formData.get('background_file') as File | null
 
@@ -125,7 +129,8 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     
     // Re-doing the update object construction to be clean:
     const updatePayload: any = {
-        name, tagline, about_text, logo_url, primary_color, secondary_color, accent_color,
+        name, tagline, about_text, about_quote, about_quote_author, about_quote_show_marks, about_text_show_marks,
+        logo_url, primary_color, secondary_color, accent_color,
         address, phone, calendar_url, background_url, background_type,
         sponsor_logo_1, sponsor_logo_2, sponsor_logo_3
     };

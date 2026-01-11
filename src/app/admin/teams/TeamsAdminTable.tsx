@@ -58,7 +58,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50">Team Identity</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50">Program Identity</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50 text-center">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50 text-right">Actions</th>
                             </tr>
@@ -83,7 +83,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                                                         {team.name}
                                                     </span>
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                                        {team.gender} • {team.sport_category}
+                                                        {team.gender} Athletics
                                                     </span>
                                                 </div>
                                             </div>

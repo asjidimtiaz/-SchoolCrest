@@ -6,10 +6,11 @@ import SeasonForm from './SeasonForm'
 
 interface SeasonEditModalProps {
     season: TeamSeason
+    schoolId: string
     onClose: () => void
 }
 
-export default function SeasonEditModal({ season, onClose }: SeasonEditModalProps) {
+export default function SeasonEditModal({ season, schoolId, onClose }: SeasonEditModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-fade-in text-left">
             <div className="w-full max-w-xl bg-white rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden flex flex-col">
@@ -38,6 +39,7 @@ export default function SeasonEditModal({ season, onClose }: SeasonEditModalProp
                 <div className="px-8 py-6">
                     <SeasonForm 
                         team_id={season.team_id} 
+                        schoolId={schoolId}
                         season={season} 
                         onSuccess={onClose}
                     />
