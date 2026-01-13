@@ -122,6 +122,15 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
         }
     }
 
+    const nav_hall_of_fame_label = formData.get('nav_hall_of_fame_label') as string
+    const nav_teams_label = formData.get('nav_teams_label') as string
+    const nav_calendar_label = formData.get('nav_calendar_label') as string
+    const nav_info_label = formData.get('nav_info_label') as string
+    const nav_hall_of_fame_tagline = formData.get('nav_hall_of_fame_tagline') as string
+    const nav_teams_tagline = formData.get('nav_teams_tagline') as string
+    const nav_calendar_tagline = formData.get('nav_calendar_tagline') as string
+    const nav_info_tagline = formData.get('nav_info_tagline') as string
+
     // (Redundant update removed here, using the cleaner one below)
     
     // Explicitly update website_url separately if needed or just part of object above?
@@ -131,8 +140,10 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     const updatePayload: any = {
         name, tagline, about_text, about_quote, about_quote_author, about_quote_show_marks, about_text_show_marks,
         logo_url, primary_color, secondary_color, accent_color,
-        address, phone, calendar_url, background_url, background_type,
-        sponsor_logo_1, sponsor_logo_2, sponsor_logo_3
+        address, phone, email, calendar_url, background_url, background_type,
+        sponsor_logo_1, sponsor_logo_2, sponsor_logo_3,
+        nav_hall_of_fame_label, nav_teams_label, nav_calendar_label, nav_info_label,
+        nav_hall_of_fame_tagline, nav_teams_tagline, nav_calendar_tagline, nav_info_tagline
     };
     
     // If we are repurposing the 'email' input name for website_url, or if I change the form to send 'website_url'.
@@ -153,7 +164,8 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
       return { error: updateError.message }
     }
     
-    // ... existing verification logic ...
+    // Force revalidation of the layout and all pages
+    revalidatePath('/', 'layout')
     
     return { success: true }
   } catch (err) {

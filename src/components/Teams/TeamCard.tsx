@@ -1,21 +1,20 @@
 'use client'
 
-import { TeamSeasonWithTeam } from '@/lib/getTeams'
-import { Users, Trophy } from 'lucide-react'
+import { Team } from '@/lib/getTeams'
+import { Users } from 'lucide-react'
 import Link from 'next/link'
 
-interface SeasonCardProps {
-  season: TeamSeasonWithTeam
+interface TeamCardProps {
+  team: Team
   primaryColor: string
 }
 
-export default function SeasonCard({ season, primaryColor }: SeasonCardProps) {
-  // Prioritize season photo, fallback to team photo
-  const photoUrl = season.photo_url || season.team.photo_url
+export default function TeamCard({ team, primaryColor }: TeamCardProps) {
+  const photoUrl = team.photo_url
 
   return (
     <Link
-      href={`/teams/${season.team.id}?season=${season.year}`}
+      href={`/teams/${team.id}`}
       className="group relative flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 text-left w-full aspect-[3/4] border border-slate-200/60 animate-slide-up"
     >
       {/* Image Container - Full Card */}
@@ -23,7 +22,7 @@ export default function SeasonCard({ season, primaryColor }: SeasonCardProps) {
         {photoUrl ? (
           <img
             src={photoUrl}
-            alt={season.team.name}
+            alt={team.name}
             className="w-full h-full object-cover transition-transform duration-700"
           />
         ) : (
@@ -36,13 +35,6 @@ export default function SeasonCard({ season, primaryColor }: SeasonCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-transparent opacity-70 transition-opacity duration-500" />
       </div>
 
-      {/* Top Badge: Year */}
-      <div className="absolute top-5 left-5 z-10">
-          <div className="px-4 py-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20">
-              <span className="text-xl font-black text-slate-900 tracking-tighter">{season.year}</span>
-          </div>
-      </div>
-
       {/* Content Overlay - Simplified to just Name */}
       <div className="absolute inset-x-0 bottom-0 p-8 pt-12 text-white text-center">
         {/* Team Name with Background for Contrast */}
@@ -51,8 +43,11 @@ export default function SeasonCard({ season, primaryColor }: SeasonCardProps) {
           style={{ backgroundColor: `${primaryColor}CC`, backdropFilter: 'blur(8px)' }}
         >
            <h3 className="text-2xl font-black leading-tight text-white break-words tracking-tight uppercase">
-               {season.team.name}
+               {team.name}
            </h3>
+           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 mt-1">
+               {team.gender} {team.sport_category || 'Athletics'}
+           </p>
         </div>
       </div>
 

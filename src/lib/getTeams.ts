@@ -6,6 +6,7 @@ export interface Team {
   gender: string
   sport_category: string
   photo_url: string | null
+  background_url: string | null
   media_type?: 'image' | 'video'
   head_coach?: string
   school_id: string
@@ -167,6 +168,39 @@ export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWit
     return (seasons as any[]) || []
   } catch (err) {
     console.error('FATAL in getAllTeamSeasons:', err)
+    return []
+  }
+}
+
+export async function getTeamYears(schoolId: string): Promise<{ team_id: string; year: number }[]> {
+  try {
+    // We need to filter seasons by teams belonging to the school.
+    // Ideally we join, but let's do the two-step for safety if RLS is tricky on joins.
+    const { data: teams, error: teamsError } = await supabaseServer
+      .from('teams')
+      .select('id')
+      .eq('school_id', schoolId)
+
+    if (teamsError || !teams || teams.length === 0) {
+      return []
+    }
+
+    const teamIds = teams.map(t => t.id)
+
+    const { data: seasons, error: seasonsError } = await supabaseServer
+      .from('team_seasons')
+      .select('team_id, year')
+      .in('team_id', teamIds)
+      .order('year', { ascending: false })
+
+    if (seasonsError) {
+      console.error('Error fetching Team Years:', seasonsError.message)
+      return []
+    }
+
+    return seasons || []
+  } catch (err) {
+    console.error('FATAL in getTeamYears:', err)
     return []
   }
 }

@@ -32,28 +32,41 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
         setIsEditOpen(true)
     }
 
+    // Calculate the next logical year (highest year + 1)
+    const nextSuggestedYear = seasons.length > 0 
+        ? Math.max(...seasons.map(s => s.year)) + 1 
+        : new Date().getFullYear()
+
     return (
-        <div className="space-y-6 text-left">
+        <div className="space-y-6 text-left pb-20">
             <div className="flex items-center justify-between">
-                <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Team History</h2>
+                <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Archive History</h2>
                 <button 
                     onClick={() => setIsAddOpen(!isAddOpen)}
-                    className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg"
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                        isAddOpen 
+                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
+                        : 'bg-black text-white hover:bg-gray-800'
+                    }`}
                 >
-                    <Plus size={14} />
-                    {isAddOpen ? 'Close Form' : 'Add New Season'}
+                    {isAddOpen ? <Plus className="rotate-45 transition-transform" size={14} /> : <Plus size={14} />}
+                    {isAddOpen ? 'Cancel' : 'Add Season'}
                 </button>
             </div>
 
             {isAddOpen && (
-                <div className="glass-card p-8 rounded-[2rem] border-2 border-dashed border-gray-200 bg-gray-50/30 animate-slide-up">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-                        <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Add Historical Season</h3>
+                <div className="glass-card p-10 rounded-[2.5rem] border-2 border-dashed border-gray-100 bg-white/50 animate-slide-up shadow-inner relative overflow-hidden">
+                    {/* Visual Flourish */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                    
+                    <div className="flex items-center gap-2 mb-8 relative z-10">
+                        <div className="w-1.5 h-6 rounded-full bg-emerald-500" />
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900">New Historical Entry</h3>
                     </div>
                     <SeasonForm 
                         team_id={teamId} 
                         schoolId={schoolId}
+                        suggestedYear={nextSuggestedYear}
                         onSuccess={() => {
                             setIsAddOpen(false)
                         }} 

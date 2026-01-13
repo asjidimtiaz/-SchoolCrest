@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useBranding } from '@/context/BrandingContext'
 import { Trophy, Users, Calendar, Info, ArrowRight, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
@@ -13,26 +11,26 @@ export default function HomeContent() {
 
   const navItems = [
     {
-      title: 'Hall of Fame',
-      description: 'Honoring exceptional alumni and staff',
+      title: branding.navHallOfFameLabel,
+      description: branding.navHallOfFameTagline,
       icon: Trophy,
       href: '/hall-of-fame',
     },
     {
-      title: 'Athletic Teams',
-      description: 'Explore our sports and history',
+      title: branding.navTeamsLabel,
+      description: branding.navTeamsTagline,
       icon: Users,
       href: '/teams',
     },
     {
-      title: 'Campus Events',
-      description: 'Stay updated with school activities',
+      title: branding.navCalendarLabel,
+      description: branding.navCalendarTagline,
       icon: Calendar,
       href: '/calendar',
     },
     {
-      title: 'School Profile',
-      description: 'Information about our community',
+      title: branding.navInfoLabel,
+      description: branding.navInfoTagline,
       icon: Info,
       href: '/info',
     },
@@ -48,36 +46,36 @@ export default function HomeContent() {
       
       {/* 📜 Navigation Cards */}
       <div className="flex-1 flex items-center justify-center px-12 py-5 z-10 overflow-hidden">
-        <div className="grid grid-cols-2 gap-6 w-full max-w-4xl">
+        <div className="grid grid-cols-2 gap-8 w-full max-w-5xl">
             {navItems.map((item, idx) => {
                 const Icon = item.icon
                 return (
                     <Link 
                         key={item.href} 
                         href={item.href}
-                        className="group relative flex items-center p-5 bg-white rounded-[2rem] shadow-lg active:scale-95 transition-all duration-200 overflow-hidden"
+                        className="group relative flex items-center p-6 bg-white rounded-[2.5rem] shadow-xl active:scale-95 transition-all duration-300 overflow-hidden"
                          style={{ 
                             animationDelay: `${idx * 100}ms`,
-                            borderLeft: `8px solid ${branding.accentColor}`
+                            borderLeft: `10px solid ${branding.accentColor}`
                         }}
                     >
-                        {/* 🎨 Hover Gradient Effect */}
+                        {/* 🎨 Background Color overlay */}
                         <div 
-                            className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500"
+                            className="absolute inset-0 opacity-0 transition-opacity duration-500"
                             style={{ backgroundColor: branding.primaryColor }}
                         />
 
                         {/* Icon Container - Colored Background */}
                         <div 
-                            className="w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center shadow-lg mr-5"
+                            className="w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center shadow-lg mr-6 relative z-10"
                             style={{ backgroundColor: branding.primaryColor }}
                         >
-                            <Icon size={40} strokeWidth={2} className="text-white" />
+                            <Icon size={44} strokeWidth={2} className="text-white" />
                         </div>
                         
                         {/* Text Content */}
                         <div className="space-y-1.5 relative z-10">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-slate-700 transition-colors">
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight transition-colors">
                             {item.title}
                             </h2>
                              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
@@ -86,8 +84,8 @@ export default function HomeContent() {
                         </div>
 
                          {/* Arrow Indicator - simplified for Kiosk */}
-                         <div className="ml-auto text-slate-400 group-active:text-slate-900 transition-colors">
-                            <ArrowRight size={28} />
+                         <div className="ml-auto text-slate-400 group-active:text-slate-900 transition-colors relative z-10">
+                            <ArrowRight size={32} />
                          </div>
                     </Link>
                 )
@@ -95,11 +93,10 @@ export default function HomeContent() {
         </div>
       </div>
 
-      {/* 🎹 Institutional Footer */}
-      <footer className="px-16 py-6 flex flex-col justify-center items-center gap-2">
-          <div className="h-0.5 w-12 rounded-full" style={{ backgroundColor: branding.accentColor }} />
-          <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Touch any card to navigate</p>
-      </footer>
+      {/* 🎹 Institutional Footer with Hero Base Line */}
+      <div className="relative z-10">
+          <div className="w-full h-1" style={{ backgroundColor: branding.accentColor }} />
+      </div>
     </main>
   )
 }

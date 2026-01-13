@@ -13,12 +13,13 @@ interface Player {
 }
 
 interface RosterManagerProps {
-    seasonId: string
-    teamId: string
+    seasonId?: string
+    teamId?: string
     initialRoster: any
     seasonYear: number
     teamName: string
     onFinish?: () => void
+    onChange?: (roster: Player[]) => void
     isInline?: boolean
 }
 
@@ -29,18 +30,17 @@ export default function RosterManager({
     seasonYear, 
     teamName,
     onFinish,
+    onChange,
     isInline = false
 }: RosterManagerProps) {
     // Defensive initialization: ensure roster is always a valid array of Player objects
     const [roster, setRoster] = useState<Player[]>(() => {
         if (!Array.isArray(initialRoster)) {
-            console.warn('[RosterManager] initialRoster is not an array:', initialRoster);
             return [];
         }
-        // Filter out any malformed items that don't have the required Player structure
         return initialRoster.filter((item: any) => {
             if (!item || typeof item !== 'object') return false;
-            if (!item.id || !item.name) return false; // At minimum, must have id and name
+            if (!item.id || !item.name) return false;
             return true;
         });
     })
@@ -54,6 +54,13 @@ export default function RosterManager({
     })
 
     const handleSaveRoster = async (newRoster: Player[]) => {
+        if (onChange) {
+            onChange(newRoster)
+            return
+        }
+        
+        if (!seasonId || !teamId) return
+
         startTransition(async () => {
             await updateRoster(seasonId, teamId, newRoster)
         })

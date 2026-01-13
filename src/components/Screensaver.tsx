@@ -150,64 +150,75 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
         </>
       )}
 
-      {/* 🎨 Content */}
-      <div className="relative z-30 flex flex-col items-center animate-fade-in text-white">
-        {branding.logoUrl && (
-          <div className="relative h-40 w-64 mb-4 drop-shadow-2xl">
-            <Image
-              src={branding.logoUrl}
-              alt={branding.name}
-              fill
-              priority
-              className="object-contain"
-            />
+      {/* 🎨 Content Wrapper - Distributed across the page */}
+      {/* 🎨 Content Wrapper - Distributed across the page */}
+      <div className="relative z-30 flex-1 w-full h-full flex flex-col items-center justify-evenly py-12 px-16 animate-fade-in text-white pointer-events-none">
+        
+        {/* 🤝 Sponsors - Absolute Top Right */}
+        {sponsors.length > 0 && (
+          <div className="absolute top-10 right-10 flex flex-col items-end gap-4 pointer-events-auto">
+              <p className="text-[11px] uppercase tracking-[0.4em] font-black text-white/50 drop-shadow-md">Supported By</p>
+              <div className="flex items-center gap-6 bg-black/40 backdrop-blur-3xl px-8 py-6 rounded-[3.5rem] border border-white/10 shadow-3xl">
+                  {sponsors.map((logo, i) => (
+                      <div key={i} className="relative h-24 w-24 rounded-full overflow-hidden shadow-2xl bg-white border-4 border-white/10 transition-transform ">
+                          <Image 
+                              src={logo} 
+                              alt={`Sponsor ${i+1}`} 
+                              fill
+                              className="object-contain p-3"
+                          />
+                      </div>
+                  ))}
+              </div>
           </div>
         )}
 
-        <h1
-          className="text-6xl font-black mb-4 text-center drop-shadow-lg tracking-tight"
-          style={{ textShadow: `0 4px 12px ${branding.primaryColor}` }}
-        >
-          {branding.name}
-        </h1>
-
-        {branding.tagline && (
-          <p className="text-2xl mb-10 text-center text-gray-200 drop-shadow-md max-w-2xl px-4">
-            {branding.tagline}
-          </p>
-        )}
-
-        <div className="animate-bounce-slow">
-          <div
-            className="px-10 py-5 rounded-full text-3xl font-black tracking-widest uppercase shadow-[0_0_50px_rgba(255,255,255,0.3)] transform hover:scale-105 transition-transform backdrop-blur-md border-4"
-            style={{
-              borderColor: branding.primaryColor,
-              backgroundColor: `${branding.secondaryColor}40`, // 25% opacity
-              color: "#ffffff",
-            }}
-          >
-            Touch to Start
-          </div>
+        {/* Top Section: Logo with moderate padding */}
+        <div className="mt-8">
+          {branding.logoUrl && (
+            <div className="relative h-40 w-64 drop-shadow-2xl">
+              <Image
+                src={branding.logoUrl}
+                alt={branding.name}
+                fill
+                priority
+                className="object-contain"
+              />
+            </div>
+          )}
         </div>
 
-        {/* 🤝 Sponsors - Below Touch to Start */}
-        {sponsors.length > 0 && (
-            <div className="mt-4 flex flex-col items-center gap-2">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/60">Powered By</p>
-                <div className="flex items-center gap-4 bg-black/30 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 shadow-2xl">
-                    {sponsors.map((logo, i) => (
-                        <div key={i} className="relative h-14 w-14 rounded-full overflow-hidden border-2 border-white/20 shadow-lg bg-white">
-                            <Image 
-                                src={logo} 
-                                alt={`Sponsor ${i+1}`} 
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                    ))}
-                </div>
+        {/* Middle/Bottom Section: Main Text & Action with moderate padding */}
+        <div className="flex flex-col items-center text-center max-w-5xl mb-8">
+          <h1
+            className="text-6xl font-black mb-6 drop-shadow-2xl tracking-tight leading-[1.1]"
+            style={{ textShadow: `0 4px 20px ${branding.primaryColor}` }}
+          >
+            {branding.name}
+          </h1>
+
+          {branding.tagline && (
+            <p 
+              className="text-lg mb-14 opacity-70 drop-shadow-xl font-bold tracking-[0.4em] uppercase max-w-4xl px-4 text-center"
+              style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
+            >
+              {branding.tagline}
+            </p>
+          )}
+
+          <div className="animate-bounce-slow pointer-events-auto">
+            <div
+              className="px-14 py-6 rounded-full text-3xl font-black tracking-widest uppercase shadow-[0_0_80px_rgba(255,255,255,0.2)] transform hover:scale-105 active:scale-95 transition-all backdrop-blur-md border-[6px]"
+              style={{
+                borderColor: branding.primaryColor,
+                backgroundColor: `${branding.secondaryColor}30`,
+                color: "#ffffff",
+              }}
+            >
+              Touch to Start
             </div>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

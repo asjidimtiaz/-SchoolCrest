@@ -11,7 +11,21 @@ type Branding = {
   accentColor?: string
   backgroundUrl?: string
   backgroundType?: 'image' | 'video'
+  // Navigation Labels
+  navHallOfFameLabel?: string
+  navTeamsLabel?: string
+  navCalendarLabel?: string
+  navInfoLabel?: string
+  // Navigation Taglines
+  navHallOfFameTagline?: string
+  navTeamsTagline?: string
+  navCalendarTagline?: string
+  navInfoTagline?: string
 }
+
+// ... (existing code)
+
+// ... (existing code)
 
 const BrandingContext = createContext<Branding | null>(null)
 
@@ -30,7 +44,15 @@ export function BrandingProvider({
     branding.secondaryColor,
     branding.accentColor,
     branding.backgroundUrl,
-    branding.backgroundType
+    branding.backgroundType,
+    branding.navHallOfFameLabel,
+    branding.navTeamsLabel,
+    branding.navCalendarLabel,
+    branding.navInfoLabel,
+    branding.navHallOfFameTagline,
+    branding.navTeamsTagline,
+    branding.navCalendarTagline,
+    branding.navInfoTagline,
   ])
 
   return (
@@ -57,5 +79,13 @@ export function useBranding() {
     secondaryColor: context.secondaryColor || '#ffffff',
     accentColor: context.accentColor || '#3b82f6',
     name: context.name || 'School Crest Kiosk',
+    navHallOfFameLabel: context.navHallOfFameLabel || 'Hall of Fame',
+    navTeamsLabel: context.navTeamsLabel || 'Athletic Teams',
+    navCalendarLabel: context.navCalendarLabel || 'Campus Events',
+    navInfoLabel: context.navInfoLabel || 'School Profile',
+    navHallOfFameTagline: context.navHallOfFameTagline || 'Honoring exceptional alumni and staff',
+    navTeamsTagline: context.navTeamsTagline || 'Explore our sports and history',
+    navCalendarTagline: context.navCalendarTagline || 'Stay updated with school activities',
+    navInfoTagline: context.navInfoTagline || 'Information about our community',
   }
 }

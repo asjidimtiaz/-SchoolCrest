@@ -87,6 +87,16 @@ export async function createTeam(prevState: any, formData: FormData) {
 
     // photo_url should now come from existing_photo_url as it's uploaded client-side
     let photo_url = formData.get("existing_photo_url") as string || '';
+    let background_url = formData.get("existing_background_url") as string || '';
+
+    // Roster Data
+    const rosterRaw = formData.get("roster") as string;
+    let initialRoster = [];
+    try {
+        if (rosterRaw) initialRoster = JSON.parse(rosterRaw);
+    } catch (e) {
+        console.warn("Failed to parse initial roster:", e);
+    }
 
     // 1. Upsert/Find Team (Program)
     // We want to avoid duplicates if user just adds a season to existing program
@@ -105,8 +115,12 @@ export async function createTeam(prevState: any, formData: FormData) {
         teamId = existingTeam.id;
         // Optionally update the program photo if a new one was provided? 
         // For now, let's update it so the latest upload becomes the program header
-        if (photo_url) {
-            await supabase.from("teams").update({ photo_url, media_type, head_coach }).eq("id", teamId);
+        if (photo_url || background_url) {
+            const updates: any = { media_type, head_coach };
+            if (photo_url) updates.photo_url = photo_url;
+            if (background_url) updates.background_url = background_url;
+            
+            await supabase.from("teams").update(updates).eq("id", teamId);
         }
     } else {
         const { data: newTeam, error: createError } = await supabase.from("teams").insert({
@@ -115,6 +129,7 @@ export async function createTeam(prevState: any, formData: FormData) {
             sport_category,
             head_coach,
             photo_url,
+            background_url,
             media_type,
             school_id,
         }).select().single();
@@ -142,7 +157,7 @@ export async function createTeam(prevState: any, formData: FormData) {
         achievements: achievements,
         individual_accomplishments: individual_accomplishments,
         summary: formData.get("summary") as string || '',
-        roster: [],
+        roster: initialRoster,
         photo_url: season_photo_url
     }).select().single();
 
@@ -179,17 +194,22 @@ export async function updateTeam(prevState: any, formData: FormData) {
     const school_id = formData.get("school_id") as string; // Ensure this is passed!
 
     const photo_url = formData.get("existing_photo_url") as string || '';
+    const background_url = formData.get("existing_background_url") as string || '';
 
-    const { error } = await supabase
-      .from("teams")
-      .update({
+    const updates: any = {
         name,
         gender,
         sport_category,
         head_coach,
-        photo_url,
         media_type
-      })
+    };
+
+    if (photo_url) updates.photo_url = photo_url;
+    if (background_url) updates.background_url = background_url;
+
+    const { error } = await supabase
+      .from("teams")
+      .update(updates)
       .eq("id", id);
 
     if (error) {

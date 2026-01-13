@@ -7,6 +7,7 @@ import { Team } from '@/lib/getTeams'
 import { Save, Users, ChevronRight, User, Film, Plus, ArrowRight } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 import RosterManager from './RosterManager'
+import SeasonsManager from './SeasonsManager'
 import { supabaseClient } from '@/lib/supabaseClient'
 
 interface TeamFormProps {
@@ -34,6 +35,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     sport_category: team?.sport_category || '',
     head_coach: team?.head_coach || '',
     photo_url: team?.photo_url || '',
+    background_url: team?.background_url || '',
     media_type: team?.media_type || 'image' as 'image' | 'video',
     
     // New Season Fields (for Creation)
@@ -43,14 +45,38 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     wc_region: false,
     wc_individual: false,
     individual_accomplishments: '',
-    summary: ''
+    summary: '',
+    roster: [] as any[]
   })
+
+  const [seasons, setSeasons] = useState<any[]>([])
+  const [loadingSeasons, setLoadingSeasons] = useState(false)
+
+  // Fetch seasons for Step 2
+  useEffect(() => {
+    async function fetchSeasons() {
+      if (step === 2 && createdData?.teamId) {
+        setLoadingSeasons(true)
+        const { data, error } = await supabaseClient
+          .from('team_seasons')
+          .select('*')
+          .eq('team_id', createdData.teamId)
+          .order('year', { ascending: false })
+        
+        if (!error && data) {
+          setSeasons(data)
+        }
+        setLoadingSeasons(false)
+      }
+    }
+    fetchSeasons()
+  }, [step, createdData?.teamId])
 
   useEffect(() => {
     if (state?.success) {
       if (isEdit) {
         router.push('/admin/teams')
-      } else if ((state as any).teamId && (state as any).seasonId) {
+      } else if ((state as any).teamId) {
         setCreatedData({
             teamId: (state as any).teamId,
             seasonId: (state as any).seasonId,
@@ -73,187 +99,101 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     }
   }
 
-  if (step === 2 && createdData) {
-      return (
-          <div className="flex flex-col xl:flex-row gap-8 pb-10 text-left">
-              <div className="flex-1">
-                  <RosterManager 
-                    seasonId={createdData.seasonId}
-                    teamId={createdData.teamId}
-                    teamName={createdData.teamName}
-                    seasonYear={createdData.seasonYear}
-                    initialRoster={[]}
-                    isInline={true}
-                    onFinish={() => router.push('/admin/teams')}
-                  />
-              </div>
+  // Handle Step 2 Success (Legacy/Final)
+  useEffect(() => {
+    if (state?.success && isEdit) {
+      router.push('/admin/teams')
+    }
+  }, [state?.success, isEdit, router])
 
-              {/* Keep Preview for continuity */}
-              <div className="xl:w-64 space-y-4 sticky top-8 opacity-50">
-                <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Program Created</h2>
-                <div className="glass-card rounded-[2rem] border-none overflow-hidden p-6 flex flex-col items-center text-center shadow-soft">
-                    <div className="w-full aspect-video rounded-2xl bg-gray-50 border border-gray-100 shadow-inner overflow-hidden mb-4 flex items-center justify-center text-gray-200 relative">
-                        {formData.photo_url ? (
-                            formData.media_type === 'video' ? (
-                                <video src={formData.photo_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                            ) : (
-                                <img src={formData.photo_url} alt="" className="w-full h-full object-cover" />
-                            )
-                        ) : (
-                            <Users size={32} />
-                        )}
-                    </div>
-                    <div>
-                        <h3 className="text-base font-black text-gray-900 leading-tight truncate">{formData.name}</h3>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mt-1">{formData.gender} Athletics</p>
-                    </div>
-                </div>
-              </div>
-          </div>
-      )
-  }
+  const nextStep = () => setStep(2)
+  const prevStep = () => setStep(1)
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 pb-10 text-left">
-      <form action={formAction} className="flex-1 space-y-6">
-        <input type="hidden" name="school_id" value={schoolId} />
-        {isEdit && <input type="hidden" name="id" value={team?.id} />}
-        <input type="hidden" name="media_type" value={formData.media_type} />
-        <input type="hidden" name="sport_category" value={formData.sport_category || 'Athletics'} />
-
-        <div className="glass-card p-6 rounded-2xl border-none space-y-5">
-            {!isEdit && (
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-600 rounded-full border border-blue-100">Step 1 of 2</span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                </div>
-            )}
-            
-            <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Program Name</label>
-                <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                    placeholder="e.g. Basketball"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Gender</label>
-                    <div className="relative">
-                        <select
-                            name="gender"
-                            value={formData.gender}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
-                        >
-                            <option value="Boys">Boys</option>
-                            <option value="Girls">Girls</option>
-                            <option value="Co-ed">Co-ed</option>
-                        </select>
-                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 rotate-90 pointer-events-none" size={14} />
-                    </div>
-                </div>
-                
-                {!isEdit && (
+        {step === 1 ? (
+            <form action={formAction} className="flex-1 space-y-6">
+                <input type="hidden" name="school_id" value={schoolId} />
+                {isEdit && <input type="hidden" name="id" value={team?.id} />}
+                <input type="hidden" name="media_type" value={formData.media_type} />
+                <input type="hidden" name="sport_category" value={formData.sport_category || 'Athletics'} />
+                <input type="hidden" name="roster" value={JSON.stringify(formData.roster)} />
+            <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+                        <div className="glass-card p-6 rounded-2xl border-none space-y-5">
+                    {!isEdit && (
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-0.5 bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-600 rounded-full border border-blue-100">Step 1 of 2</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        </div>
+                    )}
+                    
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Season Year</label>
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Program Name</label>
                         <input
-                            type="number"
-                            name="season_year"
-                            value={formData.season_year}
+                            name="name"
+                            value={formData.name}
                             onChange={handleChange}
                             required
-                            min="1900"
-                            max="2100"
                             className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                            placeholder="2026"
+                            placeholder="e.g. Basketball"
                         />
                     </div>
-                )}
-            </div>
 
-            <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Head Coach</label>
-                <input
-                    name="head_coach"
-                    value={formData.head_coach}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                    placeholder="e.g. Coach Carter"
-                />
-            </div>
-
-            {!isEdit && (
-                <div className="pt-6 border-t border-gray-100/50 space-y-6">
-                    <div>
-                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-black mb-1">Historical Archive</h2>
-                        <p className="text-[10px] font-medium text-gray-400">Initialize the program with its first recorded season.</p>
-                    </div>
-
-                    <div className="space-y-4">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Season Achievements</label>
-                        <div className="flex flex-wrap gap-4">
-                            {['State', 'Region', 'Individual'].map((type) => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                                        formData[`wc_${type.toLowerCase()}` as keyof typeof formData] 
-                                        ? 'bg-black border-black text-white' 
-                                        : 'bg-white border-gray-200 group-hover:border-gray-300 text-transparent'
-                                    }`}>
-                                        <input 
-                                            type="checkbox" 
-                                            name={`wc_${type.toLowerCase()}`}
-                                            checked={!!formData[`wc_${type.toLowerCase()}` as keyof typeof formData]}
-                                            onChange={handleChange}
-                                            className="hidden"
-                                        />
-                                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="transform scale-90">
-                                            <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                    </div>
-                                    <span className="text-xs font-bold text-gray-700 select-none">{type}</span>
-                                </label>
-                            ))}
-                        </div>
-
-                        {formData.wc_individual && (
-                            <div className="space-y-1.5 animate-slide-up">
-                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Individual Names & Events (One per line)</label>
-                                <textarea
-                                    name="individual_accomplishments"
-                                    value={formData.individual_accomplishments}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Gender</label>
+                            <div className="relative">
+                                <select
+                                    name="gender"
+                                    value={formData.gender}
                                     onChange={handleChange}
-                                    rows={3}
-                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-medium text-sm shadow-soft resize-none"
-                                    placeholder="John Doe - 100m Dash\nJane Smith - High Jump"
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+                                >
+                                    <option value="Boys">Boys</option>
+                                    <option value="Girls">Girls</option>
+                                    <option value="Co-ed">Co-ed</option>
+                                </select>
+                                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 rotate-90 pointer-events-none" size={14} />
+                            </div>
+                        </div>
+                        
+                        {!isEdit && (
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Inaugural Season Year</label>
+                                <input
+                                    type="number"
+                                    name="season_year"
+                                    value={formData.season_year}
+                                    onChange={handleChange}
+                                    required
+                                    min="1900"
+                                    max="2100"
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                                    placeholder="2026"
                                 />
                             </div>
                         )}
                     </div>
 
-                    <div className="space-y-1.5 pt-2">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Yearly Summary / Season Narrative</label>
-                        <textarea
-                            name="summary"
-                            value={formData.summary}
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Head Coach</label>
+                        <input
+                            name="head_coach"
+                            value={formData.head_coach}
                             onChange={handleChange}
-                            rows={4}
-                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-medium text-sm shadow-soft resize-none"
-                            placeholder="Provide a detailed summary of the season, major highlights, and the team's journey..."
+                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                            placeholder="e.g. Coach Carter"
                         />
                     </div>
 
-                    <div className="pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100 space-y-8">
+                        {/* 1. Card Photo Upload */}
                         <MediaUpload 
-                            name="season_photo_input"
-                            label="Season Team Photo"
-                            description="The specific team photo for this year (appears on cards and timeline)"
-                            currentMediaUrl={formData.season_photo_url}
+                            name="photo_file_input"
+                            label="Program Card Photo"
+                            description="This image appears on the main team selection card (vertical)."
+                            recommendation="Recommended ratio: 3:4 (Portrait)"
+                            currentMediaUrl={formData.photo_url}
                             onFileSelect={async (file) => {
                                 if (!file) return;
                                 setUploading(true);
@@ -262,7 +202,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                                     const uploadFormData = new FormData();
                                     uploadFormData.append('file', file);
                                     uploadFormData.append('schoolId', schoolId);
-                                    uploadFormData.append('folder', 'seasons');
+                                    uploadFormData.append('folder', 'teams');
                                     
                                     const res = await fetch('/api/upload', {
                                         method: 'POST',
@@ -270,16 +210,19 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                                     });
                                     
                                     if (!res.ok) {
-                                        const errData = await res.json();
-                                        throw new Error(errData.error || 'Upload failed');
+                                        let errorMsg = 'Upload failed';
+                                        try {
+                                            const errData = await res.json();
+                                            errorMsg = errData.error || errorMsg;
+                                        } catch (e) {
+                                            console.error('Non-JSON upload error:', await res.text());
+                                            errorMsg = `Upload failed (${res.status})`;
+                                        }
+                                        throw new Error(errorMsg);
                                     }
                                     
                                     const { url } = await res.json();
-                                    setFormData(prev => ({ ...prev, season_photo_url: url }));
-                                    // Also set program photo if it's the first one
-                                    if (!formData.photo_url) {
-                                        setFormData(prev => ({ ...prev, photo_url: url }));
-                                    }
+                                    setFormData(prev => ({ ...prev, photo_url: url }));
                                 } catch (err: any) {
                                     setCustomError("Upload failed: " + err.message);
                                 } finally {
@@ -287,77 +230,121 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                                 }
                             }}
                         />
-                        <input type="hidden" name="season_photo_url" value={formData.season_photo_url} />
+                        <input type="hidden" name="existing_photo_url" value={formData.photo_url || ''} />
+
+                        {/* 2. Background Photo Upload */}
+                        <MediaUpload 
+                            name="background_file_input"
+                            label="Program Hero Background"
+                            description="This large image appears at the top of the Team Detail page."
+                            recommendation="Recommended: 1920x1080px (Landscape)"
+                            currentMediaUrl={formData.background_url}
+                            onFileSelect={async (file) => {
+                                if (!file) return;
+                                setUploading(true);
+                                setCustomError('');
+                                try {
+                                    const uploadFormData = new FormData();
+                                    uploadFormData.append('file', file);
+                                    uploadFormData.append('schoolId', schoolId);
+                                    uploadFormData.append('folder', 'teams_bg'); // Use a relevant folder or same 'teams'
+                                    
+                                    const res = await fetch('/api/upload', {
+                                        method: 'POST',
+                                        body: uploadFormData
+                                    });
+                                    
+                                    if (!res.ok) {
+                                        let errorMsg = 'Upload failed';
+                                        try {
+                                            const errData = await res.json();
+                                            errorMsg = errData.error || errorMsg;
+                                        } catch (e) {
+                                            console.error('Non-JSON upload error:', await res.text());
+                                            errorMsg = `Upload failed (${res.status})`;
+                                        }
+                                        throw new Error(errorMsg);
+                                    }
+                                    
+                                    const { url } = await res.json();
+                                    setFormData(prev => ({ ...prev, background_url: url }));
+                                } catch (err: any) {
+                                    setCustomError("Upload failed: " + err.message);
+                                } finally {
+                                    setUploading(false);
+                                }
+                            }}
+                        />
+                        <input type="hidden" name="existing_background_url" value={formData.background_url || ''} />
                     </div>
                 </div>
-            )}
 
-            <div className="space-y-4 pt-2">
-                 <MediaUpload 
-                    name="photo_file_input"
-                    label="Program Cover Media (Optional)"
-                    description="Upload a general team photo or highlight video"
-                    recommendation="Recommended: 1280x720px (Best for historical archive)"
-                    currentMediaUrl={formData.photo_url}
-                    currentMediaType={formData.media_type}
-                    onMediaChange={(url, type) => setFormData(prev => ({ ...prev, photo_url: url || '', media_type: type }))}
-                    onFileSelect={async (file) => {
-                        if (!file) return;
-                        setUploading(true);
-                        setCustomError('');
-                        try {
-                            const uploadFormData = new FormData();
-                            uploadFormData.append('file', file);
-                            uploadFormData.append('schoolId', schoolId);
-                            uploadFormData.append('folder', 'teams');
-                            
-                            const res = await fetch('/api/upload', {
-                                method: 'POST',
-                                body: uploadFormData
-                            });
-                            
-                            if (!res.ok) {
-                                const errData = await res.json();
-                                throw new Error(errData.error || 'Upload failed');
-                            }
-                            
-                            const { url } = await res.json();
-                            setFormData(prev => ({ ...prev, photo_url: url }));
-                        } catch (err: any) {
-                            setCustomError("Upload failed: " + err.message);
-                        } finally {
-                            setUploading(false);
-                        }
-                    }}
-                 />
-                 <input type="hidden" name="existing_photo_url" value={formData.photo_url || ''} />
+                {/* Integration of Roster Manager into Step 1 */}
+                {/* Roster Management is now handled exclusively in Step 2 (Archive History) */}
             </div>
-        </div>
+                {(state?.error || customError) && (
+                  <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up">
+                    {state?.error || customError}
+                  </div>
+                )}
 
-        {(state?.error || customError) && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up">
-            {state?.error || customError}
-          </div>
+                <div className="flex items-center justify-end gap-4 pt-2">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="px-4 py-2 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-gray-900 transition-colors"
+                    >
+                        Discard Changes
+                    </button>
+                    
+                    <button
+                        type="submit"
+                        disabled={isPending || uploading || !formData.name}
+                        className="flex items-center gap-2 px-8 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_20px_40px_rgba(0,0,0,0.15)] disabled:opacity-50 text-[11px] uppercase tracking-widest"
+                    >
+                        {uploading ? <Plus className="animate-spin" size={14} /> : isPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
+                        {uploading ? 'Uploading Media...' : isPending ? 'Processing...' : isEdit ? 'Update Program' : 'Create Program & Continue'}
+                    </button>
+                </div>
+            </form>
+        ) : (
+            <div className="flex-1 space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 bg-emerald-50 text-[10px] font-black uppercase tracking-widest text-emerald-600 rounded-full border border-emerald-100">Step 2 of 2</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Manage Program Archive</h2>
+                    <p className="text-sm text-gray-400 font-medium">Add as many historical seasons as you want. Each season can have its own summary, achievements, and unique team photo.</p>
+                </div>
+
+                <div className="bg-gray-50/30 rounded-[2.5rem] border border-gray-100/50 p-1">
+                    {createdData && (
+                        <SeasonsManager 
+                            seasons={seasons}
+                            teamId={createdData.teamId}
+                            teamName={createdData.teamName}
+                            schoolId={schoolId}
+                        />
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between p-10 bg-black text-white rounded-[2rem] shadow-2xl">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-1">Success</span>
+                        <h3 className="text-xl font-black leading-none">{formData.name} Created</h3>
+                    </div>
+                    <button 
+                        type="button" 
+                        onClick={() => router.push('/admin/teams')}
+                        className="px-10 py-4 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-gray-100 transition-all active:scale-95 flex items-center gap-3"
+                    >
+                        Finish & Close Wizard
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </div>
         )}
-
-        <div className="flex items-center justify-end gap-4 pt-2">
-            <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-gray-900 transition-colors"
-            >
-                Discard Changes
-            </button>
-            <button
-                type="submit"
-                disabled={isPending || uploading}
-                className="flex items-center gap-2 px-6 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 text-[11px] uppercase tracking-widest"
-            >
-                {uploading ? <Plus className="animate-spin" size={14} /> : isPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
-                {uploading ? 'Uploading Media...' : isPending ? 'Processing...' : isEdit ? 'Update Program' : 'Next: Manage Roster'}
-            </button>
-        </div>
-      </form>
 
       <div className="xl:w-64 space-y-4 sticky top-8">
         <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Program Preview</h2>

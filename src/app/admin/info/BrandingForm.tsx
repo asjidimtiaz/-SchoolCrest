@@ -18,7 +18,12 @@ import {
   Hash,
   Facebook,
   Instagram,
-  Pipette
+  Pipette,
+  Trash2,
+  Trophy,
+  Users,
+  Calendar,
+  Info
 } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 
@@ -64,15 +69,23 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     about_quote: school.about_quote || '',
     about_quote_author: school.about_quote_author || '',
     about_quote_show_marks: school.about_quote_show_marks || false,
-    about_text_show_marks: school.about_text_show_marks || false
+    about_text_show_marks: school.about_text_show_marks || false,
+    nav_hall_of_fame_label: school.nav_hall_of_fame_label || 'Hall of Fame',
+    nav_teams_label: school.nav_teams_label || 'Athletic Teams',
+    nav_calendar_label: school.nav_calendar_label || 'Campus Events',
+    nav_info_label: school.nav_info_label || 'School Profile',
+    nav_hall_of_fame_tagline: school.nav_hall_of_fame_tagline || 'Honoring exceptional alumni and staff',
+    nav_teams_tagline: school.nav_teams_tagline || 'Explore our sports and history',
+    nav_calendar_tagline: school.nav_calendar_tagline || 'Stay updated with school activities',
+    nav_info_tagline: school.nav_info_tagline || 'Information about our community'
   })
 
   // State for action result
   const [actionState, setActionState] = useState(initialState)
   const isPending = isUploading
 
-  // Max file size in MB
-  const MAX_FILE_SIZE_MB = 10
+  // Max file size in MB (Increased for videos)
+  const MAX_FILE_SIZE_MB = 100
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
   const handleFilePreview = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -144,6 +157,16 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     }
   }
 
+  // Handle Sponsor Deletion
+  const handleDeleteSponsor = (i: number) => {
+    setPreviewData(prev => ({ ...prev, [`sponsor_logo_${i}`]: '' }));
+    setPendingFiles(prev => {
+        const next = { ...prev };
+        delete next[`sponsor_logo_${i}`];
+        return next;
+    });
+  }
+
   // Custom submit handler: upload files via API, then call server action
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -186,7 +209,18 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
             'gallery_image_3': 'uploaded_gallery_image_3',
           }
           formData.set(keyMap[fieldName] || `uploaded_${fieldName}`, url)
+        } else {
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Upload to storage failed')
         }
+      }
+
+      // Add "deleted" flag for sponsor logos by clearing their existing fields if preview is empty
+      for (let i = 1; i <= 3; i++) {
+          // @ts-ignore
+          if (!previewData[`sponsor_logo_${i}`]) {
+              formData.set(`existing_sponsor_logo_${i}`, '');
+          }
       }
 
       // Remove raw file inputs to prevent exceeding body size limit
@@ -203,8 +237,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
       if (result.success) {
         setPendingFiles({})
       }
-    } catch (err) {
-      setActionState({ error: 'Upload failed. Please try again.', success: false })
+    } catch (err: any) {
+      setActionState({ error: err.message || 'Upload failed. Please try again.', success: false })
     } finally {
       setIsUploading(false)
     }
@@ -323,6 +357,145 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                     <div>
                         <p className="text-xs font-black uppercase tracking-widest text-gray-900">Show Double Quotes</p>
                         <p className="text-[10px] text-gray-400 font-bold">Wrap featured quote in visual quote marks</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        {/* SECTION: NAVIGATION LABELS */}
+        <section className="bg-white p-8 rounded-[1.5rem] shadow-sm border border-gray-100/50 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                <div className="p-2.5 bg-green-50 text-green-600 rounded-xl">
+                    <LayoutTemplate size={20} />
+                </div>
+                <div>
+                    <h2 className="text-sm font-black uppercase tracking-wide text-gray-900">Custom Navigation Labels</h2>
+                    <p className="text-[10px] text-gray-400 font-medium">Customize the names of the main navigation categories.</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                {/* Hall of Fame */}
+                <div className="space-y-4">
+                     <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
+                             <Trophy size={14} />
+                        </div>
+                        <h3 className="text-xs font-black uppercase text-gray-400 tracking-wider">Hall of Fame Card</h3>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Label</label>
+                        <input
+                            name="nav_hall_of_fame_label"
+                            value={previewData.nav_hall_of_fame_label}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300"
+                            placeholder="Default: Hall of Fame"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                         <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Tagline Description</label>
+                         <input
+                            name="nav_hall_of_fame_tagline"
+                            value={previewData.nav_hall_of_fame_tagline}
+                            onChange={handleChange}
+                             className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-700 placeholder:text-gray-300"
+                            placeholder="Brief description..."
+                         />
+                    </div>
+                </div>
+
+                {/* Teams */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
+                             <Users size={14} />
+                        </div>
+                        <h3 className="text-xs font-black uppercase text-gray-400 tracking-wider">Teams Card</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Label</label>
+                        <input
+                            name="nav_teams_label"
+                            value={previewData.nav_teams_label}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300"
+                            placeholder="Default: Athletic Teams"
+                        />
+                    </div>
+                     <div className="space-y-2">
+                         <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Tagline Description</label>
+                         <input
+                            name="nav_teams_tagline"
+                            value={previewData.nav_teams_tagline}
+                            onChange={handleChange}
+                             className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-700 placeholder:text-gray-300"
+                            placeholder="Brief description..."
+                         />
+                    </div>
+                </div>
+
+                {/* Calendar */}
+                 <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
+                             <Calendar size={14} />
+                        </div>
+                        <h3 className="text-xs font-black uppercase text-gray-400 tracking-wider">Calendar Card</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Label</label>
+                        <input
+                            name="nav_calendar_label"
+                            value={previewData.nav_calendar_label}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300"
+                            placeholder="Default: Campus Events"
+                        />
+                    </div>
+                     <div className="space-y-2">
+                         <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Tagline Description</label>
+                         <input
+                            name="nav_calendar_tagline"
+                            value={previewData.nav_calendar_tagline}
+                            onChange={handleChange}
+                             className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-700 placeholder:text-gray-300"
+                            placeholder="Brief description..."
+                         />
+                    </div>
+                </div>
+
+                {/* Info */}
+                 <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
+                             <Info size={14} />
+                        </div>
+                        <h3 className="text-xs font-black uppercase text-gray-400 tracking-wider">Info Card</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Label</label>
+                        <input
+                            name="nav_info_label"
+                            value={previewData.nav_info_label}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm text-gray-900 placeholder:text-gray-300"
+                            placeholder="Default: School Profile"
+                        />
+                    </div>
+                     <div className="space-y-2">
+                         <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Tagline Description</label>
+                         <input
+                            name="nav_info_tagline"
+                            value={previewData.nav_info_tagline}
+                            onChange={handleChange}
+                             className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-700 placeholder:text-gray-300"
+                            placeholder="Brief description..."
+                         />
                     </div>
                 </div>
             </div>
@@ -643,33 +816,44 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
             
             <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="space-y-2">
+                    <div key={i} className="space-y-3 group/sponsor relative flex flex-col items-center">
                         <label className="text-[10px] font-bold text-gray-500 uppercase">Sponsor {i}</label>
-                        <div className="relative h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center overflow-hidden group">
+                        <div className="relative h-32 w-32 bg-gray-50 rounded-full border-2 border-dashed border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center overflow-hidden">
                            {/* File Input with Preview Handler */}
                            <input 
-                                type="file" 
-                                name={`sponsor_file_${i}`} 
-                                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                                accept="image/*" 
-                                title=""
-                                onChange={(e) => handleFilePreview(e, `sponsor_logo_${i}`)}
+                                 type="file" 
+                                 name={`sponsor_file_${i}`} 
+                                 className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                                 accept="image/*" 
+                                 title=""
+                                 onChange={(e) => handleFilePreview(e, `sponsor_logo_${i}`)}
                            />
                            
                            {/* Preview or Existing */}
                            {/* @ts-ignore */}
                            {previewData[`sponsor_logo_${i}`] ? (
-                               // @ts-ignore
-                               <img src={previewData[`sponsor_logo_${i}`]} className="h-full w-full object-contain p-2" />
+                               <div className="relative w-full h-full p-4 bg-white">
+                                    {/* @ts-ignore */}
+                                    <img src={previewData[`sponsor_logo_${i}`]} className="h-full w-full object-contain" />
+                                    
+                                    {/* Delete Button */}
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleDeleteSponsor(i)}
+                                        className="absolute inset-0 flex items-center justify-center bg-red-500/80 text-white transition-all z-20 opacity-0 group-hover/sponsor:opacity-100"
+                                    >
+                                        <Trash2 size={24} />
+                                    </button>
+                               </div>
                            ) : (
                                <div className="flex flex-col items-center">
-                                   <span className="text-gray-300 text-xs font-bold">+ Upload</span>
-                                   <span className="text-[7px] text-blue-500 font-black uppercase mt-1">400x200px</span>
+                                   <span className="text-gray-300 text-[10px] font-bold">+ Upload</span>
                                </div>
                            )}
                            
-                           {/* Hidden Input to persist existing URL if not changed (Action uses these) */}
-                           <input type="hidden" name={`existing_sponsor_logo_${i}`} value={school[`sponsor_logo_${i}`] as string || ''} />
+                           {/* Hidden Input to persist existing URL if not changed */}
+                           {/* @ts-ignore */}
+                           <input type="hidden" name={`existing_sponsor_logo_${i}`} value={previewData[`sponsor_logo_${i}`]?.startsWith('blob:') ? (school[`sponsor_logo_${i}`] || '') : (previewData[`sponsor_logo_${i}`] || '')} />
                         </div>
                     </div>
                 ))}

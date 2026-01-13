@@ -27,16 +27,16 @@ export default function FullScreenToggle() {
     }
   }
 
+  if (isFullscreen) return null
+
   return (
     <button
       onClick={toggleFullscreen}
-      className="p-3 bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-md rounded-xl text-white transition-all shadow-lg border border-white/10 flex items-center justify-center group"
-      title={isFullscreen ? 'Exit Full Screen' : 'Go Full Screen'}
+      className="p-3 bg-white/10 active:scale-95 backdrop-blur-md rounded-xl text-white transition-all shadow-lg border border-white/10 flex items-center justify-center group"
+      title="Go Full Screen"
     >
-      {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-      <span className="ml-2 text-[10px] font-black uppercase tracking-widest hidden group-hover:inline-block transition-all">
-        {isFullscreen ? 'Exit Full' : 'Full Screen'}
-      </span>
+      <Maximize size={20} />
+      
     </button>
   )
 }

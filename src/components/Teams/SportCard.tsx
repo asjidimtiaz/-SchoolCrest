@@ -13,7 +13,7 @@ export default function SportCard({ team, primaryColor }: SportCardProps) {
   return (
     <Link
       href={`/teams/${team.id}`}
-      className="group relative flex flex-col bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-500 text-left w-full aspect-[3/4] border border-slate-200/60 animate-slide-up"
+      className="group relative flex flex-col bg-white rounded-[2.5rem] overflow-hidden shadow-sm transition-all duration-500 text-left w-full aspect-[3/4] border border-slate-200/60 animate-slide-up"
     >
       {/* Image Container */}
       <div className="relative flex-1 w-full bg-slate-50 overflow-hidden">
@@ -21,7 +21,7 @@ export default function SportCard({ team, primaryColor }: SportCardProps) {
           <img
             src={team.photo_url}
             alt={team.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-200 bg-slate-50">
@@ -30,7 +30,7 @@ export default function SportCard({ team, primaryColor }: SportCardProps) {
         )}
         
         {/* Subtle Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-800/60 via-transparent to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-800/60 via-transparent to-transparent opacity-50 transition-opacity duration-500" />
       </div>
 
       {/* Content Overlay */}
@@ -53,16 +53,16 @@ export default function SportCard({ team, primaryColor }: SportCardProps) {
         {/* Category removed per request */}
         
         {/* Interactive Indicator - Cohesive Button Style */}
-        <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 transition-all duration-300 group-hover:bg-white group-hover:text-slate-900 group-hover:scale-[1.02]">
+        <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 transition-all duration-300">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] whitespace-nowrap">View History</span>
-          <div className="w-5 h-5 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-lg group-hover:bg-slate-900 group-hover:text-white transition-colors">
+          <div className="w-5 h-5 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-lg transition-colors">
             <span className="text-xs font-bold leading-none">&rarr;</span>
           </div>
         </div>
       </div>
 
-      {/* Outer Border Glow on Hover */}
-      <div className="absolute inset-0 rounded-[2.5rem] border-2 border-white/0 group-hover:border-white/10 transition-colors duration-500 pointer-events-none" />
+      {/* Outer Border Glow */}
+      <div className="absolute inset-0 rounded-[2.5rem] border-2 border-white/0 transition-colors duration-500 pointer-events-none" />
     </Link>
   )
 }

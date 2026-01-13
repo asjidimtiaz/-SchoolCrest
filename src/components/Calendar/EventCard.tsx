@@ -14,10 +14,10 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
   const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
   return (
-    <div className="group relative flex items-start gap-8 glass-card border-none rounded-[2.5rem] p-8 shadow-soft hover:shadow-premium transition-all duration-500 animate-slide-up">
+    <div className="group relative flex items-start gap-8 glass-card border-none rounded-[2.5rem] p-8 shadow-soft transition-all duration-500 animate-slide-up">
       {/* Date Badge */}
       <div 
-        className="flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-[2rem] bg-white shadow-soft group-hover:scale-105 transition-transform duration-500 relative overflow-hidden"
+        className="flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-[2rem] bg-white shadow-soft transition-transform duration-500 relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white" />
         <div className="relative flex flex-col items-center">
@@ -31,7 +31,7 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
       {/* Content */}
       <div className="flex-1">
         <div className="flex items-start justify-between mb-4">
-            <h3 className="text-3xl font-black text-gray-900 leading-tight tracking-tight group-hover:text-black transition-colors max-w-xl">
+            <h3 className="text-3xl font-black text-gray-900 leading-tight tracking-tight transition-colors max-w-xl">
                 {event.title}
             </h3>
             {event.category && (
@@ -69,7 +69,7 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
       </div>
 
       {/* Left Accent Marker */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-gray-100 rounded-r-full group-hover:bg-[var(--color-primary)] group-hover:h-24 transition-all duration-500" style={{ backgroundColor: primaryColor }} />
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-gray-100 rounded-r-full transition-all duration-500" style={{ backgroundColor: primaryColor }} />
     </div>
   )
 }

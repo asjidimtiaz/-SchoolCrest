@@ -5,12 +5,18 @@ import { BrandingProvider } from '@/context/BrandingContext'
 import ReloadButton from '@/components/ReloadButton'
 
 import { headers } from 'next/headers'
-import { Inter } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 
 const inter = Inter({ 
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
 })
 
 export default async function RootLayout({
@@ -63,7 +69,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html suppressHydrationWarning className={inter.variable}>
+    <html suppressHydrationWarning className={`${inter.variable} ${outfit.variable}`}>
       <body
         suppressHydrationWarning
         className={inter.className}
@@ -83,6 +89,14 @@ export default async function RootLayout({
             accentColor: school?.accent_color,
             backgroundUrl: school?.background_url,
             backgroundType: school?.background_type,
+            navHallOfFameLabel: school?.nav_hall_of_fame_label,
+            navTeamsLabel: school?.nav_teams_label,
+            navCalendarLabel: school?.nav_calendar_label,
+            navInfoLabel: school?.nav_info_label,
+            navHallOfFameTagline: school?.nav_hall_of_fame_tagline,
+            navTeamsTagline: school?.nav_teams_tagline,
+            navCalendarTagline: school?.nav_calendar_tagline,
+            navInfoTagline: school?.nav_info_tagline,
           }}
         >
           <SchoolProvider value={school}>

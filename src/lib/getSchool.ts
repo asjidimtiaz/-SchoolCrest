@@ -34,7 +34,15 @@ export const getSchool = cache(async () => {
         sponsor_logo_2, 
         sponsor_logo_3,
         facebook_url,
-        instagram_url
+        instagram_url,
+        nav_hall_of_fame_label,
+        nav_teams_label,
+        nav_calendar_label,
+        nav_info_label,
+        nav_hall_of_fame_tagline,
+        nav_teams_tagline,
+        nav_calendar_tagline,
+        nav_info_tagline
       `)
       .eq('slug', slug)
       .eq('active', true)
@@ -73,7 +81,15 @@ export const getSchool = cache(async () => {
             sponsor_logo_2, 
             sponsor_logo_3,
             facebook_url,
-            instagram_url
+            instagram_url,
+            nav_hall_of_fame_label,
+            nav_teams_label,
+            nav_calendar_label,
+            nav_info_label,
+            nav_hall_of_fame_tagline,
+            nav_teams_tagline,
+            nav_calendar_tagline,
+            nav_info_tagline
           `)
           .eq('id', profile.school_id)
           .eq('active', true)

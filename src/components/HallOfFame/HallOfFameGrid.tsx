@@ -96,143 +96,149 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
         </div>
       )}
 
-      {/* 🔎 Detail Modal */}
+      {/* 🔍 Detail Modal - Compact "Season Window" Style */}
       {selectedInductee && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-12 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-          <div 
-            className="bg-white w-full max-w-6xl h-full max-h-[85vh] rounded-[3rem] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-white/20"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Left: Media */}
-            <div 
-                className="md:w-1/2 relative h-80 md:h-full group/img overflow-hidden"
-                style={{ backgroundColor: branding.primaryColor || '#0f172a' }}
-            >
-              {activeMedia === 'video' && selectedInductee.video_url ? (
-                <VideoPlayer 
-                  src={selectedInductee.video_url} 
-                  poster={selectedInductee.photo_url || undefined}
-                  className="w-full h-full"
-                />
-              ) : selectedInductee.photo_url ? (
-                <img
-                  src={selectedInductee.photo_url}
-                  alt={selectedInductee.name}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white/20">
-                    <Trophy size={160} strokeWidth={0.5} />
-                </div>
-              )}
-
-              {/* Media Toggle */}
-              {selectedInductee.video_url && selectedInductee.photo_url && (
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2 p-1.5 bg-black/20 backdrop-blur-2xl rounded-2xl border border-white/10 z-30">
-                  <button 
-                    onClick={() => setActiveMedia('image')}
-                    className={`p-3 rounded-xl transition-all ${activeMedia === 'image' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
-                  >
-                    <ImageIcon size={18} />
-                  </button>
-                  <button 
-                    onClick={() => setActiveMedia('video')}
-                    className={`p-3 rounded-xl transition-all ${activeMedia === 'video' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
-                  >
-                    <Video size={18} />
-                  </button>
-                </div>
-              )}
-
-              {/* Institutional Overlay */}
-              {activeMedia === 'image' && (
-                  <div 
-                    className="absolute inset-0 pointer-events-none opacity-40"
-                    style={{ background: `linear-gradient(to top, ${branding.primaryColor}, transparent)` }}
-                  />
-              )}
-            </div>
-
-            {/* Right: Content */}
-            <div className="md:w-1/2 p-16 flex flex-col relative overflow-y-auto bg-white custom-scrollbar">
-              <button
-                onClick={() => setSelectedInductee(null)}
-                className="absolute top-8 right-8 w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 active:scale-90 z-20 border border-slate-100"
-                style={{ 
-                    '--hover-bg': branding.primaryColor 
-                } as React.CSSProperties}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = branding.primaryColor || '#0f172a'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
-              >
-                <X size={24} />
-              </button>
-
-              <div className="mb-10 relative">
-                <div className="flex items-center gap-3 mb-6">
-                  <span 
-                      className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg border border-slate-200 bg-slate-50 text-slate-600"
-                      style={{ 
-                          color: branding.primaryColor,
-                          borderColor: `${branding.primaryColor}30`,
-                          backgroundColor: `${branding.primaryColor}10`
-                      }}
-                  >
-                      {selectedInductee.year}
-                  </span>
-                  {selectedInductee.induction_year && (
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          Inducted {selectedInductee.induction_year}
-                      </span>
-                  )}
-                  <div className="h-px flex-1 bg-slate-100" />
-                </div>
-                
-                <h2 className="text-6xl font-black text-slate-900 leading-tight tracking-tighter mb-2">{selectedInductee.name}</h2>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: branding.primaryColor }} />
-                  <p className="text-xl text-slate-400 font-bold uppercase tracking-widest">{selectedInductee.category}</p>
-                </div>
-              </div>
-
-              <div className="space-y-10">
-                <div className="relative">
-                  <div className="absolute -left-6 top-0 bottom-0 w-1 rounded-full" style={{ backgroundColor: branding.secondaryColor !== '#ffffff' ? branding.secondaryColor : branding.primaryColor }} />
-                  <p className="text-xl text-slate-600 font-medium leading-relaxed italic">
-                    "{selectedInductee.bio || 'LEGACY IN PROGRESS'}"
-                  </p>
-                </div>
-
-                {selectedInductee.achievements && (
-                  <div className="pt-8 border-t border-slate-100">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 flex items-center gap-3">
-                        Achievements
-                        <div className="h-px flex-1 bg-slate-50" />
-                      </h3>
-                      <div className="grid grid-cols-1 gap-3">
-                          {(() => {
-                              let list = selectedInductee.achievements;
-                              // If it's a string that looks like an array, try to parse it
-                              if (typeof list === 'string' && (list as string).startsWith('[')) {
-                                  try { list = JSON.parse(list as string); } catch(e) {}
-                              }
-                              const items = Array.isArray(list) ? list : [list];
-                              
-                              return items.filter(Boolean).map((achievement, i) => (
-                                  <div key={i} className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
-                                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: branding.primaryColor }} />
-                                      <span className="text-slate-800 font-bold text-sm tracking-tight">{achievement}</span>
-                                  </div>
-                              ));
-                          })()}
-                      </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-[200] flex items-end md:items-start justify-center p-4 animate-in fade-in duration-300">
+           {/* Backdrop */}
+           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedInductee(null)} />
           
-          {/* Close on background click */}
-          <div className="absolute inset-0 -z-10" onClick={() => setSelectedInductee(null)} />
+           {/* Modal Container */}
+           <div 
+            className="relative w-full max-w-5xl max-h-[calc(100vh-10rem)] bg-[#FAFAFA] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 mt-24 mb-8"
+            onClick={(e) => e.stopPropagation()}
+           >
+             
+             {/* Header */}
+             <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shrink-0">
+                 <div className="flex items-center gap-3">
+                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter uppercase line-clamp-1">{selectedInductee.name}</h2>
+                     <div className="hidden md:block px-3 py-1 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">
+                         Class of {selectedInductee.year}
+                     </div>
+                 </div>
+                 <button 
+                     onClick={() => setSelectedInductee(null)}
+                     className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
+                 >
+                     <X size={20} className="text-slate-900" />
+                 </button>
+             </div>
+
+             {/* Scrollable Content */}
+             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                     
+                     {/* Left: Media & Tag (7 cols) */}
+                     <div className="md:col-span-12 lg:col-span-7 space-y-6">
+                         {/* Photo / Video Card */}
+                         <div className="aspect-video w-full rounded-3xl overflow-hidden shadow-md border border-gray-200 relative bg-gray-900 group/media">
+                             
+                             {activeMedia === 'video' && selectedInductee.video_url ? (
+                                <VideoPlayer 
+                                  src={selectedInductee.video_url} 
+                                  poster={selectedInductee.photo_url || undefined}
+                                  className="w-full h-full"
+                                />
+                             ) : selectedInductee.photo_url ? (
+                                <img
+                                  src={selectedInductee.photo_url}
+                                  alt={selectedInductee.name}
+                                  className="w-full h-full object-cover transition-transform duration-700"
+                                />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white/20">
+                                    <Trophy size={120} strokeWidth={0.5} />
+                                </div>
+                             )}
+
+                             {/* Media Toggle Controls */}
+                             {selectedInductee.video_url && selectedInductee.photo_url && (
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-1 bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 z-30 transition-opacity duration-300 opacity-0 group-hover/media:opacity-100">
+                                  <button 
+                                    onClick={() => setActiveMedia('image')}
+                                    className={`p-2 rounded-lg transition-all ${activeMedia === 'image' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                  >
+                                    <ImageIcon size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={() => setActiveMedia('video')}
+                                    className={`p-2 rounded-lg transition-all ${activeMedia === 'video' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                  >
+                                    <Video size={14} />
+                                  </button>
+                                </div>
+                              )}
+                         </div>
+
+                         {/* Bio Section */}
+                         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 flex items-center gap-2">
+                                 <Trophy size={12} /> Legacy & Bio
+                             </h4>
+                             <p className="text-base text-slate-800 font-medium leading-relaxed italic line-clamp-[10]">
+                               "{selectedInductee.bio || 'A true legend of our school history.'}"
+                             </p>
+                         </div>
+                     </div>
+
+                     {/* Right: Info & Achievements (5 cols) */}
+                     <div className="md:col-span-12 lg:col-span-5 space-y-6">
+                        {/* Info Card */}
+                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden p-8 space-y-6">
+                             <div className="space-y-2">
+                                <h3 className="font-black text-slate-900 text-lg tracking-tight uppercase">Inductee Details</h3>
+                                <div className="h-1 w-12 rounded-full" style={{ backgroundColor: branding.primaryColor }} />
+                             </div>
+
+                             <div className="grid grid-cols-1 gap-4">
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Category</span>
+                                    <span className="text-lg font-bold text-slate-900">{selectedInductee.category}</span>
+                                </div>
+                                {selectedInductee.induction_year && (
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Inducted In</span>
+                                        <span className="text-lg font-bold text-slate-900">{selectedInductee.induction_year}</span>
+                                    </div>
+                                )}
+                             </div>
+                        </div>
+
+                        {/* Achievements List */}
+                        {selectedInductee.achievements && (
+                          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden flex flex-col h-full max-h-[400px]">
+                              <div className="bg-slate-50 px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+                                  <h3 className="font-black text-slate-900 text-lg tracking-tight">Achievements</h3>
+                              </div>
+                              
+                              <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+                                  <div className="space-y-2">
+                                      {(() => {
+                                          let list = selectedInductee.achievements;
+                                          if (typeof list === 'string' && (list as string).startsWith('[')) {
+                                              try { list = JSON.parse(list as string); } catch(e) {}
+                                          }
+                                          const items = Array.isArray(list) ? list : [list];
+                                          
+                                          return items.filter(Boolean).map((achievement, i) => (
+                                              <div key={i} className="flex items-start gap-4 p-4 hover:bg-slate-50 rounded-2xl transition-colors border border-transparent hover:border-slate-100">
+                                                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
+                                                      <Trophy size={14} />
+                                                  </div>
+                                                  <span className="font-medium text-slate-700 text-sm leading-relaxed">{achievement}</span>
+                                              </div>
+                                          ));
+                                      })()}
+                                  </div>
+                              </div>
+                          </div>
+                        )}
+                     </div>
+
+                 </div>
+             </div>
+
+           </div>
         </div>
       )}
     </>

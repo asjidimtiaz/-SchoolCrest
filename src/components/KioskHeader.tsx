@@ -16,7 +16,7 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
     <header className="sticky top-0 shrink-0 z-50 bg-gray-100">
       {/* Main Header with Gradient */}
       <div 
-        className="px-8 lg:px-16 py-2 flex items-center justify-between shadow-xl relative overflow-hidden"
+        className="px-8 lg:px-16 py-0.5 flex items-center justify-between shadow-xl relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
         }}
@@ -26,7 +26,7 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
         
         <Link 
           href="/home"
-          className="flex items-center gap-4 relative z-10 hover:opacity-80 active:scale-[0.98] transition-all cursor-pointer group"
+          className="flex items-center gap-4 relative z-10 active:scale-[0.98] transition-all cursor-pointer group"
         >
           {/* Logo Container */}
           <div className="relative">
@@ -34,20 +34,20 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
               <img 
                 src={branding.logoUrl} 
                 alt={branding.name} 
-                className="h-16 w-16 object-cover rounded-full drop-shadow-lg bg-white/10 p-1 group-hover:bg-white/20 transition-colors" 
+                className="h-12 w-12 lg:h-14 lg:w-14 object-contain rounded-xl drop-shadow-xl bg-white p-1 transition-colors my-2" 
               />
             ) : (
               <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-lg border border-white/30 group-hover:bg-white/30 transition-colors"
+                className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-lg border border-white/30 transition-colors"
               >
-                <GraduationCap size={44} strokeWidth={2} className="text-white" />
+                <GraduationCap size={28} strokeWidth={2} className="text-white" />
               </div>
             )}
           </div>
 
           {/* Text Content */}
           <div className="flex flex-col justify-center">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight leading-none drop-shadow-lg group-hover:translate-x-0.5 transition-transform">
+            <h1 className="text-xl font-extrabold text-white tracking-tight leading-none drop-shadow-lg group-hover:translate-x-0.5 transition-transform">
               {branding.name}
             </h1>
             {branding.tagline && (
@@ -69,11 +69,11 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
         </div>
       </div>
       
-      {/* Bottom accent line - using branding.accentColor for rich detail */}
+      {/* Bottom accent line - solid color */}
       <div 
-        className="h-1 opacity-80" 
+        className="h-1" 
         style={{ 
-          background: `linear-gradient(90deg, transparent 0%, ${branding.accentColor} 50%, transparent 100%)` 
+          backgroundColor: branding.accentColor
         }} 
       />
     </header>
