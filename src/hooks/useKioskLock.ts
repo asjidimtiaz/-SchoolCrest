@@ -1,36 +1,30 @@
-'use client'
+import { useEffect } from 'react';
 
-import { useEffect } from 'react'
-
-export default function useKioskLock() {
+export function useKioskLock() {
   useEffect(() => {
-    const blockKeys = (e: KeyboardEvent) => {
-      const blocked = [
-        'F5',
-        'F11',
-        'F12',
-        'Escape',
-      ]
+    // 1. Prevent accidentally closing tab
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = ''; // Required for Legacy Chrome
+    };
 
-      // Ctrl / Cmd combos
-      if (
-        e.ctrlKey ||
-        e.metaKey ||
-        blocked.includes(e.key)
-      ) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-    const blockContext = (e: MouseEvent) => e.preventDefault()
+    // 2. Trap Back Button (Push state so back button stays on page)
+    // We strictly want to prevent leaving the domain via back button history
+    // First, push a state so we have something to pop
+    window.history.pushState(null, '', window.location.href);
 
-    window.addEventListener('keydown', blockKeys)
-    window.addEventListener('contextmenu', blockContext)
+    const handlePopState = () => {
+        // When back is pressed, just push the state again to stay here
+        window.history.pushState(null, '', window.location.href);
+    };
+
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('keydown', blockKeys)
-      window.removeEventListener('contextmenu', blockContext)
-    }
-  }, [])
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 }

@@ -23,7 +23,7 @@ export async function getEvents(schoolId: string): Promise<SchoolEvent[]> {
     .limit(50)
 
   if (error) {
-    console.error('Error fetching Events:', error)
+    console.error('Error fetching Events for school:', schoolId, JSON.stringify(error, null, 2))
     return []
   }
 

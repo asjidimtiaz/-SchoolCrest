@@ -6,7 +6,9 @@ import KioskHeader from '@/components/KioskHeader'
 import TeamsGrid from '@/components/Teams/TeamsGrid'
 import BackButton from '@/components/BackButton'
 
-export default function TeamsContent({ teams, teamYears }: { teams: any[], teamYears: { team_id: string; year: number }[] }) {
+import { TeamSeasonWithTeam } from '@/lib/getTeams'
+
+export default function TeamsContent({ seasons }: { seasons: TeamSeasonWithTeam[] }) {
     const branding = useBranding()
     
     return (
@@ -17,7 +19,7 @@ export default function TeamsContent({ teams, teamYears }: { teams: any[], teamY
             <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-10 flex flex-col pt-0 overflow-y-auto custom-scrollbar">
                 {/* Grid Container */}
                 <div className="w-full flex-1 pb-32">
-                    <TeamsGrid initialData={teams} teamYears={teamYears} />
+                    <TeamsGrid seasons={seasons} />
                 </div>
             </div>
 

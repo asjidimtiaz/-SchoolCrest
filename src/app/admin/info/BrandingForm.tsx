@@ -167,6 +167,16 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     });
   }
 
+  // Handle Gallery Deletion
+  const handleDeleteGallery = (i: number) => {
+    setPreviewData(prev => ({ ...prev, [`gallery_image_${i}`]: '' }));
+    setPendingFiles(prev => {
+        const next = { ...prev };
+        delete next[`gallery_image_${i}`];
+        return next;
+    });
+  }
+
   // Custom submit handler: upload files via API, then call server action
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -874,9 +884,9 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
             
             <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="space-y-2">
+                    <div key={i} className="space-y-2 group/gallery relative flex flex-col">
                         <label className="text-[10px] font-bold text-gray-500 uppercase">Image {i}</label>
-                         <div className="relative h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center overflow-hidden group">
+                         <div className="relative h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center overflow-hidden">
                            <input 
                                 type="file" 
                                 name={`gallery_file_${i}`} 
@@ -888,14 +898,29 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                            
                            {/* @ts-ignore */}
                            {previewData[`gallery_image_${i}`] ? (
-                               // @ts-ignore
-                                <img src={previewData[`gallery_image_${i}`]} className="h-full w-full object-cover" />
+                                <div className="relative w-full h-full">
+                                    {/* @ts-ignore */}
+                                    <img src={previewData[`gallery_image_${i}`]} className="h-full w-full object-cover" />
+                                    
+                                    {/* Delete Button */}
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleDeleteGallery(i)}
+                                        className="absolute inset-0 flex items-center justify-center bg-red-500/80 text-white transition-all z-20 opacity-0 group-hover/gallery:opacity-100"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
                            ) : (
                                 <div className="flex flex-col items-center">
                                     <span className="text-gray-300 text-xs font-bold">+ Upload</span>
                                     <span className="text-[7px] text-blue-500 font-black uppercase mt-1">800x600px</span>
                                 </div>
                            )}
+                           
+                           {/* Hidden input to signal deletion or persistence */}
+                           {/* @ts-ignore */}
+                           <input type="hidden" name={`deleted_gallery_image_${i}`} value={previewData[`gallery_image_${i}`] ? 'false' : 'true'} />
                         </div>
                     </div>
                 ))}

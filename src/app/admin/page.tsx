@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
 
   const stats = [
     { label: 'Hall of Fame', value: String(hofRes.count || 0), icon: Trophy, href: '/admin/hall-of-fame', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Active Teams', value: String(teamsRes.count || 0), icon: Users, href: '/admin/teams', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Active Programs', value: String(teamsRes.count || 0), icon: Users, href: '/admin/teams', color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Upcoming Events', value: String(eventsRes.count || 0), icon: Calendar, href: '/admin/calendar', color: 'text-purple-600', bg: 'bg-purple-50' },
   ]
 
@@ -88,7 +88,7 @@ export default async function AdminDashboard() {
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm border border-gray-50 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <Users size={14} />
               </div>
-              <p className="font-bold text-gray-900 text-xs leading-tight">New Team</p>
+              <p className="font-bold text-gray-900 text-xs leading-tight">Add New Program</p>
             </Link>
             <Link href="/admin/calendar/new" className="p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-soft transition-all text-left space-y-2 group">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-purple-600 shadow-sm border border-gray-50 group-hover:bg-purple-600 group-hover:text-white transition-colors">

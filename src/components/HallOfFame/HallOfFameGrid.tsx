@@ -113,7 +113,7 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
                  <div className="flex items-center gap-3">
                      <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter uppercase line-clamp-1">{selectedInductee.name}</h2>
                      <div className="hidden md:block px-3 py-1 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">
-                         Class of {selectedInductee.year}
+                        Years {selectedInductee.year}
                      </div>
                  </div>
                  <button 
@@ -140,11 +140,18 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
                                   className="w-full h-full"
                                 />
                              ) : selectedInductee.photo_url ? (
-                                <img
-                                  src={selectedInductee.photo_url}
-                                  alt={selectedInductee.name}
-                                  className="w-full h-full object-cover transition-transform duration-700"
-                                />
+                                <>
+                                   {/* Blurred Background for Portrait Images */}
+                                   <div 
+                                       className="absolute inset-0 bg-cover bg-center blur-xl opacity-50 scale-110"
+                                       style={{ backgroundImage: `url(${selectedInductee.photo_url})` }}
+                                   />
+                                   <img
+                                     src={selectedInductee.photo_url}
+                                     alt={selectedInductee.name}
+                                     className="w-full h-full object-contain relative z-10"
+                                   />
+                                </>
                              ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white/20">
                                     <Trophy size={120} strokeWidth={0.5} />
@@ -197,7 +204,7 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
                                 </div>
                                 {selectedInductee.induction_year && (
                                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Inducted In</span>
+                                        <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Induction Year</span>
                                         <span className="text-lg font-bold text-slate-900">{selectedInductee.induction_year}</span>
                                     </div>
                                 )}

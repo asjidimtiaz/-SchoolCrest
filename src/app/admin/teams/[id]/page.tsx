@@ -25,8 +25,8 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
                 <ChevronLeft size={20} />
             </Link>
             <div>
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Edit Program</h1>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">Manage Program Details & History</p>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Program History & Details</h1>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">Manage Program Identity & Season Archive</p>
             </div>
        </div>
 
@@ -37,7 +37,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {/* Archive History Section */}
-            <div className="border-t border-gray-200/60 pt-12">
+            <div id="seasons" className="border-t border-gray-200/60 pt-12">
                  <SeasonsManager seasons={seasons} teamId={team.id} teamName={team.name} schoolId={school.id} />
             </div>
        </div>

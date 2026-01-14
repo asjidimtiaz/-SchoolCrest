@@ -18,7 +18,7 @@ export default async function TeamsAdminPage() {
                <span className="px-2 py-0.5 bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-600 rounded-full border border-blue-100">Programs</span>
                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
             </div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Athletic Teams</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">ALL PROGRAMS</h1>
             <p className="text-sm text-gray-500 font-medium tracking-tight">Manage sports programs, seasonal records, and player rosters.</p>
         </div>
         <Link
@@ -26,7 +26,7 @@ export default async function TeamsAdminPage() {
             className="flex items-center gap-2 px-6 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg text-[11px] uppercase tracking-widest"
         >
             <Plus size={16} />
-            New Team
+            Add New Program
         </Link>
       </div>
 

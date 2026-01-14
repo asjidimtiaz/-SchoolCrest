@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TeamSeason } from '@/lib/getTeams'
 import DeleteButton from './DeleteButton'
 import RosterModal from './RosterModal'
 import SeasonEditModal from './SeasonEditModal'
 import SeasonForm from './SeasonForm'
-import { Edit, Trash2, Users, Plus } from 'lucide-react'
+import { Edit, Trash2, Users, Plus, X } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 
 interface SeasonsManagerProps {
     seasons: TeamSeason[]
@@ -16,11 +17,18 @@ interface SeasonsManagerProps {
 }
 
 export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: SeasonsManagerProps) {
+    const searchParams = useSearchParams()
     const [selectedSeasonForRoster, setSelectedSeasonForRoster] = useState<TeamSeason | null>(null)
     const [selectedSeasonForEdit, setSelectedSeasonForEdit] = useState<TeamSeason | null>(null)
     const [isRosterOpen, setIsRosterOpen] = useState(false)
     const [isEditOpen, setIsEditOpen] = useState(false)
-    const [isAddOpen, setIsAddOpen] = useState(false)
+    const [isAddOpen, setIsAddOpen] = useState(searchParams.get('add') === 'true')
+
+    useEffect(() => {
+        if (searchParams.get('add') === 'true') {
+            setIsAddOpen(true)
+        }
+    }, [searchParams])
 
     const handleOpenRoster = (season: TeamSeason) => {
         setSelectedSeasonForRoster(season)
@@ -43,27 +51,20 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                 <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Archive History</h2>
                 <button 
                     onClick={() => setIsAddOpen(!isAddOpen)}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                    className={`flex items-center gap-3 px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${
                         isAddOpen 
-                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
+                        ? 'bg-white text-gray-400 hover:text-black hover:shadow-2xl' 
                         : 'bg-black text-white hover:bg-gray-800'
                     }`}
                 >
-                    {isAddOpen ? <Plus className="rotate-45 transition-transform" size={14} /> : <Plus size={14} />}
+                    {isAddOpen ? <X size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
                     {isAddOpen ? 'Cancel' : 'Add Season'}
                 </button>
             </div>
 
             {isAddOpen && (
-                <div className="glass-card p-10 rounded-[2.5rem] border-2 border-dashed border-gray-100 bg-white/50 animate-slide-up shadow-inner relative overflow-hidden">
-                    {/* Visual Flourish */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                    
-                    <div className="flex items-center gap-2 mb-8 relative z-10">
-                        <div className="w-1.5 h-6 rounded-full bg-emerald-500" />
-                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900">New Historical Entry</h3>
-                    </div>
-                    <SeasonForm 
+                <div className="animate-slide-up relative bg-white/30 rounded-[3rem] p-1 border border-gray-100/50 mb-12">
+                     <SeasonForm 
                         team_id={teamId} 
                         schoolId={schoolId}
                         suggestedYear={nextSuggestedYear}
@@ -97,22 +98,24 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                                         <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none">
                                             {season.year} Season
                                         </h3>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-2">
                                             <button 
                                                 onClick={() => handleOpenRoster(season)}
-                                                className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                                title="Manage Roster"
+                                                className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
                                             >
-                                                <Users size={18} />
+                                                <Users size={14} />
+                                                Manage Roster
                                             </button>
                                             <button 
                                                 onClick={() => handleOpenEdit(season)}
-                                                className="p-2 text-gray-400 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
-                                                title="Edit Details"
+                                                className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                                             >
-                                                <Edit size={18} />
+                                                <Edit size={14} />
+                                                Edit Details
                                             </button>
-                                            <DeleteButton id={season.id} teamId={teamId} type="season" />
+                                            <div className="ml-1 pl-3 border-l border-gray-100">
+                                                <DeleteButton id={season.id} teamId={teamId} type="season" />
+                                            </div>
                                         </div>
                                     </div>
                                     

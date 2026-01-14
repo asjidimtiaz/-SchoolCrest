@@ -61,7 +61,7 @@ export async function createTeam(prevState: any, formData: FormData) {
     const gender = formData.get("gender") as string;
     // Use 'Athletics' as fallback if category is missing (legacy support)
     const sport_category = (formData.get("sport_category") as string) || 'Athletics';
-    const head_coach = formData.get("head_coach") as string;
+    const head_coach = (formData.get("head_coach") as string) || '';
     const school_id = formData.get("school_id") as string;
     const media_type = formData.get("media_type") as string || 'image';
 
@@ -112,16 +112,7 @@ export async function createTeam(prevState: any, formData: FormData) {
         .single();
 
     if (existingTeam) {
-        teamId = existingTeam.id;
-        // Optionally update the program photo if a new one was provided? 
-        // For now, let's update it so the latest upload becomes the program header
-        if (photo_url || background_url) {
-            const updates: any = { media_type, head_coach };
-            if (photo_url) updates.photo_url = photo_url;
-            if (background_url) updates.background_url = background_url;
-            
-            await supabase.from("teams").update(updates).eq("id", teamId);
-        }
+        return { error: `A program named "${name}" (${gender}) already exists. Please use a unique name or manage the existing program from the dashboard.` };
     } else {
         const { data: newTeam, error: createError } = await supabase.from("teams").insert({
             name,

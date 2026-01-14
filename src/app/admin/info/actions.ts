@@ -115,7 +115,12 @@ export async function updateSchoolBranding(prevState: any, formData: FormData) {
     // Handle Gallery Images - URLs now uploaded by client
     for (let index = 1; index <= 3; index++) {
         const uploadedUrl = formData.get(`uploaded_gallery_image_${index}`) as string || ''
-        if (uploadedUrl) {
+        const isDeleted = formData.get(`deleted_gallery_image_${index}`) === 'true'
+
+        if (isDeleted) {
+            // Delete record from DB
+            await supabase.from('screensaver_images').delete().eq('school_id', id).eq('order_index', index)
+        } else if (uploadedUrl) {
             // Upsert: delete old at index, insert new
             await supabase.from('screensaver_images').delete().eq('school_id', id).eq('order_index', index)
             await supabase.from('screensaver_images').insert({ school_id: id, image_url: uploadedUrl, order_index: index })

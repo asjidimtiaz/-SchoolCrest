@@ -78,9 +78,9 @@ export default async function AdminLayout({
     .maybeSingle()
 
   const navItems = [
-    { label: 'Dashboard', href: '/admin', icon: 'LayoutDashboard' },
+    { label: 'Dashboard', href: '/admin', icon: 'LayoutGrid' },
     { label: 'Hall of Fame', href: '/admin/hall-of-fame', icon: 'Trophy' },
-    { label: 'Teams', href: '/admin/teams', icon: 'Users' },
+    { label: 'Programs', href: '/admin/teams', icon: 'Shapes' },
     { label: 'Events', href: '/admin/calendar', icon: 'Calendar' },
     { label: 'Calendar', href: '/admin/school-calendar', icon: 'Calendar' },
     { label: 'School Info', href: '/admin/info', icon: 'Info' },

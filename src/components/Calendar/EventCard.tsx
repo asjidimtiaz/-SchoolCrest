@@ -10,66 +10,54 @@ interface EventCardProps {
 
 export default function EventCard({ event, primaryColor }: EventCardProps) {
   const startDate = new Date(event.start_time)
-  const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
   return (
-    <div className="group relative flex items-start gap-8 glass-card border-none rounded-[2.5rem] p-8 shadow-soft transition-all duration-500 animate-slide-up">
-      {/* Date Badge */}
-      <div 
-        className="flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-[2rem] bg-white shadow-soft transition-transform duration-500 relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white" />
-        <div className="relative flex flex-col items-center">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-1">{startDate.toLocaleDateString('en-US', { month: 'short' })}</span>
-            <span className="text-4xl font-black text-gray-900 leading-none">{startDate.getDate()}</span>
-        </div>
-        {/* Dynamic Accent */}
-        <div className="absolute bottom-0 inset-x-0 h-1 bg-red-500/20" />
+    <div className="group relative flex items-center gap-6 py-5 px-10 bg-white/10 backdrop-blur-2xl rounded-full transition-all duration-500 hover:bg-white/15 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] ml-20 mb-3 ring-1 ring-white/10 hover:ring-white/30 overflow-hidden active:scale-[0.98]">
+      
+      {/* Premium Glossy Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+
+      {/* Time Column: Prominent & Clean */}
+      <div className="flex-shrink-0">
+        <span className="text-sm font-black text-white/80 tracking-widest uppercase">{timeStr}</span>
       </div>
 
-      {/* Content */}
-      <div className="flex-1">
-        <div className="flex items-start justify-between mb-4">
-            <h3 className="text-3xl font-black text-gray-900 leading-tight tracking-tight transition-colors max-w-xl">
-                {event.title}
-            </h3>
-            {event.category && (
-                <span className="px-4 py-1.5 bg-white/50 border border-gray-100 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                    {event.category}
-                </span>
-            )}
-        </div>
-        
-        <div className="flex flex-wrap gap-6 text-gray-400">
-             <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
-                  <Clock size={16} />
-                </div>
-                <span className="text-sm font-bold uppercase tracking-widest text-gray-500">{timeStr}</span>
-             </div>
-             {event.location && (
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
-                      <MapPin size={16} />
-                    </div>
-                    <span className="text-sm font-bold uppercase tracking-widest text-gray-500">{event.location}</span>
-                </div>
-             )}
-        </div>
+      {/* Branded Separator Dot: Glowing Accent */}
+      <div 
+        className="w-2.5 h-2.5 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] ring-2 ring-white/10 flex-shrink-0" 
+        style={{ 
+          backgroundColor: primaryColor,
+          boxShadow: `0 0 20px ${primaryColor}60`
+        }}
+      />
 
-        {event.description && (
-            <div className="mt-6 flex items-start gap-4">
-              <div className="w-1 h-full min-h-[1.5rem] bg-gray-100 rounded-full" />
-              <p className="text-gray-500 font-medium leading-relaxed max-w-2xl text-lg italic">
-                "{event.description}"
-              </p>
-            </div>
+      {/* Content: Centered & Balanced */}
+      <div className="flex-1 min-w-0 flex items-center gap-6">
+        <h3 className="text-xl font-black text-white leading-none tracking-tight truncate lowercase">
+            {event.title}
+        </h3>
+        
+        {/* Location Indicator: Minimal & High-End */}
+        {event.location && (
+          <div className="flex items-center gap-3">
+             <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 truncate max-w-[200px]">
+                 {event.location}
+             </span>
+          </div>
         )}
       </div>
 
-      {/* Left Accent Marker */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-gray-100 rounded-r-full transition-all duration-500" style={{ backgroundColor: primaryColor }} />
+      {/* Details Indicator: Subtle Pulse (if description exists) */}
+      {event.description && (
+          <div className="relative flex items-center justify-center w-2 h-2">
+            <div className="absolute inset-0 rounded-full bg-white/40 animate-ping opacity-20" />
+            <div className="w-1.5 h-1.5 rounded-full bg-white/30 group-hover:bg-white/60 transition-colors" />
+          </div>
+      )}
     </div>
   )
 }
+
+

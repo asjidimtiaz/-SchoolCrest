@@ -59,7 +59,6 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                         <thead>
                             <tr className="bg-gray-50/50">
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50">Program Identity</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50 text-center">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100/50 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -83,43 +82,21 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                                                         {team.name}
                                                     </span>
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                                        {team.gender} Athletics
+                                                        {team.gender} 
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 text-center">
-                                            {team.latestSeason ? (
-                                                <div className="flex flex-col items-center">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                                                        {team.latestSeason.year} Season
-                                                    </span>
-                                                    <span className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tight">
-                                                        {playerCount} Players
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic">
-                                                    No Active Season
-                                                </span>
-                                            )}
-                                        </td>
+                                       
                                         <td className="px-6 py-5 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button 
-                                                    onClick={() => handleOpenRoster(team)}
-                                                    disabled={isPending}
-                                                    className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                                                >
-                                                    <UserPlus size={14} />
-                                                    Roster
-                                                </button>
                                                 <Link 
-                                                    href={`/admin/teams/${team.id}`}
-                                                    className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                                    title="View All Seasons"
+                                                    href={`/admin/teams/${team.id}#seasons`}
+                                                    className="flex items-center gap-1.5 px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                                    title="View Program Seasons"
                                                 >
-                                                    <ChevronRight size={18} />
+                                                    <ChevronRight size={14} strokeWidth={3} />
+                                                    View Seasons
                                                 </Link>
                                                 <Link 
                                                     href={`/admin/teams/${team.id}/edit`}

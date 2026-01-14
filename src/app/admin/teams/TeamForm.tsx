@@ -33,7 +33,6 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     name: team?.name || '',
     gender: team?.gender || 'Boys',
     sport_category: team?.sport_category || '',
-    head_coach: team?.head_coach || '',
     photo_url: team?.photo_url || '',
     background_url: team?.background_url || '',
     media_type: team?.media_type || 'image' as 'image' | 'video',
@@ -173,17 +172,6 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                                 />
                             </div>
                         )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Head Coach</label>
-                        <input
-                            name="head_coach"
-                            value={formData.head_coach}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                            placeholder="e.g. Coach Carter"
-                        />
                     </div>
 
                     <div className="pt-4 border-t border-gray-100 space-y-8">
@@ -385,13 +373,8 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                     </p>
                 </div>
 
-                <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-[10px] font-bold text-gray-400">
+                <div className="pt-3 border-t border-gray-50 flex justify-center items-center text-[10px] font-bold text-gray-400">
                     {isEdit ? 'Program' : (formData.season_year || 'Year')}
-                    {formData.head_coach && (
-                        <span className="truncate max-w-[100px]">
-                            {formData.head_coach}
-                        </span>
-                    )}
                 </div>
             </div>
         </div>

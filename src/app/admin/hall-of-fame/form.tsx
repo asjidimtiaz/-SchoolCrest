@@ -9,6 +9,8 @@ import InducteePhoto from '@/components/HallOfFame/InducteePhoto'
 import ImageUpload from '@/components/ImageUpload'
 import VideoUpload from '@/components/VideoUpload'
 import { Video } from 'lucide-react'
+import { useBranding } from '@/context/BrandingContext'
+
 
 interface InducteeFormProps {
   inductee?: Inductee
@@ -20,6 +22,7 @@ const initialState = { error: '', success: false }
 
 export default function InducteeForm({ inductee, schoolId, isEdit = false }: InducteeFormProps) {
   const router = useRouter()
+  const branding = useBranding()
   // @ts-ignore
   const [state, formAction, isPending] = useActionState(isEdit ? updateInductee : createInductee, initialState)
 
@@ -90,7 +93,7 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Years Served or Class Year</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Years Involved</label>
                     <input
                         name="year"
                         type="text"
@@ -215,59 +218,81 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
       <div className="xl:w-64 space-y-4">
         <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Profile Preview</h2>
         
-        <div className="glass-card rounded-[2rem] border-none overflow-hidden flex flex-col items-center p-6 text-center relative group">
-            <div className="relative mb-4">
-                <InducteePhoto 
-                    src={formData.photo_url} 
-                    name={formData.name} 
-                    size="lg"
-                />
-                {formData.video_url && (
-                    <div className="absolute -bottom-1 -right-1 p-1.5 bg-black text-white rounded-lg shadow-lg">
-                        <Video size={10} />
-                    </div>
-                )}
-            </div>
-
-            <h3 className="text-base font-bold text-gray-900 leading-tight mb-1 truncate w-full">
-                {formData.name || 'Inductee Name'}
-            </h3>
+        {/* Modal-style Preview matching Detail Modal */}
+        <div className="relative w-full bg-[#FAFAFA] rounded-[1.5rem] shadow-xl overflow-hidden flex flex-col border border-gray-100 scale-90 -translate-y-4">
             
-            <div className="flex flex-col items-center gap-2 mb-4">
-                <span className="px-3 py-0.5 bg-gray-50 text-[8px] font-bold uppercase tracking-widest rounded-full text-gray-400 border border-gray-100">
-                    {formData.year || '----'}
-                </span>
-                {formData.induction_year && (
-                    <span className="text-[7px] font-black text-gray-300 uppercase tracking-tighter">
-                        Inducted {formData.induction_year}
-                    </span>
-                )}
-                <div className="flex items-center gap-1 text-blue-500">
-                    <Award size={10} />
-                    <span className="text-[9px] font-bold uppercase tracking-widest">{formData.category}</span>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-sm font-black text-slate-900 tracking-tighter uppercase truncate max-w-[120px]">
+                        {formData.name || 'Inductee Name'}
+                    </h2>
+                    <div className="px-2 py-0.5 bg-black text-white rounded-full text-[6px] font-black uppercase tracking-widest self-start">
+                        Years {formData.year || '----'}
+                    </div>
+                </div>
+                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                    <X size={10} className="text-slate-900" />
                 </div>
             </div>
 
-            <div className="w-full space-y-3 pt-4 border-t border-gray-50">
-                <p className="text-[10px] text-gray-500 font-medium leading-relaxed line-clamp-3">
-                    {formData.bio || 'Their story starts here...'}
-                </p>
-
-                <div className="flex flex-wrap justify-center gap-1.5">
-                    {(Array.isArray(formData.achievements) 
-                        ? formData.achievements 
-                        : (formData.achievements || '').split('\n')
-                    ).filter(Boolean).slice(0, 3).map((a, i) => (
-                        <div key={i} className="px-2 py-0.5 bg-white border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase tracking-tighter">
-                            {a}
+            {/* Content Area */}
+            <div className="p-3 space-y-3">
+                {/* Media Box */}
+                <div className="aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-gray-200 relative bg-gray-900">
+                    {formData.photo_url ? (
+                        <>
+                            {/* Blurred Background */}
+                            <div 
+                                className="absolute inset-0 bg-cover bg-center blur-md opacity-50 scale-110"
+                                style={{ backgroundImage: `url(${formData.photo_url})` }}
+                            />
+                            <img
+                                src={formData.photo_url}
+                                alt="Preview"
+                                className="w-full h-full object-contain relative z-10"
+                            />
+                        </>
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/20">
+                            <ImageIcon size={32} strokeWidth={1} />
                         </div>
-                    ))}
+                    )}
+                </div>
+
+                {/* Info Card */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+                    <div className="space-y-1">
+                        <h3 className="font-black text-slate-900 text-[8px] tracking-tight uppercase">Inductee Details</h3>
+                        <div className="h-0.5 w-6 rounded-full" style={{ backgroundColor: branding.primaryColor || '#000' }} />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2">
+                        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                            <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Category</span>
+                            <span className="text-[10px] font-bold text-slate-900">{formData.category}</span>
+                        </div>
+                        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                            <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Induction Year</span>
+                            <span className="text-[10px] font-bold text-slate-900">{formData.induction_year || '----'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Back to Menu mockup */}
+            <div className="pb-3 flex justify-center">
+                <div className="px-4 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full border border-slate-400 flex items-center justify-center">
+                        <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                    </div>
+                    <span className="text-[6px] font-black uppercase tracking-widest text-slate-900">Back to Menu</span>
                 </div>
             </div>
         </div>
 
-        <p className="text-[8px] text-gray-400 text-center px-6 font-bold uppercase tracking-tight leading-tight">
-            How the inductee will appear in the kiosk grid.
+        <p className="text-[8px] text-gray-400 text-center px-6 font-bold uppercase tracking-tight leading-tight -mt-4">
+            How the inductee will appear in the detail window.
         </p>
       </div>
     </div>

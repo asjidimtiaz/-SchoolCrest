@@ -1,5 +1,5 @@
 import { getSchool } from '@/lib/getSchool'
-import { getTeams, getTeamYears } from '@/lib/getTeams'
+import { getAllTeamSeasons } from '@/lib/getTeams'
 import TeamsContent from '@/components/Teams/TeamsContent'
 
 export default async function TeamsPage() {
@@ -7,8 +7,7 @@ export default async function TeamsPage() {
   
   if (!school) return null;
 
-  const teams = await getTeams(school.id);
-  const teamYears = await getTeamYears(school.id);
+  const allSeasons = await getAllTeamSeasons(school.id);
 
-  return <TeamsContent teams={teams} teamYears={teamYears} />;
+  return <TeamsContent seasons={allSeasons} />;
 }

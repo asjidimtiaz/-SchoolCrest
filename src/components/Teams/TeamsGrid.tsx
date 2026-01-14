@@ -1,141 +1,174 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Team } from '@/lib/getTeams'
+import { TeamSeasonWithTeam } from '@/lib/getTeams'
 import TeamCard from './TeamCard'
 import { useBranding } from '@/context/BrandingContext'
-import { X, Trophy, Search } from 'lucide-react'
+import { X, Trophy, Search, ChevronDown } from 'lucide-react'
 
-export default function TeamsGrid({ initialData, teamYears }: { initialData: Team[], teamYears: { team_id: string; year: number }[] }) {
+export default function TeamsGrid({ seasons }: { seasons: TeamSeasonWithTeam[] }) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('All')
   const [selectedYear, setSelectedYear] = useState<string>('All')
   const branding = useBranding()
   
-  // Extract unique filters (Sport Category)
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(new Set(initialData.map(t => t.sport_category))).filter(Boolean).sort()
-    return ['All', ...uniqueCategories]
-  }, [initialData])
+  // Extract unique Teams/Programs
+  const programs = useMemo(() => {
+    const teamMap = new Map<string, string>();
+    seasons.forEach(s => {
+        teamMap.set(s.team.id, s.team.name);
+    });
+    const sorted = Array.from(teamMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+    return [{ id: 'All', name: 'ALL PROGRAMS' }, ...sorted.map(([id, name]) => ({ id, name }))];
+  }, [seasons])
 
   // Extract unique years
   const years = useMemo(() => {
-    const uniqueYears = Array.from(new Set(teamYears.map(ty => ty.year))).sort((a, b) => b - a)
+    const uniqueYears = Array.from(new Set(seasons.map(s => s.year))).sort((a, b) => b - a)
     return ['All', ...uniqueYears]
-  }, [teamYears])
+  }, [seasons])
 
-  const filteredData = initialData.filter(team => {
-    const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    // Filter by Category
-    const matchesCategory = selectedCategory === 'All' || team.sport_category === selectedCategory
+  const filteredSeasons = useMemo(() => {
+    return seasons.filter(s => {
+        const matchesSearch = 
+            s.team.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (s.summary && s.summary.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesTeam = selectedTeamId === 'All' || s.team.id === selectedTeamId;
+        const matchesYear = selectedYear === 'All' || s.year.toString() === selectedYear;
 
-    // Filter by Year
-    // If 'All' is selected, show all teams.
-    // If a specific year is selected, check if this team has a season in that year.
-    const matchesYear = selectedYear === 'All' || teamYears.some(ty => ty.team_id === team.id && ty.year.toString() === selectedYear)
+        return matchesSearch && matchesTeam && matchesYear;
+    });
+  }, [seasons, searchTerm, selectedTeamId, selectedYear]);
 
-    return matchesSearch && matchesCategory && matchesYear;
-  });
+  // Derived display data
+  const gridData = useMemo(() => {
+    // If a specific team is selected, show all their filtered seasons
+    if (selectedTeamId !== 'All') {
+        return filteredSeasons;
+    }
+
+    // If 'All' teams are selected, but a specific year is chosen, show all seasons for that year
+    if (selectedYear !== 'All') {
+        return filteredSeasons;
+    }
+
+    // Default view: Show one card per team (latest season only)
+    const teamLatest = new Map<string, TeamSeasonWithTeam>();
+    filteredSeasons.forEach(s => {
+        if (!teamLatest.has(s.team.id)) {
+            teamLatest.set(s.team.id, s);
+        } else {
+            const existing = teamLatest.get(s.team.id)!;
+            if (s.year > existing.year) {
+                teamLatest.set(s.team.id, s);
+            }
+        }
+    });
+    return Array.from(teamLatest.values()).sort((a, b) => a.team.name.localeCompare(b.team.name));
+  }, [filteredSeasons, selectedTeamId, selectedYear]);
 
   return (
     <>
       {/* 🔍 Unified Search & Filter Toolbar */}
-      <div className="my-6 flex justify-center sticky top-0 z-40">
-        <div className="bg-white p-1.5 rounded-full shadow-2xl border border-gray-200/50 flex items-center max-w-4xl w-full gap-0 backdrop-blur-md bg-white/90">
+      <div className="my-6 flex justify-center sticky top-0 z-40 px-2 lg:px-0">
+        <div className="bg-white/95 p-1.5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/20 flex items-center max-w-5xl w-full gap-0 backdrop-blur-xl">
             
             {/* 1. Search Section (Flexible) */}
-            <div className="flex-1 flex items-center px-4 md:px-5 h-10">
-                <div className="text-gray-400 mr-3">
-                    <Search size={18} />
+            <div className="flex-1 flex items-center px-4 md:px-6 h-12">
+                <div className="text-slate-400 mr-4">
+                    <Search size={22} className="opacity-60" />
                 </div>
                 <input
                     type="text"
-                    placeholder="Search teams..."
+                    placeholder="Search history, teams, themes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-base font-bold text-slate-900 placeholder:text-slate-400 h-full w-full"
+                    className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-slate-900 placeholder:text-slate-400 h-full w-full"
                 />
                 {searchTerm && (
                     <button 
                         onClick={() => setSearchTerm('')}
-                        className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 text-slate-500 transition-colors"
+                        className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
                     >
-                        <X size={14} strokeWidth={3} />
+                        <X size={16} strokeWidth={3} />
                     </button>
                 )}
             </div>
 
             {/* 2. Year Filter (Select) */}
-            <div className="relative flex-shrink-0 min-w-[100px] md:min-w-[140px] h-10 flex items-center justify-center px-2 border-l border-gray-100">
+            <div className="relative flex-shrink-0 min-w-[110px] md:min-w-[160px] h-12 flex items-center justify-center px-4 border-l border-slate-100">
                  <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
-                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
+                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-600 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0 pr-6"
                 >
                     {years.map(y => (
                         <option key={y} value={y}>
-                            {y === 'All' ? 'ALL YEARS' : y}
+                            {y === 'All' ? 'ANY YEAR' : y}
                         </option>
                     ))}
                 </select>
-                <div className="absolute right-2 pointer-events-none text-slate-400">
-                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                     </svg>
+                <div className="absolute right-4 pointer-events-none text-slate-400">
+                    <ChevronDown size={14} strokeWidth={3} />
                 </div>
             </div>
 
-            {/* 3. Category Filter (Select) */}
-            <div className="relative flex-shrink-0 min-w-[100px] md:min-w-[160px] h-10 flex items-center justify-center px-2 border-l border-gray-100">
+            {/* 3. Program/Team Filter (Select) */}
+            <div className="relative flex-shrink-0 min-w-[130px] md:min-w-[200px] h-12 flex items-center justify-center px-4 border-l border-slate-100">
                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-700 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0"
+                    value={selectedTeamId}
+                    onChange={(e) => setSelectedTeamId(e.target.value)}
+                    className="appearance-none bg-transparent border-none outline-none font-black text-xs uppercase tracking-widest text-slate-600 cursor-pointer w-full text-center hover:text-slate-900 transition-colors focus:ring-0 pr-6"
                 >
-                    {categories.map(cat => (
-                        <option key={cat} value={cat}>
-                            {cat === 'All' ? 'ALL PROGRAMS' : cat}
+                    {programs.map(p => (
+                        <option key={p.id} value={p.id}>
+                            {p.name}
                         </option>
                     ))}
                 </select>
-                <div className="absolute right-2 pointer-events-none text-slate-400">
-                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                     </svg>
+                <div className="absolute right-4 pointer-events-none text-slate-400">
+                    <ChevronDown size={14} strokeWidth={3} />
                 </div>
             </div>
 
-            {/* Action/Submit Button - Circular Branded Anchor */}
-            <div className="flex-shrink-0 p-1 pl-3">
+            {/* Icon Decoration */}
+            <div className="hidden sm:flex flex-shrink-0 p-1 pl-4 items-center">
                 <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg"
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-lg rotate-3"
                     style={{ backgroundColor: branding.primaryColor }}
                 >
-                    <Trophy size={18} strokeWidth={2.5} />
+                    <Trophy size={20} strokeWidth={2.5} />
                 </div>
             </div>
-
         </div>
       </div>
 
-      {/* 🖼️ Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32">
-        {filteredData.map((team) => (
+      {/* 🖼️ grid Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-32 mt-4">
+        {gridData.map((item) => (
           <TeamCard
-            key={team.id}
-            team={team}
+            key={item.id}
+            team={item.team}
+            season={item}
             primaryColor={branding.primaryColor || '#000'}
+            showYear={selectedTeamId !== 'All' || selectedYear !== 'All' || gridData.length > (programs.length - 1)}
           />
         ))}
       </div>
 
-      {filteredData.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-32 animate-fade-in">
-            <div className="w-24 h-24 bg-gray-50 rounded-[2.5rem] flex items-center justify-center text-gray-200 mb-6">
+      {gridData.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-40 animate-in fade-in zoom-in duration-500">
+            <div className="w-24 h-24 bg-white/50 backdrop-blur-md rounded-[2.5rem] shadow-xl border border-white/20 flex items-center justify-center text-slate-300 mb-8">
               <Trophy size={48} strokeWidth={1} />
             </div>
-            <p className="text-xl font-black text-gray-400 uppercase tracking-widest">No teams found</p>
+            <p className="text-xl font-black text-slate-400 uppercase tracking-widest">No matching records found</p>
+            <button 
+                onClick={() => { setSearchTerm(''); setSelectedTeamId('All'); setSelectedYear('All'); }}
+                className="mt-6 text-sm font-black text-slate-900 underline underline-offset-8 uppercase tracking-widest hover:text-black"
+            >
+                Clear all filters
+            </button>
         </div>
       )}
     </>

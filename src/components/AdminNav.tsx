@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Trophy, Users, Calendar, Info, UserCircle, LucideIcon } from 'lucide-react'
+import { LayoutGrid, Trophy, Shapes, Calendar, Info, UserCircle, LucideIcon } from 'lucide-react'
 
 interface NavItem {
   label: string
@@ -17,9 +17,9 @@ interface AdminNavProps {
 
 // Map icon names to components
 const iconMap: Record<string, LucideIcon> = {
-  LayoutDashboard,
+  LayoutGrid,
   Trophy,
-  Users,
+  Shapes,
   Calendar,
   Info,
   UserCircle,

@@ -45,7 +45,7 @@ export default function HomeContent() {
       <KioskHeader />
       
       {/* 📜 Navigation Cards */}
-      <div className="flex-1 flex items-center justify-center px-12 py-5 z-10 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-12 py-5 z-10 overflow-y-auto custom-scrollbar">
         <div className="grid grid-cols-2 gap-8 w-full max-w-5xl">
             {navItems.map((item, idx) => {
                 const Icon = item.icon

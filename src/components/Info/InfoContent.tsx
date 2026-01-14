@@ -127,24 +127,7 @@ export default function InfoContent({ school, galleryImages }: InfoContentProps)
                     </div>
 
                     {/* Quick Stats or Institutional Tag */}
-                    <div 
-                        className="px-8 py-5 glass-card rounded-[2rem] shadow-2xl flex items-center justify-between overflow-hidden relative"
-                        style={{ backgroundColor: branding.primaryColor }}
-                    >   
-                         {/* Texture overlay */}
-                        <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
-                        
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-1.5 h-8 rounded-full bg-white/30" />
-                            <div>
-                                <p className="text-[9px] font-black text-white/60 uppercase tracking-widest">Est. Tradition</p>
-                                <p className="text-white font-bold text-base">{school.name}</p>
-                            </div>
-                        </div>
-                        <div className="opacity-60 relative z-10">
-                             {branding.logoUrl && <img src={branding.logoUrl} alt="Logo" className="h-10 w-auto brightness-0 invert" />}
-                        </div>
-                    </div>
+                 
                 </div>
 
                 {/* Right Column: Mission & Gallery (8 cols) */}

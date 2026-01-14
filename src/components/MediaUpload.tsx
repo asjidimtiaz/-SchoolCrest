@@ -95,8 +95,8 @@ export default function MediaUpload({
   }
 
   return (
-    <div className={`space-y-1.5 ${className}`}>
-      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">{label}</label>
+    <div className={`space-y-1 ${className}`}>
+      {label && <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{label}</label>}
       
       <div 
         onClick={() => fileInputRef.current?.click()}
@@ -109,7 +109,7 @@ export default function MediaUpload({
           border-2 border-dashed transition-all duration-300 overflow-hidden
           ${isDragging 
             ? 'border-black bg-black/[0.02] scale-[0.99]' 
-            : 'border-gray-100 bg-white/50 hover:border-gray-300 hover:bg-white/80'
+            : 'border-gray-100 bg-white/30 hover:border-gray-200 hover:bg-white/50'
           }
         `}
       >
@@ -178,18 +178,18 @@ export default function MediaUpload({
              )}
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center space-y-3">
+          <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center space-y-2">
             <div className={`
-              w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300
-              ${isDragging ? 'bg-black text-white scale-110 shadow-xl' : 'bg-gray-50 text-gray-300 group-hover:text-gray-400'}
+              w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300
+              ${isDragging ? 'bg-black text-white scale-110 shadow-xl' : 'bg-gray-50/50 text-gray-300 group-hover:text-gray-400 group-hover:bg-gray-100/50'}
             `}>
-              <Upload size={24} />
+              <Upload size={20} />
             </div>
-            <div>
-              <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight leading-none mb-1">{description}</p>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Supports IMG & Video (Max 50MB)</p>
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-black text-gray-700 uppercase tracking-tight leading-none">{description}</p>
+              <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Supports IMG & Video (Max 50MB)</p>
               {recommendation && (
-                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest animate-pulse mt-1">{recommendation}</p>
+                <p className="text-[8px] text-blue-500 font-black uppercase tracking-widest animate-pulse mt-1">{recommendation}</p>
               )}
             </div>
           </div>
@@ -198,16 +198,13 @@ export default function MediaUpload({
         {/* Dragging Overlay */}
         {isDragging && !preview && (
           <div className="absolute inset-0 bg-black/5 flex items-center justify-center pointer-events-none">
-            <div className="px-6 py-3 bg-white shadow-2xl rounded-2xl border border-black/5 flex items-center gap-3 animate-slide-up">
-              {/* <ImageIcon className="text-black" size={20} /> */}
-              <Upload className="text-black" size={20} />
-              <span className="text-[12px] font-black uppercase tracking-widest text-gray-900">Drop content here</span>
+            <div className="px-5 py-2.5 bg-white shadow-2xl rounded-xl border border-black/5 flex items-center gap-3 animate-slide-up">
+              <Upload className="text-black" size={18} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">Drop content here</span>
             </div>
           </div>
         )}
       </div>
-
-
     </div>
   )
 }
