@@ -58,13 +58,8 @@ export default function TeamCard({ team, season, primaryColor, showYear }: TeamC
             
             <div className="flex items-center gap-3 ml-1">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
-                   {team.gender} {team.sport_category || 'Program'} {season?.coach ? `• ${season.coach}` : ''}
+                   {team.gender}
                 </span>
-                {season?.record && (
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20 text-[10px] font-black uppercase tracking-[0.15em] text-white">
-                        RECORD HIGHLIGHT: {season.record}
-                    </div>
-                )}
             </div>
         </div>
       </div>
