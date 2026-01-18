@@ -2,16 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Configure route to accept larger files
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-}
-
 export async function POST(request: NextRequest) {
+  console.log('[DEBUG] API Upload: Request received')
   try {
     const cookieStore = await cookies()
     
@@ -35,8 +27,10 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    console.log('[DEBUG] API Upload: Parsing FormData...')
     const formData = await request.formData()
     const file = formData.get('file') as File
+    console.log('[DEBUG] API Upload: File parsed:', file?.name, file?.size)
     const folder = formData.get('folder') as string || 'misc'
     const schoolId = formData.get('schoolId') as string
 

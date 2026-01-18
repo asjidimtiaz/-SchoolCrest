@@ -26,6 +26,7 @@ import {
   Info
 } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
+import { uploadFileClient } from '@/lib/supabaseClient'
 
 interface BrandingFormProps {
   school: any
@@ -77,7 +78,14 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     nav_hall_of_fame_tagline: school.nav_hall_of_fame_tagline || 'Honoring exceptional alumni and staff',
     nav_teams_tagline: school.nav_teams_tagline || 'Explore our sports and history',
     nav_calendar_tagline: school.nav_calendar_tagline || 'Stay updated with school activities',
-    nav_info_tagline: school.nav_info_tagline || 'Information about our community'
+    nav_info_tagline: school.nav_info_tagline || 'Information about our community',
+    address: school.address || '',
+    phone: school.phone || '',
+    email: school.email || '',
+    website_url: school.website_url || '',
+    facebook_url: school.facebook_url || '',
+    instagram_url: school.instagram_url || '',
+    about_text: school.about_text || ''
   })
 
   // State for action result
@@ -85,9 +93,40 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
   const isPending = isUploading
 
   // Max file size in MB (Increased for videos)
-  const MAX_FILE_SIZE_MB = 100
+  const MAX_FILE_SIZE_MB = 500
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
+  // Handle Background File Selection (Stored for server-side upload)
+  const handleBackgroundFileSelect = (file: File | null) => {
+      if (!file) {
+          // If cleared, just update preview and existing URL
+          setPreviewData(prev => ({ ...prev, background_url: '', background_type: 'image' }))
+          setPendingFiles(prev => {
+              const newFiles = { ...prev }
+              delete newFiles.background_file
+              return newFiles
+          })
+          return
+      }
+
+      // 1. Update Preview immediately
+      const objectUrl = URL.createObjectURL(file)
+      const type = file.type.startsWith('video') ? 'video' : 'image'
+      
+      setPreviewData(prev => ({ 
+          ...prev, 
+          background_url: objectUrl,
+          background_type: type
+      }))
+
+      // 2. Store file for later upload in handleSubmit
+      setPendingFiles(prev => ({ 
+          ...prev, 
+          background_file: file 
+      }))
+  }
+
+  // Pre-upload handler for other files (keep as pending)
   const handleFilePreview = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
       const file = e.target.files?.[0];
       if (file) {
@@ -148,14 +187,6 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
   }
 
   // Handle Background File Selection (separate from URL preview)
-  const handleBackgroundFileSelect = (file: File | null) => {
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      const type = file.type.startsWith('video/') ? 'video' : 'image';
-      setPreviewData(prev => ({ ...prev, background_url: objectUrl, background_type: type }));
-      setPendingFiles(prev => ({ ...prev, background_file: file }));
-    }
-  }
 
   // Handle Sponsor Deletion
   const handleDeleteSponsor = (i: number) => {
@@ -177,78 +208,125 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
     });
   }
 
-  // Custom submit handler: upload files via API, then call server action
+  // Custom submit handler: directly call server action with all files
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const form = e.currentTarget // Capture synchronously!
     setIsUploading(true)
     setActionState({ error: '', success: false })
 
     try {
-      const form = e.currentTarget
-      const formData = new FormData(form)
-
-      // Upload pending files via API route (bypasses RLS issues)
+      // 1. Upload all pending files directly to Supabase first
+      // This avoids sending large binary buffers through Next.js server actions
+      const uploadedUrls: Record<string, string> = {}
+      
       for (const [fieldName, file] of Object.entries(pendingFiles)) {
-        const uploadFormData = new FormData()
-        uploadFormData.append('file', file)
-        uploadFormData.append('schoolId', school.id)
-        
-        let folder = 'gallery'
-        if (fieldName.includes('sponsor')) folder = 'sponsors'
-        if (fieldName === 'logo_file') folder = 'logos'
-        if (fieldName === 'background_file') folder = 'backgrounds'
-        
-        uploadFormData.append('folder', folder)
-        
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData
-        })
-        
-        if (res.ok) {
-          const { url } = await res.json()
-          // Map field names to their expected uploaded keys in action
-          const keyMap: Record<string, string> = {
-            'logo_file': 'uploaded_logo_url',
-            'background_file': 'uploaded_background_url',
-            'sponsor_logo_1': 'uploaded_sponsor_logo_1',
-            'sponsor_logo_2': 'uploaded_sponsor_logo_2',
-            'sponsor_logo_3': 'uploaded_sponsor_logo_3',
-            'gallery_image_1': 'uploaded_gallery_image_1',
-            'gallery_image_2': 'uploaded_gallery_image_2',
-            'gallery_image_3': 'uploaded_gallery_image_3',
+          console.log(`[DEBUG] Pre-uploading ${fieldName} directly to Supabase...`)
+          
+          let folder = 'others'
+          if (fieldName === 'logo_file') folder = 'logos'
+          if (fieldName === 'background_file') folder = 'backgrounds'
+          if (fieldName.startsWith('sponsor_logo')) folder = 'sponsors'
+          if (fieldName.startsWith('gallery_image')) folder = 'gallery'
+
+          const ext = file.name.split('.').pop()
+          const path = `${folder}/${school.id}/${Date.now()}_${fieldName}.${ext}`
+          
+          const publicUrl = await uploadFileClient(file, 'school-assets', path)
+          if (!publicUrl) {
+              throw new Error(`Failed to upload ${fieldName}. Please check your Supabase Storage settings and file size limits.`)
           }
-          formData.set(keyMap[fieldName] || `uploaded_${fieldName}`, url)
-        } else {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Upload to storage failed')
-        }
+          
+          uploadedUrls[fieldName] = publicUrl
       }
 
-      // Add "deleted" flag for sponsor logos by clearing their existing fields if preview is empty
+      // 2. Create clean FormData for the database update
+      const formData = new FormData()
+      formData.append('id', school.id)
+
+      // 3. Add all text/boolean values from previewData
+      Object.entries(previewData).forEach(([key, value]) => {
+          // Priority 1: If we just uploaded a new file for this specific key
+          if (uploadedUrls[key]) {
+              formData.append(key, uploadedUrls[key])
+              return
+          }
+
+          // Priority 2: Special mapping for 'logo_url' and 'background_url' from their '_file' uploads
+          if (key === 'logo_url' && uploadedUrls['logo_file']) {
+              formData.append(key, uploadedUrls['logo_file'])
+              return
+          }
+          if (key === 'background_url' && uploadedUrls['background_file']) {
+              formData.append(key, uploadedUrls['background_file'])
+              return
+          }
+
+          // Skip values that are blobs (they SHOULD have been handled above by uploadedUrls)
+          if (String(value).startsWith('blob:')) {
+              console.log(`[DEBUG] Skipping blob URL for ${key} (Expected to be replaced by uploadedUrl)`)
+              return
+          }
+
+          formData.append(key, String(value ?? ''))
+      })
+
+      // 4. Force map 'uploaded_' keys for backward compatibility with actions.ts
+      if (uploadedUrls['logo_file']) formData.set('uploaded_logo_url', uploadedUrls['logo_file'])
+      if (uploadedUrls['background_file']) {
+          formData.set('uploaded_background_url', uploadedUrls['background_file'])
+          // Also explicitly set the type if we just uploaded a video
+          const file = pendingFiles['background_file']
+          if (file && file.type.startsWith('video')) {
+              formData.set('background_type', 'video')
+          } else {
+              formData.set('background_type', 'image')
+          }
+      }
+      
+      console.log(`[DEBUG] Final background_type in form: ${formData.get('background_type')}`)
+
+      for (let i = 1; i <= 3; i++) {
+          if (uploadedUrls[`sponsor_logo_${i}`]) {
+              formData.set(`uploaded_sponsor_logo_${i}`, uploadedUrls[`sponsor_logo_${i}`])
+          }
+          if (uploadedUrls[`gallery_image_${i}`]) {
+              formData.set(`uploaded_gallery_image_${i}`, uploadedUrls[`gallery_image_${i}`])
+          }
+      }
+
+      // 5. Explicit social/contact fields are now handled automatically by the previewData loop above
+
+      // 6. Record deletions
       for (let i = 1; i <= 3; i++) {
           // @ts-ignore
-          if (!previewData[`sponsor_logo_${i}`]) {
-              formData.set(`existing_sponsor_logo_${i}`, '');
+          if (!previewData[`gallery_image_${i}`]) {
+              formData.set(`deleted_gallery_image_${i}`, 'true');
           }
       }
 
-      // Remove raw file inputs to prevent exceeding body size limit
-      for (let i = 1; i <= 3; i++) {
-        formData.delete(`sponsor_file_${i}`)
-        formData.delete(`gallery_file_${i}`)
-      }
-      formData.delete('logo_file')
-      formData.delete('background_file')
+      // DEBUG: Final check
+      console.log('[DEBUG] Final FormData keys (expecting URLs, no Files):', Array.from(formData.keys()))
 
-      // Call server action directly
+      // 7. Call server action to update DATABASE only
       const result = await updateSchoolBranding(null, formData)
       setActionState({ error: result.error || '', success: result.success || false })
       if (result.success) {
+        // Sync the state with the new real URLs to prevent stale blobs
+        setPreviewData(prev => ({
+            ...prev,
+            ...uploadedUrls,
+            // Explicitly map files back to URLs
+            logo_url: uploadedUrls['logo_file'] || prev.logo_url,
+            background_url: uploadedUrls['background_file'] || prev.background_url,
+            background_type: uploadedUrls['background_file'] ? (pendingFiles['background_file']?.type.startsWith('video') ? 'video' : 'image') : prev.background_type
+        }))
         setPendingFiles({})
+        router.refresh()
       }
     } catch (err: any) {
-      setActionState({ error: err.message || 'Upload failed. Please try again.', success: false })
+      console.error('[FATAL] Form submission failed:', err)
+      setActionState({ error: err.message || 'Update failed. Please try again.', success: false })
     } finally {
       setIsUploading(false)
     }
@@ -256,7 +334,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 pb-20">
-      <form ref={formRef} onSubmit={handleSubmit} className="flex-1 space-y-8">
+      <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data" className="flex-1 space-y-8">
         <input type="hidden" name="id" value={school.id} />
 
         {/* SECTION: SCHOOL IDENTITY */}
@@ -302,7 +380,7 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">About Text</label>
                         <textarea
                             name="about_text"
-                            defaultValue={school.about_text}
+                            value={previewData.about_text}
                             onChange={handleChange}
                             rows={3}
                             className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-600 placeholder:text-gray-300 resize-none"
@@ -527,7 +605,6 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                 {/* Logo Upload */}
                 <div className="md:col-span-5 space-y-2">
                     <MediaUpload 
-                        name="logo_file"
                         label="Official School Logo"
                         description="Upload PNG or JPG (Transparent recommended)"
                         recommendation="Recommended: 512x512px (Circle/Square)"
@@ -710,7 +787,6 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
 
             <div className="space-y-4">
                 <MediaUpload 
-                    name="background_file"
                     label="Background Media"
                     description="Upload an image or video for the landing page background"
                     recommendation="Recommended: 1920x1080px (16:9 ratio)"
@@ -721,12 +797,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                 />
                 <input 
                     type="hidden" 
-                    name="existing_background_url" 
-                    value={
-                        (previewData.background_url && !previewData.background_url.startsWith('blob:')) 
-                            ? previewData.background_url 
-                            : (school.background_url && !school.background_url.startsWith('blob:') ? school.background_url : '')
-                    } 
+                    name="background_url" 
+                    value={previewData.background_url.startsWith('blob:') ? '' : previewData.background_url} 
                 />
                 <input type="hidden" name="background_type" value={previewData.background_type} />
             </div>
@@ -751,7 +823,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input
                             name="address"
-                            defaultValue={school.address}
+                            value={previewData.address}
+                            onChange={handleChange}
                             className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
                             placeholder="e.g. 123 Education Lane, Springfield"
                         />
@@ -764,7 +837,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input
                             name="phone"
-                            defaultValue={school.phone}
+                            value={previewData.phone}
+                            onChange={handleChange}
                             className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
                             placeholder="(555) 123-4567"
                         />
@@ -777,7 +851,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                          <input
                             name="website_url"
-                            defaultValue={school.website_url}
+                            value={previewData.website_url}
+                            onChange={handleChange}
                             className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
                             placeholder="https://yourschool.com"
                         />
@@ -790,7 +865,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                          <input
                             name="facebook_url"
-                            defaultValue={school.facebook_url}
+                            value={previewData.facebook_url}
+                            onChange={handleChange}
                             className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
                             placeholder="https://facebook.com/yourschool"
                         />
@@ -803,7 +879,8 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                         <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                          <input
                             name="instagram_url"
-                            defaultValue={school.instagram_url}
+                            value={previewData.instagram_url}
+                            onChange={handleChange}
                             className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
                             placeholder="https://instagram.com/yourschool"
                         />
@@ -832,7 +909,6 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                            {/* File Input with Preview Handler */}
                            <input 
                                  type="file" 
-                                 name={`sponsor_file_${i}`} 
                                  className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                                  accept="image/*" 
                                  title=""
@@ -889,7 +965,6 @@ export default function BrandingForm({ school, galleryImages = [] }: BrandingFor
                          <div className="relative h-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center overflow-hidden">
                            <input 
                                 type="file" 
-                                name={`gallery_file_${i}`} 
                                 className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                                 accept="image/*"
                                 title=""

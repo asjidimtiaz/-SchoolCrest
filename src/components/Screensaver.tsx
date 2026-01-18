@@ -63,40 +63,23 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
             .map(url => sanitize(url))
             .filter(Boolean) as string[];
         }
-
-        const { data: galleryData } = await supabase
-          .from("screensaver_images")
-          .select("image_url")
-          .eq("school_id", school.id)
-          .order("order_index", { ascending: true });
-
-        if (galleryData) {
-          galleryUrls = galleryData.map(item => sanitize(item.image_url)).filter(Boolean);
-        }
       }
 
       // Robust Media Detection: defaults to image unless file extension explicitly suggests video
       // Updated regex to handle query parameters (e.g. Supabase public URLs)
-      const isUrlVideo = primaryUrl ? /\.(mp4|webm|ogg|mov)($|\?)/i.test(primaryUrl) : false;
+      const isUrlVideo = primaryUrl ? /\.(mp4|webm|ogg|mov|m4v)($|\?)/i.test(primaryUrl) : false;
       const finalType = isUrlVideo ? 'video' : (primaryType === 'video' ? 'video' : 'image');
 
       setBgConfig({ url: primaryUrl, type: finalType as 'image' | 'video' });
-      if (freshSponsors.length > 0) setSponsors(freshSponsors);
+      setSponsors(freshSponsors);
 
-      // Construct Rotation: Ensure primary background is ALWAYS the first item if it's an image
-      const rotationImages: string[] = [];
+      // Construct Background: Only use primary background
+      const backgroundImages: string[] = [];
       if (primaryUrl && finalType === 'image') {
-        rotationImages.push(primaryUrl);
+        backgroundImages.push(primaryUrl);
       }
-      
-      // Merge gallery images, ensuring no duplicates and strictly unique items
-      galleryUrls.forEach(url => {
-        if (url && !rotationImages.includes(url)) {
-          rotationImages.push(url);
-        }
-      });
 
-      setImages(rotationImages);
+      setImages(backgroundImages);
       setLoading(false);
     }
 
@@ -155,6 +138,7 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
           {isVideoBackground ? (
             <div className="absolute inset-0">
               <video
+                key={bgConfig.url} // Force re-render on URL change
                 autoPlay
                 loop
                 muted
@@ -254,11 +238,10 @@ const Screensaver = memo(function Screensaver({ onStart }: ScreensaverProps) {
               <div className="flex items-center gap-5 bg-black/30 backdrop-blur-xl px-6 py-4 rounded-[2.5rem] border border-white/10 shadow-2xl">
                   {sponsors.map((logo, i) => (
                       <div key={i} className="relative h-20 w-20 rounded-full overflow-hidden shadow-lg bg-white border-4 border-white/20">
-                          <Image 
+                          <img 
                               src={logo} 
                               alt={`Sponsor ${i+1}`} 
-                              fill
-                              className="object-contain p-3"
+                              className="w-full h-full object-contain p-3"
                           />
                       </div>
                   ))}

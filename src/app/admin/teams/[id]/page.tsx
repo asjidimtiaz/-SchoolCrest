@@ -30,14 +30,25 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ id:
             </div>
        </div>
 
-       <div className="space-y-12">
+       <div className="space-y-6">
             {/* Program Details Section */}
-            <div>
-                <TeamForm team={team} schoolId={school.id} isEdit={true} />
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center gap-6">
+                 <div className="w-16 h-16 bg-slate-50 rounded-[1.25rem] flex items-center justify-center text-slate-300 border border-slate-100/50">
+                    <Trophy size={28} strokeWidth={1.5} />
+                 </div>
+                 <div>
+                     <div className="flex items-center gap-3 mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Current Program</span>
+                        <div className="px-2.5 py-0.5 bg-gray-50 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-400 border border-gray-100">
+                            {team.gender}
+                        </div>
+                     </div>
+                     <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">{team.name}</h2>
+                </div>
             </div>
 
             {/* Archive History Section */}
-            <div id="seasons" className="border-t border-gray-200/60 pt-12">
+            <div id="seasons" className="border-t border-gray-200/60 pt-6">
                  <SeasonsManager seasons={seasons} teamId={team.id} teamName={team.name} schoolId={school.id} />
             </div>
        </div>

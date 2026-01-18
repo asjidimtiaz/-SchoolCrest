@@ -68,6 +68,23 @@ export default function CalendarForm({ school }: CalendarFormProps) {
               Supports full <code className="bg-gray-100 px-1 rounded">iframe</code> embed code or direct <code className="bg-gray-100 px-1 rounded">src</code> URL.
             </p>
           </div>
+
+          <div className="space-y-2 pt-4 border-t border-gray-50">
+            <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Google Cloud API Key</label>
+            <div className="relative group">
+              <Save className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                name="google_api_key"
+                defaultValue={school.google_api_key || ''}
+                type="password"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-medium text-sm text-gray-900 placeholder:text-gray-300"
+                placeholder="Enter your Google Cloud API Key..."
+              />
+            </div>
+            <p className="text-[9px] text-gray-400 font-medium ml-1">
+              Required to fetch events and display them as native cards. Get one from the Google Cloud Console.
+            </p>
+          </div>
         </div>
       </section>
 

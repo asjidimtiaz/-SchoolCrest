@@ -43,10 +43,14 @@ export async function updateCalendarUrl(prevState: any, formData: FormData) {
     const supabase = await getSupabase()
     const id = formData.get("id") as string
     const calendar_url = formData.get("calendar_url") as string
+    const google_api_key = formData.get("google_api_key") as string
 
     const { error } = await supabase
       .from("schools")
-      .update({ calendar_url })
+      .update({ 
+        calendar_url,
+        google_api_key
+      })
       .eq("id", id)
 
     if (error) {

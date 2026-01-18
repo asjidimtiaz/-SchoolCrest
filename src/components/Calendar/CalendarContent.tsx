@@ -8,6 +8,9 @@ import KioskHeader from '@/components/KioskHeader'
 import BackButton from '@/components/BackButton'
 import EventCard from '@/components/Calendar/EventCard'
 import { SchoolEvent } from '@/lib/getEvents'
+import { useState, useEffect } from 'react'
+import { fetchGoogleEvents, GoogleCalendarEvent } from '@/lib/googleCalendar'
+import GoogleCalendarCard from '@/components/Calendar/GoogleCalendarCard'
 
 interface CalendarContentProps {
   school: any
@@ -16,6 +19,20 @@ interface CalendarContentProps {
 
 export default function CalendarContent({ school, events }: CalendarContentProps) {
   const branding = useBranding()
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([])
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
+
+  useEffect(() => {
+    if (school.calendar_url && school.google_api_key) {
+        setIsLoadingGoogle(true)
+        fetchGoogleEvents(school.calendar_url, school.google_api_key)
+            .then(data => {
+                setGoogleEvents(data)
+                setIsLoadingGoogle(false)
+            })
+            .catch(() => setIsLoadingGoogle(false))
+    }
+  }, [school.calendar_url, school.google_api_key])
 
   // Helper to force Agenda/List view and clean styling
   const getEmbedUrl = (url: string) => {
@@ -46,18 +63,51 @@ export default function CalendarContent({ school, events }: CalendarContentProps
             {/* Content Container */}
             <div className="w-full max-w-7xl mx-auto pb-10 h-full flex flex-col">
                 
-                {/* 1. Google Calendar Embed */}
+                {/* 1. Google Calendar Integration */}
                 {school.calendar_url && (
-                  <div className="flex-none w-full h-[60vh] bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/40 ring-1 ring-white/60 mb-16 relative group">
-                        <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-                        <iframe 
-                            src={getEmbedUrl(school.calendar_url)} 
-                            style={{ border: 0 }} 
-                            width="100%" 
-                            height="100%" 
-                            frameBorder="0"
-                            className="w-full h-full relative z-10"
-                        ></iframe>
+                  <div className="mb-16">
+                    {/* Header for Google Calendar */}
+                    <div className="flex items-center gap-6 mb-10 animate-fade-in">
+                        <div className="px-8 py-3 rounded-full bg-white/10 border border-white/30 backdrop-blur-xl shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                            <span className="text-sm font-black uppercase tracking-[0.25em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                School Schedule
+                            </span>
+                        </div>
+                        <div className="h-px bg-gradient-to-r from-white/20 via-white/10 to-transparent flex-1 shadow-[0_0_10px_rgba(255,255,255,0.2)]"></div>
+                    </div>
+
+                    {school.google_api_key && (googleEvents.length > 0 || isLoadingGoogle) ? (
+                        /* Native Cards View */
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                            {isLoadingGoogle ? (
+                                /* Skeleton Loading State */
+                                Array(4).fill(0).map((_, i) => (
+                                    <div key={i} className="h-48 bg-white/5 animate-pulse rounded-[2.5rem] border border-white/10" />
+                                ))
+                            ) : (
+                                googleEvents.map(event => (
+                                    <GoogleCalendarCard 
+                                        key={event.id} 
+                                        event={event} 
+                                        primaryColor={branding.primaryColor} 
+                                    />
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        /* Iframe Fallback (If no API key or fetch failed/empty) */
+                        <div className="flex-none w-full h-[60vh] bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/40 ring-1 ring-white/60 relative group">
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+                            <iframe 
+                                src={getEmbedUrl(school.calendar_url)} 
+                                style={{ border: 0 }} 
+                                width="100%" 
+                                height="100%" 
+                                frameBorder="0"
+                                className="w-full h-full relative z-10"
+                            ></iframe>
+                        </div>
+                    )}
                   </div>
                 )}
 

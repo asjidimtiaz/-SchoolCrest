@@ -62,12 +62,7 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                     >
                         <Trophy size={28} strokeWidth={2.5} />
                     </div>
-                    <div className="flex flex-col items-start gap-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 leading-none">
-                            {team.gender} Athletics
-                        </span>
-                        <div className="h-1 w-12 rounded-full bg-white/40" />
-                    </div>
+                   
                 </div>
 
                 <h1 className="text-7xl lg:text-9xl font-black text-white tracking-tighter mb-8 leading-[0.9] drop-shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-1000 uppercase">
@@ -81,8 +76,8 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
             <div className="flex items-center gap-4 mb-10 border-b-2 border-slate-100 pb-6">
                 <div className="w-1.5 h-10 bg-black rounded-full" />
                 <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Archived history</span>
-                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight leading-none">Season Archive</h2>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400"> history</span>
+                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight leading-none">All Seasons</h2>
                 </div>
             </div>
             
@@ -91,45 +86,67 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                     <button 
                         key={season.id} 
                         onClick={() => setActiveSeason(season)}
-                        className="group relative w-full aspect-[4/3] rounded-[2rem] shadow-soft border border-slate-100 hover:border-black hover:shadow-premium transition-all duration-500 text-left overflow-hidden bg-slate-900 flex flex-col justify-end"
+                        className="group relative flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 text-left w-full aspect-[3/4] border border-gray-100"
                     >
-                        {/* Background Image */}
-                        <div className="absolute inset-0 z-0">
+                        {/* Year Badge - Top Left */}
+                        <div className="absolute top-4 left-4 z-20">
+                            <div className="px-4 py-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-white/20">
+                                <span className="text-sm font-black text-slate-900 tracking-tighter">
+                                    {season.year}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Image Container - Takes available space */}
+                        <div className="relative flex-1 w-full bg-slate-100 overflow-hidden transition-opacity">
                             {(season.photo_url || team.photo_url) ? (
                                 <img 
                                     src={season.photo_url || team.photo_url || ''} 
                                     alt={`${season.year} Season`}
-                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />
+                                <div className="w-full h-full flex items-center justify-center text-slate-200 bg-slate-50">
+                                    <Users size={64} strokeWidth={1} />
+                                </div>
                             )}
-                            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                        </div>
-
-                        {/* Content */}
-                        <div className="relative z-10 p-8 space-y-4">
-                            <div className="flex items-end justify-between">
-                                <span className="text-6xl font-black text-white tracking-tighter leading-none">{season.year}</span>
-                                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:bg-white group-hover:text-black transition-all duration-300 shadow-xl">
-                                    <ArrowRight size={24} strokeWidth={3} />
-                                </div>
-                            </div>
                             
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-white/90">
-                                        RECORD HIGHLIGHT: {season.record || 'ARCHIVED'}
-                                    </div>
-                                    <div className="px-4 py-1.5 bg-black/20 backdrop-blur-md rounded-xl border border-white/5 text-[9px] font-bold uppercase tracking-widest text-white/60 truncate max-w-[180px]">
-                                        HEAD COACH: {season.coach || 'STAFF'}
-                                    </div>
+                            {/* Championship Badges Overlay on Card */}
+                            {season.achievements && season.achievements.length > 0 && (
+                                <div className="absolute top-14 left-4 right-4 flex flex-col gap-2 z-20">
+                                    {season.achievements.includes('State Champions') && (
+                                        <div className="bg-amber-400 text-amber-950 px-3 py-1.5 rounded-xl font-black uppercase tracking-[0.1em] text-[9px] shadow-xl border border-white/20 flex items-center gap-2 self-start animate-fade-in">
+                                            <Trophy size={12} fill="currentColor" />
+                                            State Champions
+                                        </div>
+                                    )}
+                                    {season.achievements.includes('Region Champions') && (
+                                        <div className="bg-white/90 backdrop-blur-md text-slate-900 px-3 py-1.5 rounded-xl font-black uppercase tracking-[0.1em] text-[9px] shadow-xl border border-white/10 flex items-center gap-2 self-start animate-fade-in">
+                                            <Trophy size={12} fill="currentColor" />
+                                            Region Champions
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Subtle inner shadow for depth */}
+                            <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.1)] pointer-events-none" />
                         </div>
 
-                        {/* Visual Border Highlight */}
-                        <div className="absolute inset-0 border-2 border-white/0 rounded-[2rem] z-20 pointer-events-none group-hover:border-white/10 transition-colors" />
+                        {/* Separator Line */}
+                        <div className="h-1.5 w-full relative z-10" style={{ backgroundColor: branding.primaryColor }} />
+
+                        {/* White Footer Section */}
+                        <div className="bg-white px-4 py-5 flex flex-col items-center justify-center relative z-10 text-center">
+                            <h3 className="text-xl font-black leading-none text-slate-900 uppercase tracking-tight line-clamp-2">
+                                {season.year} Season
+                            </h3>
+                            <div className="mt-1 flex items-center gap-1.5 opacity-60">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                    {season.record}
+                                </span>
+                            </div>
+                        </div>
                     </button>
                 ))}
 
@@ -159,7 +176,26 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Season review</span>
                                 <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">{activeSeason.year} Season</h2>
                             </div>
-                            <div className="px-6 py-2.5 bg-gray-50 border border-gray-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ml-4">
+
+                            {/* Championship Badges in Header */}
+                            {activeSeason.achievements && activeSeason.achievements.length > 0 && (
+                                <div className="flex flex-wrap gap-4 ml-8">
+                                    {activeSeason.achievements.includes('State Champions') && (
+                                        <div className="bg-amber-400 text-amber-950 px-8 py-3 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-xl border-2 border-white/50 flex items-center gap-3">
+                                            <Trophy size={18} fill="currentColor" />
+                                            State Champions
+                                        </div>
+                                    )}
+                                    {activeSeason.achievements.includes('Region Champions') && (
+                                        <div className="bg-white/90 backdrop-blur-md text-slate-900 px-8 py-3 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-xl border-2 border-slate-200/50 flex items-center gap-3">
+                                            <Trophy size={18} fill="currentColor" />
+                                            Region Champions
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="px-6 py-2.5 bg-gray-50 border border-gray-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ml-auto">
                                 RECORD HIGHLIGHT: <span className="text-slate-900 ml-1">{activeSeason.record || 'N/A'}</span>
                             </div>
                             {activeSeason.coach && (
@@ -197,29 +233,8 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                                         </div>
                                     )}
                                      
-                                     {/* Championships Banner Overlay */}
-                                     {activeSeason.achievements && activeSeason.achievements.length > 0 && (
-                                        <div className="absolute top-8 left-8 right-8 flex flex-wrap gap-4">
-                                            {activeSeason.achievements.includes('State Champions') && (
-                                                <div className="bg-amber-400 text-amber-950 px-8 py-3 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl border-2 border-white/50 flex items-center gap-3 animate-slide-up">
-                                                    <Trophy size={18} fill="currentColor" />
-                                                    State Champions
-                                                </div>
-                                            )}
-                                            {activeSeason.achievements.includes('Region Champions') && (
-                                                <div className="bg-white/90 backdrop-blur-md text-slate-900 px-8 py-3 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl border-2 border-white/10 flex items-center gap-3 animate-slide-up">
-                                                    <Trophy size={18} fill="currentColor" />
-                                                    Region Champions
-                                                </div>
-                                            )}
-                                            {activeSeason.achievements.includes('Individual Honors') && (
-                                                <div className="bg-emerald-500 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl border-2 border-white/10 flex items-center gap-3 animate-slide-up">
-                                                    <Trophy size={18} fill="currentColor" />
-                                                    Individual Honors
-                                                </div>
-                                            )}
-                                        </div>
-                                     )}
+                                     {/* Championships Banner Overlay - Managed in Header now, but keeping for visual flair if needed */}
+                                     {/* {activeSeason.achievements && activeSeason.achievements.length > 0 && ( ... )} */}
                                 </div>
 
                                 {/* Summary */}

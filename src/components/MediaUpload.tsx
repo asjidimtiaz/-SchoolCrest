@@ -24,7 +24,7 @@ export default function MediaUpload({
   label = "Program Media", 
   description = "Upload a photo or video",
   className = "",
-  name = "media_file",
+  name,
   required = false,
   recommendation
 }: MediaUploadProps) {
@@ -53,13 +53,9 @@ export default function MediaUpload({
     const type = isImage ? 'image' : 'video'
     setMediaType(type)
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      setPreview(result)
-      onMediaChange?.(result, type)
-    }
-    reader.readAsDataURL(file)
+    const objectUrl = URL.createObjectURL(file)
+    setPreview(objectUrl)
+    onMediaChange?.(objectUrl, type)
     onFileSelect?.(file)
   }
 
@@ -122,7 +118,7 @@ export default function MediaUpload({
           name={name}
           required={required && !preview}
         />
-        <input type="hidden" name="media_type" value={mediaType} />
+        <input type="hidden" value={mediaType} />
 
         {preview ? (
           <div className="relative w-full h-full animate-fade-in bg-black">
