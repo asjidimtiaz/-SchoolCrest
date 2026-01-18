@@ -123,6 +123,9 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Selection Category</label>
                 <div className="space-y-2">
+                    {/* Always send the category value */}
+                    <input type="hidden" name="category" value={formData.category} />
+
                     <select
                         value={defaultCategories.includes(formData.category) ? formData.category : 'Other'}
                         onChange={(e) => {
@@ -146,9 +149,9 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
 
                     {(isCustomCategory || !defaultCategories.includes(formData.category)) && (
                         <input
-                            name="category"
+                            // Don't name this since the hidden input takes priority
                             value={formData.category}
-                            onChange={handleChange}
+                            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                             required
                             className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
                             placeholder="Enter custom category (e.g. Administrator, Fan, etc.)"

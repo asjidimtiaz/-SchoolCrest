@@ -48,6 +48,11 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     roster: [] as any[]
   })
 
+  const defaultSportCategories = ['Athletics', 'Clubs', 'Academics', 'Fine Arts', 'Activities']
+  const [isCustomCategory, setIsCustomCategory] = useState(
+    formData.sport_category !== '' && !defaultSportCategories.includes(formData.sport_category)
+  )
+
   const [seasons, setSeasons] = useState<any[]>([])
   const [loadingSeasons, setLoadingSeasons] = useState(false)
 
@@ -115,7 +120,47 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                 <input type="hidden" name="school_id" value={schoolId} />
                 {isEdit && <input type="hidden" name="id" value={team?.id} />}
                 <input type="hidden" name="media_type" value={formData.media_type} />
-                <input type="hidden" name="sport_category" value={formData.sport_category || 'Athletics'} />
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Program Category</label>
+                        <div className="space-y-2">
+                            {/* Always send the category value */}
+                            <input type="hidden" name="sport_category" value={formData.sport_category} />
+
+                            <div className="relative">
+                                <select
+                                    value={defaultSportCategories.includes(formData.sport_category) ? formData.sport_category : 'Other'}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        if (val === 'Other') {
+                                            setIsCustomCategory(true)
+                                            setFormData(prev => ({ ...prev, sport_category: '' }))
+                                        } else {
+                                            setIsCustomCategory(false)
+                                            setFormData(prev => ({ ...prev, sport_category: val }))
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+                                >
+                                    {defaultSportCategories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                    <option value="Other">Other...</option>
+                                </select>
+                                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 rotate-90 pointer-events-none" size={14} />
+                            </div>
+
+                            {(isCustomCategory || (formData.sport_category !== '' && !defaultSportCategories.includes(formData.sport_category))) && (
+                                <input
+                                    value={formData.sport_category}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, sport_category: e.target.value }))}
+                                    required
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
+                                    placeholder="Enter custom category (e.g. Winter Sports, Clubs, etc.)"
+                                    autoFocus={isCustomCategory}
+                                />
+                            )}
+                        </div>
+                    </div>
                 <input type="hidden" name="roster" value={JSON.stringify(formData.roster)} />
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
                         <div className="glass-card p-6 rounded-2xl border-none space-y-5">
