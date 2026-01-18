@@ -30,12 +30,19 @@ export default function InducteeCard({ inductee, onSelect, primaryColor }: Induc
       {/* Image Container - Takes available space */}
       <div className="relative flex-1 w-full bg-slate-100 overflow-hidden  transition-opacity">
         {inductee.photo_url && !hasError ? (
-          <img
-            src={inductee.photo_url}
-            alt={inductee.name}
-            className="w-full h-full object-cover transition-transform duration-700 "
-            onError={() => setHasError(true)}
-          />
+          <>
+            {/* Blurred Background for non-aspect images */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110"
+              style={{ backgroundImage: `url(${inductee.photo_url})` }}
+            />
+            <img
+              src={inductee.photo_url}
+              alt={inductee.name}
+              className="w-full h-full object-contain relative z-10 transition-transform duration-700 pointer-events-none"
+              onError={() => setHasError(true)}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
             <User size={64} strokeWidth={1} />

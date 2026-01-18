@@ -92,11 +92,18 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                         {/* Image Container - Takes available space */}
                         <div className="relative flex-1 w-full bg-slate-100 overflow-hidden transition-opacity">
                             {(season.photo_url || team.photo_url) ? (
-                                <img 
-                                    src={season.photo_url || team.photo_url || ''} 
-                                    alt={`${season.year} Season`}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                                <>
+                                    {/* Blurred Background for non-aspect images */}
+                                    <div 
+                                        className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110"
+                                        style={{ backgroundImage: `url(${season.photo_url || team.photo_url})` }}
+                                    />
+                                    <img 
+                                        src={season.photo_url || team.photo_url || ''} 
+                                        alt={`${season.year} Season`}
+                                        className="w-full h-full object-contain relative z-10 transition-transform duration-700 group-hover:scale-105"
+                                    />
+                                </>
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-200 bg-slate-50">
                                     <Users size={64} strokeWidth={1} />
@@ -214,11 +221,18 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                                 {/* Season Photo */}
                                 <div className="aspect-video w-full rounded-[3rem] overflow-hidden shadow-premium border border-gray-100 relative bg-gray-50">
                                     {(activeSeason.photo_url || team.photo_url) ? (
-                                        <img 
-                                            src={activeSeason.photo_url || team.photo_url || ''} 
-                                            className="w-full h-full object-cover" 
-                                            alt={`${activeSeason.year} Team`} 
-                                        />
+                                        <>
+                                            {/* Blurred Background for non-landscape images */}
+                                            <div 
+                                                className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110"
+                                                style={{ backgroundImage: `url(${activeSeason.photo_url || team.photo_url})` }}
+                                            />
+                                            <img 
+                                                src={activeSeason.photo_url || team.photo_url || ''} 
+                                                className="w-full h-full object-contain relative z-10" 
+                                                alt={`${activeSeason.year} Team`} 
+                                            />
+                                        </>
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-200">
                                             <Users size={80} strokeWidth={1} />

@@ -33,12 +33,19 @@ export default function TeamCard({ team, season, primaryColor, showYear }: TeamC
       {/* Image Container - Takes available space */}
       <div className="relative flex-1 w-full bg-slate-100 overflow-hidden transition-opacity">
         {photoUrl && !hasError ? (
-          <img
-            src={photoUrl}
-            alt={`${team.name} ${season?.year || ''}`}
-            className="w-full h-full object-cover transition-transform duration-700"
-            onError={() => setHasError(true)}
-          />
+          <>
+            {/* Blurred Background for non-aspect images */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110"
+              style={{ backgroundImage: `url(${photoUrl})` }}
+            />
+            <img
+              src={photoUrl}
+              alt={`${team.name} ${season?.year || ''}`}
+              className="w-full h-full object-contain relative z-10 transition-transform duration-700"
+              onError={() => setHasError(true)}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
             <Users size={64} strokeWidth={1} />

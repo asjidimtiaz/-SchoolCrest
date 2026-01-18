@@ -81,7 +81,7 @@ export default function TeamsGrid({ seasons }: { seasons: TeamSeasonWithTeam[] }
                 </div>
                 <input
                     type="text"
-                    placeholder="Search history, teams, themes..."
+                    placeholder="Search "
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-slate-900 placeholder:text-slate-400 h-full w-full"

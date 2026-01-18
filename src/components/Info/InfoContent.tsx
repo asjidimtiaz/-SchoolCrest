@@ -186,11 +186,16 @@ export default function InfoContent({ school, galleryImages }: InfoContentProps)
                              
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-48 md:h-56">
                                 {galleryImages.slice(0, 3).map((img, i) => (
-                                    <div key={i} className="relative rounded-2xl overflow-hidden h-full w-full">
+                                    <div key={i} className="relative rounded-2xl overflow-hidden h-full w-full bg-slate-50">
+                                        {/* Blurred Background for non-aspect images */}
+                                        <div 
+                                            className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110"
+                                            style={{ backgroundImage: `url(${img.image_url})` }}
+                                        />
                                         <img 
                                             src={img.image_url} 
                                             alt="Campus Life" 
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-contain relative z-10"
                                         />
                                     </div>
                                 ))}

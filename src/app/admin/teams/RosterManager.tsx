@@ -180,7 +180,7 @@ export default function RosterManager({
                          <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-gray-100">
                             <Plus size={16} className="text-gray-300" />
                          </div>
-                         <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">No players addedyet.</p>
+                         <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">No players added yet.</p>
                      </div>
                  )}
 
