@@ -88,14 +88,6 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                         onClick={() => setActiveSeason(season)}
                         className="group relative flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 text-left w-full aspect-[3/4] border border-gray-100"
                     >
-                        {/* Year Badge - Top Left */}
-                        <div className="absolute top-4 left-4 z-20">
-                            <div className="px-4 py-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-white/20">
-                                <span className="text-sm font-black text-slate-900 tracking-tighter">
-                                    {season.year}
-                                </span>
-                            </div>
-                        </div>
 
                         {/* Image Container - Takes available space */}
                         <div className="relative flex-1 w-full bg-slate-100 overflow-hidden transition-opacity">
@@ -113,7 +105,7 @@ export default function TeamDetailContent({ team, seasons, seasonYear }: TeamDet
                             
                             {/* Championship Badges Overlay on Card */}
                             {season.achievements && season.achievements.length > 0 && (
-                                <div className="absolute top-14 left-4 right-4 flex flex-col gap-2 z-20">
+                                <div className="absolute top-4 left-4 right-4 flex flex-col gap-2 z-20">
                                     {season.achievements.includes('State Champions') && (
                                         <div className="bg-amber-400 text-amber-950 px-3 py-1.5 rounded-xl font-black uppercase tracking-[0.1em] text-[9px] shadow-xl border border-white/20 flex items-center gap-2 self-start animate-fade-in">
                                             <Trophy size={12} fill="currentColor" />
