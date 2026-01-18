@@ -50,6 +50,9 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
     return ''
   }
 
+  const defaultCategories = ['Athlete', 'Coach', 'Contributor', 'Team']
+  const [isCustomCategory, setIsCustomCategory] = useState(!defaultCategories.includes(inductee?.category || 'Athlete'))
+
   // Live Preview State
   const [formData, setFormData] = useState({
     name: inductee?.name || '',
@@ -119,17 +122,40 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
 
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Selection Category</label>
-                <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
-                >
-                    <option value="Athlete">Athlete</option>
-                    <option value="Coach">Coach</option>
-                    <option value="Contributor">Contributor</option>
-                    <option value="Team">Team</option>
-                </select>
+                <div className="space-y-2">
+                    <select
+                        value={defaultCategories.includes(formData.category) ? formData.category : 'Other'}
+                        onChange={(e) => {
+                            const val = e.target.value
+                            if (val === 'Other') {
+                                setIsCustomCategory(true)
+                                setFormData(prev => ({ ...prev, category: '' }))
+                            } else {
+                                setIsCustomCategory(false)
+                                setFormData(prev => ({ ...prev, category: val }))
+                            }
+                        }}
+                        className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+                    >
+                        <option value="Athlete">Athlete</option>
+                        <option value="Coach">Coach</option>
+                        <option value="Contributor">Contributor</option>
+                        <option value="Team">Team</option>
+                        <option value="Other">Other...</option>
+                    </select>
+
+                    {(isCustomCategory || !defaultCategories.includes(formData.category)) && (
+                        <input
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            required
+                            className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
+                            placeholder="Enter custom category (e.g. Administrator, Fan, etc.)"
+                            autoFocus={isCustomCategory}
+                        />
+                    )}
+                </div>
             </div>
 
             <ImageUpload 
