@@ -1,4 +1,5 @@
 import ClientKioskShell from '@/components/ClientKioskShell'
+import { KioskProvider } from '@/context/KioskContext'
 
 export default function KioskLayout({
   children,
@@ -6,8 +7,10 @@ export default function KioskLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClientKioskShell>
-      {children}
-    </ClientKioskShell>
+    <KioskProvider>
+      <ClientKioskShell>
+        {children}
+      </ClientKioskShell>
+    </KioskProvider>
   )
 }

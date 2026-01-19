@@ -1,19 +1,10 @@
 'use client'
 
-import { Maximize, Minimize } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Maximize } from 'lucide-react'
+import { useKiosk } from '@/context/KioskContext'
 
 export default function FullScreenToggle() {
-  const [isFullscreen, setIsFullscreen] = useState(false)
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+  const { isFullscreen } = useKiosk()
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

@@ -60,40 +60,23 @@ export default function HallOfFameGrid({ initialData }: { initialData: Inductee[
           </div>
         </div>
 
-        <div className="flex-1 max-w-sm">
-          {categories.length > 5 ? (
-            <div className="relative">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-6 py-2.5 bg-white border border-gray-200 rounded-[2rem] shadow-xl text-sm font-black uppercase tracking-widest text-slate-900 outline-none appearance-none cursor-pointer hover:border-slate-300 transition-all"
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <ChevronDown size={18} />
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-1.5 p-1 bg-white border border-gray-200 rounded-[2.5rem] shadow-xl overflow-x-auto no-scrollbar">
+        <div className="flex-1 max-w-xs shrink-0">
+          <div className="relative">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-6 py-3 bg-white border border-gray-100 rounded-[2rem] shadow-xl text-xs font-black uppercase tracking-[0.2em] text-slate-600 outline-none appearance-none cursor-pointer hover:text-slate-900 transition-all focus:ring-2 focus:ring-black/5"
+            >
               {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-6 py-2.5 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                    selectedCategory === cat 
-                      ? 'text-white shadow-lg' 
-                      : 'text-slate-500 hover:bg-slate-100'
-                  }`}
-                  style={selectedCategory === cat ? { backgroundColor: branding.primaryColor } : {}}
-                >
-                  {cat}
-                </button>
+                <option key={cat} value={cat}>
+                  {cat === 'All' ? 'ALL CATEGORIES' : cat.toUpperCase()}
+                </option>
               ))}
+            </select>
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <ChevronDown size={14} strokeWidth={3} />
             </div>
-          )}
+          </div>
         </div>
       </div>
 
