@@ -116,6 +116,7 @@ h1, h2, h3, h4, .font-display {
 
 html,
 body {
+  overflow-x: hidden;
   overscroll-behavior: none;
   touch-action: pan-y;
   background-color: hsl(var(--background));
@@ -144,6 +145,21 @@ body {
 @media (pointer: fine) {
   body {
     cursor: auto;
+  }
+}
+
+@media (max-height: 600px) {
+  .screensaver-title {
+    font-size: 44px !important;
+  }
+  .screensaver-tagline {
+    font-size: 16px !important;
+    margin-bottom: 2rem !important;
+  }
+  .screensaver-button {
+    padding: 10px 22px !important;
+    font-size: 30px !important;
+    border-width: 4px !important;
   }
 }
 

@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useClerk } from "@clerk/nextjs";
 import {
   LogOut,
   User,
   Settings,
   ChevronDown,
-  Mail,
   ShieldCheck,
 } from "lucide-react";
-import Link from "next/link";
 
 interface SidebarProfileProps {
   admin: {
@@ -22,12 +22,13 @@ interface SidebarProfileProps {
   primaryColor?: string;
 }
 
-export default function SidebarProfile({
+export default function AdminSidebarProfile({
   admin,
   schoolName,
   profileLink = "/admin/profile",
   primaryColor = "#3b82f6",
 }: SidebarProfileProps) {
+  const { signOut } = useClerk();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -128,12 +129,13 @@ export default function SidebarProfile({
                 Manage Account
               </Link>
 
-              <form action="/auth/signout" method="post" className="w-full">
-                <button className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50/50 hover:bg-red-50 text-red-500 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border border-transparent hover:border-red-100 active:scale-[0.98]">
-                  <LogOut size={12} className="opacity-60" />
-                  Sign Out
-                </button>
-              </form>
+              <button 
+                onClick={() => signOut()}
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50/50 hover:bg-red-50 text-red-500 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border border-transparent hover:border-red-100 active:scale-[0.98]"
+              >
+                <LogOut size={12} className="opacity-60" />
+                Sign Out
+              </button>
             </div>
           </div>
 

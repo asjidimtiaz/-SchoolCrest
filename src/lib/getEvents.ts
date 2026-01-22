@@ -1,4 +1,4 @@
-import { supabaseServer } from './supabaseServer'
+import { supabasePublic } from './supabaseServer'
 
 export interface SchoolEvent {
   id: string
@@ -14,7 +14,7 @@ export interface SchoolEvent {
 export async function getEvents(schoolId: string): Promise<SchoolEvent[]> {
   const now = new Date().toISOString()
   
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabasePublic
     .from('events')
     .select('*')
     .eq('school_id', schoolId)

@@ -1,4 +1,4 @@
-import { supabaseServer } from './supabaseServer'
+import { supabasePublic } from './supabaseServer'
 
 export interface Team {
   id: string
@@ -27,7 +27,7 @@ export interface TeamSeason {
 
 export async function getTeams(schoolId: string): Promise<Team[]> {
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabasePublic
       .from('teams')
       .select('*')
       .eq('school_id', schoolId)
@@ -47,7 +47,7 @@ export async function getTeams(schoolId: string): Promise<Team[]> {
 
 export async function getTeam(teamId: string): Promise<Team | null> {
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabasePublic
       .from('teams')
       .select('*')
       .eq('id', teamId)
@@ -67,7 +67,7 @@ export async function getTeam(teamId: string): Promise<Team | null> {
 
 export async function getTeamSeasons(teamId: string): Promise<TeamSeason[]> {
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabasePublic
       .from('team_seasons')
       .select('*')
       .eq('team_id', teamId)
@@ -91,7 +91,7 @@ export async function getTeamsWithLatestSeason(schoolId: string): Promise<(Team 
     
     // Fetch latest season for each team
     const teamsWithSeason = await Promise.all(teams.map(async (team) => {
-      const { data: seasons, error } = await supabaseServer
+      const { data: seasons, error } = await supabasePublic
         .from('team_seasons')
         .select('*')
         .eq('team_id', team.id)
@@ -123,7 +123,7 @@ export interface TeamSeasonWithTeam extends TeamSeason {
 export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWithTeam[]> {
   try {
     // 1. Get all teams for the school first
-    const { data: teams, error: teamsError } = await supabaseServer
+    const { data: teams, error: teamsError } = await supabasePublic
       .from('teams')
       .select('*')
       .eq('school_id', schoolId)
@@ -137,7 +137,7 @@ export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWit
     // optimize: separate query or join. Supabase JS 'select(*, teams!inner(*))' is better but strict typing can be tricky.
     // Let's try the join syntax if relation is established, else manual map.
     // Assuming standard resizing logic, simple join:
-    const { data: seasons, error: seasonsError } = await supabaseServer
+    const { data: seasons, error: seasonsError } = await supabasePublic
       .from('team_seasons')
       .select(`
         *,
@@ -151,7 +151,7 @@ export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWit
       console.warn('Join fetch failed, trying manual composition...', seasonsError.message)
       
       const teamIds = teams.map(t => t.id)
-      const { data: rawSeasons, error: rawError } = await supabaseServer
+      const { data: rawSeasons, error: rawError } = await supabasePublic
         .from('team_seasons')
         .select('*')
         .in('team_id', teamIds)
@@ -176,7 +176,7 @@ export async function getTeamYears(schoolId: string): Promise<{ team_id: string;
   try {
     // We need to filter seasons by teams belonging to the school.
     // Ideally we join, but let's do the two-step for safety if RLS is tricky on joins.
-    const { data: teams, error: teamsError } = await supabaseServer
+    const { data: teams, error: teamsError } = await supabasePublic
       .from('teams')
       .select('id')
       .eq('school_id', schoolId)
@@ -187,7 +187,7 @@ export async function getTeamYears(schoolId: string): Promise<{ team_id: string;
 
     const teamIds = teams.map(t => t.id)
 
-    const { data: seasons, error: seasonsError } = await supabaseServer
+    const { data: seasons, error: seasonsError } = await supabasePublic
       .from('team_seasons')
       .select('team_id, year')
       .in('team_id', teamIds)

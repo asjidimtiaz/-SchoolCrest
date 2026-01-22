@@ -1,10 +1,10 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import CreateAdminForm from './CreateAdminForm'
 
 export default async function NewAdminPage() {
-  const { data: schools } = await supabaseServer
+  const { data: schools } = await supabaseAdmin
     .from('schools')
     .select('id, name, slug')
     .eq('active', true)

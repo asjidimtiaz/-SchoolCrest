@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabasePublic } from '@/lib/supabaseServer'
 
 export interface TenantContext {
   school: {
@@ -26,7 +26,7 @@ export async function getTenantContext(): Promise<TenantContext> {
     const headersList = await headers()
     const slug = headersList.get('x-school-slug') || 'schoolcrestinteractive'
 
-    const { data: school, error } = await supabaseServer
+    const { data: school, error } = await supabasePublic
       .from('schools')
       .select('id, name, slug, primary_color, secondary_color, accent_color, logo_url, tagline, active')
       .eq('slug', slug)
@@ -66,7 +66,7 @@ export async function getTenantContext(): Promise<TenantContext> {
  * Get school ID from slug - useful for database operations
  */
 export async function getSchoolIdFromSlug(slug: string): Promise<string | null> {
-  const { data } = await supabaseServer
+  const { data } = await supabasePublic
     .from('schools')
     .select('id')
     .eq('slug', slug)
@@ -79,7 +79,7 @@ export async function getSchoolIdFromSlug(slug: string): Promise<string | null> 
  * Check if a slug is available for new school registration
  */
 export async function isSlugAvailable(slug: string): Promise<boolean> {
-  const { data } = await supabaseServer
+  const { data } = await supabasePublic
     .from('schools')
     .select('id')
     .eq('slug', slug)

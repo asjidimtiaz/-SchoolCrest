@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Globe, Settings, ArrowUpRight, Search } from 'lucide-react'
 import SchoolStatusToggle from './SchoolStatusToggle'
+import SchoolDemoToggle from './SchoolDemoToggle'
 
 interface School {
   id: string
@@ -100,6 +101,7 @@ export default function ClientSchoolList({ schools }: { schools: School[] }) {
                   <div className="w-px h-8 bg-gray-100 mx-2 hidden md:block"></div>
                   
                   <SchoolStatusToggle schoolId={school.id} currentStatus={school.active !== false} />
+                  <SchoolDemoToggle schoolId={school.id} isDemo={school.is_demo} />
                </div>
             </div>
           ))

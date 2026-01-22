@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { ArrowLeft, Shield, Globe, Power, Trash2, Calendar, Building2, ExternalLink, Mail, User, Clock, AlertTriangle } from 'lucide-react'
 import { toggleSchoolStatus, deleteSchool } from '../../actions'
@@ -7,13 +7,13 @@ import PurgeSchoolButton from '../PurgeSchoolButton'
 export default async function SchoolSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   
-  const { data: school, error } = await supabaseServer
+  const { data: school, error } = await supabaseAdmin
     .from('schools')
     .select('*')
     .eq('id', id)
     .single()
 
-  const { data: admin } = await supabaseServer
+  const { data: admin } = await supabaseAdmin
     .from('admins')
     .select('id, role')
     .eq('school_id', id)

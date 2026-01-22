@@ -1,34 +1,23 @@
 'use server'
 
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 
 export async function updateProfile(prevState: any, formData: FormData) {
   const fullName = formData.get('fullName') as string
-  const cookieStore = await cookies()
+  const { userId } = await auth()
+  
+  if (!userId) return { error: 'Not authenticated', success: false }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set(name: string, value: string, options: any) { cookieStore.set({ name, value, ...options }) },
-        remove(name: string, options: any) { cookieStore.set({ name, value: '', ...options }) },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated', success: false }
+  const supabase = await getSupabaseServer()
 
   // Fetch admin data early to use for both upload path and redirect logic
   const { data: adminData } = await supabase
     .from('admins')
     .select('school_id, role')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single()
 
   const school_id = adminData?.school_id
@@ -43,12 +32,12 @@ export async function updateProfile(prevState: any, formData: FormData) {
     
     if (school_id) {
       const fileExt = avatarFile.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const fileName = `${userId}-${Date.now()}.${fileExt}`
       filePath = `avatars/${school_id}/${fileName}`
     } else if (isSuperAdmin) {
       // Fallback for super admins or system users
       const fileExt = avatarFile.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const fileName = `${userId}-${Date.now()}.${fileExt}`
       filePath = `avatars/system/${fileName}`
     }
 
@@ -76,7 +65,7 @@ export async function updateProfile(prevState: any, formData: FormData) {
       full_name: fullName,
       avatar_url: avatar_url
     })
-    .eq('id', user.id)
+    .eq('id', userId)
 
   if (error) {
     console.error('Profile update error:', error.message)

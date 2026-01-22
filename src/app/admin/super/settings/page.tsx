@@ -1,7 +1,7 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export default async function PlatformSettingsPage() {
-  const { data: settings } = await supabaseServer
+  const { data: settings } = await supabaseAdmin
     .from('platform_settings')
     .select('*')
     .order('key')

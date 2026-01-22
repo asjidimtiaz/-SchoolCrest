@@ -8,32 +8,30 @@ export default async function AdminAccountsPage() {
     .from('admins')
     .select(`
       id,
+      email,
+      full_name,
       role,
       active,
+      school_id,
       last_login,
       created_at
     `)
     .order('created_at', { ascending: false })
-
-  // Get user emails from auth.users
-  const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
   
   // Get schools for mapping
   const { data: schools } = await supabaseAdmin
     .from('schools')
     .select('id, name, slug')
 
-  // Merge data
+  // Prepare data for display
   const adminsWithDetails = admins?.map(admin => {
-    const user = users?.find(u => u.id === admin.id)
-    const school = schools?.find(s => s.id === (user?.user_metadata as any)?.school_id)
+    const school = schools?.find(s => s.id === admin.school_id)
     
     return {
       ...admin,
-      email: user?.email || 'Unknown',
+      email: admin.email || 'Invite Sent',
       school_name: school?.name || 'N/A',
       school_slug: school?.slug,
-      auth_last_login: user?.last_sign_in_at
     }
   }) || []
 
@@ -109,7 +107,7 @@ export default async function AdminAccountsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {adminsWithDetails.map((admin) => (
+            {adminsWithDetails.map((admin, index) => (
               <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-3">
@@ -143,19 +141,22 @@ export default async function AdminAccountsPage() {
                 </td>
                 <td className="px-8 py-6">
                   <span className="text-sm text-gray-500 font-medium">
-                    {admin.auth_last_login || admin.last_login
-                      ? new Date(admin.auth_last_login || admin.last_login).toLocaleDateString() 
+                    {admin.last_login
+                      ? new Date(admin.last_login).toLocaleDateString() 
                       : 'Never'}
                   </span>
                 </td>
                 <td className="px-8 py-6 text-right">
-                  <AdminActions admin={{
-                    id: admin.id,
-                    email: admin.email,
-                    role: admin.role,
-                    active: admin.active !== false,
-                    school_name: admin.school_name
-                  }} />
+                  <AdminActions 
+                    admin={{
+                      id: admin.id,
+                      email: admin.email,
+                      role: admin.role,
+                      active: admin.active !== false,
+                      school_name: admin.school_name
+                    }} 
+                    alignTop={index >= adminsWithDetails.length - 2 && index !== 0}
+                  />
                 </td>
               </tr>
             ))}

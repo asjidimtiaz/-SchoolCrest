@@ -2,66 +2,69 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { clerkClient } from '@clerk/nextjs/server'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function createAdminAccount(prevState: any, formData: FormData) {
   try {
-    // Use service role key for admin operations
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return { error: "Server configuration error: Missing Supabase credentials" }
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-    
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const role = formData.get('role') as string
     const school_id = formData.get('school_id') as string | null
 
-    // Create the user in Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    })
-
-    if (authError) {
-      console.error("Error creating auth user:", authError.message)
-      return { error: authError.message }
+    if (!email || !password || !role) {
+      return { error: "Missing required fields" }
     }
 
-    if (!authData.user) {
-      return { error: "Failed to create user" }
+    // 1. Create User in Clerk
+    let clerkUser;
+    try {
+      const client = await clerkClient()
+      clerkUser = await client.users.createUser({
+        emailAddress: [email],
+        password,
+        skipPasswordChecks: false,
+        skipPasswordRequirement: false,
+      })
+    } catch (err: any) {
+      console.error("Clerk Create Error:", err)
+      // Extract nice error message if possible
+      const message = err.errors?.[0]?.longMessage || err.message || "Failed to create user in Clerk"
+      return { error: message }
     }
 
-    // Create the admin record
+    if (!clerkUser) {
+      return { error: "Failed to create user in Clerk (Unknown error)" }
+    }
+
+    // 2. Create Admin Record in Supabase (using Clerk ID)
     const { error: adminError } = await supabaseAdmin
       .from('admins')
       .insert({
-        id: authData.user.id,
+        id: clerkUser.id,
+        email: email, // Store email for reference/display
         school_id: role === 'school_admin' ? school_id : null,
         role,
         active: true,
+        full_name: '', // Optional, or prompt for it
       })
 
     if (adminError) {
-      console.error("Error creating admin record:", adminError.message)
-      // Try to delete the auth user if admin record creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      return { error: adminError.message }
+      console.error("Error creating details record:", adminError.message)
+      // Rollback Clerk user if DB fails (Best Effort)
+      try {
+        const client = await clerkClient()
+        await client.users.deleteUser(clerkUser.id)
+      } catch (delErr) {
+        console.error("Failed to rollback Clerk user:", delErr)
+      }
+      return { error: "Failed to save admin details: " + adminError.message }
     }
 
     revalidatePath('/admin/super/admins')
     return { success: true }
   } catch (err) {
     console.error("FATAL in createAdminAccount:", err)
-    return { error: "An unexpected error occurred while creating the admin account." }
+    return { error: "An unexpected error occurred." }
   }
 }

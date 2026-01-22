@@ -1,16 +1,16 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { ArrowLeft, Mail, Building2, Send } from 'lucide-react'
 import InviteAdminForm from './InviteAdminForm'
 
 export default async function InviteAdminPage() {
-  const { data: schools } = await supabaseServer
+  const { data: schools } = await supabaseAdmin
     .from('schools')
     .select('id, name, slug')
     .eq('active', true)
     .order('name')
 
-  const { data: pendingInvites } = await supabaseServer
+  const { data: pendingInvites } = await supabaseAdmin
     .from('admin_invites')
     .select('id, email, school_id, created_at, expires_at, accepted_at, token')
     .is('accepted_at', null)

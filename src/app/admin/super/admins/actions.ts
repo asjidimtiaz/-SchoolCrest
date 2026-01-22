@@ -1,22 +1,11 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
-}
 
 export async function toggleAdminStatus(adminId: string, newStatus: boolean) {
   try {
-    const supabase = getSupabaseAdmin()
-    
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('admins')
       .update({ active: newStatus })
       .eq('id', adminId)
@@ -36,9 +25,7 @@ export async function toggleAdminStatus(adminId: string, newStatus: boolean) {
 
 export async function changeAdminRole(adminId: string, newRole: string) {
   try {
-    const supabase = getSupabaseAdmin()
-    
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('admins')
       .update({ role: newRole })
       .eq('id', adminId)
@@ -58,9 +45,7 @@ export async function changeAdminRole(adminId: string, newRole: string) {
 
 export async function reassignAdminToSchool(adminId: string, newSchoolId: string | null) {
   try {
-    const supabase = getSupabaseAdmin()
-    
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('admins')
       .update({ school_id: newSchoolId })
       .eq('id', adminId)
@@ -80,10 +65,8 @@ export async function reassignAdminToSchool(adminId: string, newSchoolId: string
 
 export async function deleteAdmin(adminId: string) {
   try {
-    const supabase = getSupabaseAdmin()
-    
     // Delete from admins table
-    const { error: adminError } = await supabase
+    const { error: adminError } = await supabaseAdmin
       .from('admins')
       .delete()
       .eq('id', adminId)
@@ -93,13 +76,9 @@ export async function deleteAdmin(adminId: string) {
       return { error: adminError.message }
     }
 
-    // Delete from auth
-    const { error: authError } = await supabase.auth.admin.deleteUser(adminId)
-
-    if (authError) {
-      console.error("Error deleting auth user:", authError.message)
-      // Don't fail completely - admin record is already deleted
-    }
+    // Note: We don't delete from Clerk automatically here 
+    // to avoid accidental data loss across shared accounts,
+    // but the user will lose authorization immediately.
 
     revalidatePath('/admin/super/admins')
     return { success: true }

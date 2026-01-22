@@ -1,5 +1,5 @@
 import { getSchool } from '@/lib/getSchool'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 import { Trophy, Users, Calendar, ArrowRight, PlusCircle, Settings, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
@@ -9,11 +9,13 @@ export default async function AdminDashboard() {
 
   if (!school) return null
 
-  // Fetch real-time counts
+  // Fetch real-time counts using authenticated client
+  const supabase = await getSupabaseServer()
+  
   const [hofRes, teamsRes, eventsRes] = await Promise.all([
-    supabaseServer.from('hall_of_fame').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
-    supabaseServer.from('teams').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
-    supabaseServer.from('events').select('*', { count: 'exact', head: true }).eq('school_id', school.id).gte('start_time', new Date().toISOString())
+    supabase.from('hall_of_fame').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
+    supabase.from('events').select('*', { count: 'exact', head: true }).eq('school_id', school.id).gte('start_time', new Date().toISOString())
   ])
 
   const stats = [

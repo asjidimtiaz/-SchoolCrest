@@ -1,11 +1,11 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { ArrowLeft, Building2, Palette, Upload, UserPlus, Check, ChevronRight } from 'lucide-react'
 import SchoolOnboardingWizard from './SchoolOnboardingWizard'
 
 export default async function NewSchoolPage() {
   // Get list of existing slugs for validation
-  const { data: schools } = await supabaseServer
+  const { data: schools } = await supabaseAdmin
     .from('schools')
     .select('slug')
 

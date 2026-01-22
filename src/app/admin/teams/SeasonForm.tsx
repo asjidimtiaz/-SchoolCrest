@@ -5,7 +5,7 @@ import { upsertSeason } from './actions'
 import { TeamSeason } from '@/lib/getTeams'
 import MediaUpload from '@/components/MediaUpload'
 import RosterManager from './RosterManager'
-import { supabaseClient } from '@/lib/supabaseClient'
+
 
 interface SeasonFormProps {
     team_id: string

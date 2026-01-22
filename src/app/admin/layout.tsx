@@ -1,10 +1,12 @@
 import { getSchool } from '@/lib/getSchool'
-import Link from 'next/link'
-import { LayoutDashboard, Trophy, Users, Calendar, Info, LogOut, ExternalLink, ShieldAlert, UserCircle } from 'lucide-react'
-import { cookies, headers } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { ShieldAlert, LogOut, ExternalLink } from 'lucide-react'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { currentUser } from '@clerk/nextjs/server'
+import { getSupabaseServer } from '@/lib/supabaseServer'
+import { syncAdminIdentity } from '@/lib/syncAdmin'
 import AdminController from '@/components/AdminController'
-import SidebarProfile from '@/components/SidebarProfile'
+import AdminSidebarProfile from '@/components/AdminSidebarProfile'
 import AdminNav from '@/components/AdminNav'
 
 export const dynamic = 'force-dynamic'
@@ -14,20 +16,71 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Check if this is a Super Admin route or Login page or Accept Invite page
+  // Check if this is a Super Admin route first (these handle their own auth)
   const headersList = await headers()
   const pathname = headersList.get('x-current-path') || ''
   const isSuperAdminRoute = pathname.startsWith('/admin/super')
-  const isLoginPage = pathname.startsWith('/admin/login')
-  const isAcceptInvitePage = pathname.startsWith('/admin/accept-invite')
 
-  // If it's a Super Admin route or login page, render children without sidebar
-  if (isSuperAdminRoute || isLoginPage || isAcceptInvitePage) {
+  if (isSuperAdminRoute) {
+    return <>{children}</>
+  }
+
+  // Try to get current user - if this fails, Clerk is not configured properly
+  let user = null
+  let adminProfile = null
+  let clerkError = null
+
+  try {
+    user = await currentUser()
+    if (user) {
+      adminProfile = await syncAdminIdentity()
+    }
+  } catch (error) {
+    clerkError = error
+    console.error('[AdminLayout] Clerk error:', error)
+  }
+
+  // Redirect Super Admins to their dashboard if they hit the root /admin
+  if (adminProfile?.role === 'super_admin' && !pathname.startsWith('/admin/super')) {
+    redirect('/admin/super')
+  }
+
+  // If Clerk is erroring, show setup instructions
+  if (clerkError) {
+    return (
+      <html>
+        <body className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-2xl bg-white rounded-xl shadow-lg p-8">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Clerk Configuration Error</h1>
+            <p className="text-gray-700 mb-4">
+              Clerk is not configured properly. Please complete the Clerk-Supabase integration:
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
+              <li>Go to Clerk Dashboard → Integrations</li>
+              <li>Find "Supabase" and click Configure</li>
+              <li>Add your Supabase Project URL and JWT Secret</li>
+              <li>Go to Supabase Dashboard → Authentication → Providers</li>
+              <li>Add Clerk as a provider with your JWKS URL</li>
+            </ol>
+            <a
+              href="/"
+              className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800"
+            >
+              Go to Home
+            </a>
+          </div>
+        </body>
+      </html>
+    )
+  }
+
+  // If no user, they need to sign in (Clerk will redirect)
+  if (!user) {
     return <AdminController>{children}</AdminController>
   }
 
   const school = await getSchool()
-  
+
   // Strict Isolation: If no school is found for a logged-in admin, block access.
   if (!school) {
     return (
@@ -40,37 +93,15 @@ export default async function AdminLayout({
           <p className="text-gray-500">
             Your admin account is not linked to any active school. Please contact support or your super admin.
           </p>
-          <div className="pt-4">
-             <form action="/auth/signout" method="post">
-                <button 
-                  className="flex items-center gap-2 px-6 py-3 bg-white text-red-600 rounded-xl hover:bg-red-50 border border-red-100 font-bold transition-all shadow-sm mx-auto"
-                >
-                  <LogOut size={20} />
-                  Sign Out
-                </button>
-             </form>
-          </div>
         </div>
       </div>
     )
   }
 
   const primaryColor = school.primary_color || '#000'
-  
+
   // Fetch admin role for conditional navigation
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await getSupabaseServer()
   const { data: profile } = await supabase
     .from('admins')
     .select('role, full_name, avatar_url')
@@ -87,20 +118,20 @@ export default async function AdminLayout({
     { label: 'My Profile', href: '/admin/profile', icon: 'UserCircle' },
   ]
 
-  const kioskUrl = school.slug === 'schoolcrestinteractive' 
-    ? '/' 
+  const kioskUrl = school.slug === 'schoolcrestinteractive'
+    ? '/'
     : `http://${school.slug}.schoolcrestinteractive.com:3000` // Adjust for production later
 
   return (
     <AdminController>
       <div className="min-h-screen bg-gray-50/50 flex">
         {/* Sidebar */}
-        <aside className="w-64 glass-card fixed inset-y-3 left-3 rounded-2xl flex flex-col z-20 transition-all duration-300">
+        <aside className="w-64 glass-card sticky top-3 h-[calc(100vh-24px)] rounded-2xl flex flex-col z-20 transition-all duration-300 ml-3">
           <div className="p-3">
-            <SidebarProfile 
+            <AdminSidebarProfile
               admin={{
                 name: profile?.full_name || 'Administrator',
-                email: user?.email || '',
+                email: user?.emailAddresses?.[0]?.emailAddress || '',
                 avatar_url: profile?.avatar_url
               }}
               schoolName={school.name}
@@ -120,7 +151,7 @@ export default async function AdminLayout({
                 href={kioskUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-3 py-2 text-blue-600 rounded-xl hover:bg-white hover:shadow-soft transition-all font-bold group border border-transparent hover:border-blue-50 text-sm"
+                className="flex items-center gap-2.5 px-3 py-2 text-blue-600 rounded-xl hover:bg-white hover:shadow-soft transition-all font-bold group border border-transparent hover:border-blue-50 text-sm"
               >
                 <div className="p-1.5 bg-blue-100 rounded group-hover:bg-blue-600 group-hover:text-white transition-colors">
                   <ExternalLink size={10} />
@@ -134,7 +165,7 @@ export default async function AdminLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 ml-72 p-8 min-h-screen">
+        <main className="flex-1 p-8 min-h-screen">
           <div className="max-w-6xl mx-auto animate-fade-in">
             {children}
           </div>

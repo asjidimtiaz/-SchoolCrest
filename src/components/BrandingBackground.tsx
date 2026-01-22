@@ -12,7 +12,7 @@ export default function BrandingBackground() {
         {branding.backgroundType === 'video' ? (
           <video
             src={branding.backgroundUrl}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="fixed inset-0 w-full h-full object-cover"
             autoPlay
             loop
             muted
@@ -21,7 +21,7 @@ export default function BrandingBackground() {
           />
         ) : (
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            className="fixed inset-0 bg-cover bg-center"
             style={{
               backgroundImage: `url(${branding.backgroundUrl})`,
               zIndex: 0,
@@ -32,7 +32,7 @@ export default function BrandingBackground() {
         
         {/* 1. Brand Tint (Color Grading) - 'multiply' blends color naturally into video */}
         <div 
-          className="absolute inset-0 z-[1] pointer-events-none" 
+          className="fixed inset-0 z-[1] pointer-events-none" 
           style={{ 
             backgroundColor: branding.primaryColor,
             mixBlendMode: 'multiply',
@@ -41,14 +41,14 @@ export default function BrandingBackground() {
         />
 
         {/* 2. Text Legibility Vignette (Top/Bottom Subtle Darkening) */}
-        <div className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-b from-black/40 via-transparent to-black/50" />
+        <div className="fixed inset-0 z-[1] pointer-events-none bg-gradient-to-b from-black/40 via-transparent to-black/50" />
       </>
     )
   }
 
   // 2. Fallback Pattern (if no background media)
   return (
-    <div className="absolute inset-0 z-0" style={{ backgroundColor: branding.primaryColor || '#f8fafc' }}>
+    <div className="fixed inset-0 z-0" style={{ backgroundColor: branding.primaryColor || '#f8fafc' }}>
         <div className="absolute inset-0 bg-white/90" />
         <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
             <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:40px_40px]" />

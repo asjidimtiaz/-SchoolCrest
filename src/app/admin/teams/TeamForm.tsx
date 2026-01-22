@@ -8,7 +8,7 @@ import { Save, Users, ChevronRight, User, Film, Plus, ArrowRight } from 'lucide-
 import MediaUpload from '@/components/MediaUpload'
 import RosterManager from './RosterManager'
 import SeasonsManager from './SeasonsManager'
-import { supabaseClient } from '@/lib/supabaseClient'
+import { supabasePublic } from '@/lib/supabaseClient'
 
 interface TeamFormProps {
   team?: Team
@@ -61,7 +61,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     async function fetchSeasons() {
       if (step === 2 && createdData?.teamId) {
         setLoadingSeasons(true)
-        const { data, error } = await supabaseClient
+        const { data, error } = await supabasePublic
           .from('team_seasons')
           .select('*')
           .eq('team_id', createdData.teamId)

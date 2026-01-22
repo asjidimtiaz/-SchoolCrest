@@ -1,10 +1,10 @@
 import { getSchool } from '@/lib/getSchool'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 import EventForm from '../../EventForm'
 import { notFound } from 'next/navigation'
 
-async function getEvent(id: string) {
-    const { data, error } = await supabaseServer
+async function getEvent(id: string, supabase: any) {
+    const { data, error } = await supabase
         .from('events')
         .select('*')
         .eq('id', id)
@@ -17,7 +17,8 @@ async function getEvent(id: string) {
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const school = await getSchool()
-  const event = await getEvent(id)
+  const supabase = await getSupabaseServer()
+  const event = await getEvent(id, supabase)
 
   if (!school || !event) return notFound()
 

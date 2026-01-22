@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { Plus, Globe, Settings, EyeOff, Eye, Users, Building2, AlertCircle, ArrowUpRight, Search } from 'lucide-react'
 import SchoolStatusToggle from './SchoolStatusToggle'
@@ -6,12 +6,12 @@ import DashboardBanner from './_components/DashboardBanner'
 import ClientSchoolList from './ClientSchoolList'
 
 export default async function SuperAdminDashboard() {
-  const { data: schools, error } = await supabaseServer
+  const { data: schools, error } = await supabaseAdmin
     .from('schools')
     .select('*')
     .order('name')
 
-  const { data: admins } = await supabaseServer
+  const { data: admins } = await supabaseAdmin
     .from('admins')
     .select('id, school_id, role, active')
 

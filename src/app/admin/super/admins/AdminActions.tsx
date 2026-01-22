@@ -12,9 +12,10 @@ interface AdminActionsProps {
     active: boolean
     school_name: string
   }
+  alignTop?: boolean
 }
 
-export default function AdminActions({ admin }: AdminActionsProps) {
+export default function AdminActions({ admin, alignTop = false }: AdminActionsProps) {
   const [isPending, startTransition] = useTransition()
   const [showMenu, setShowMenu] = useState(false)
 
@@ -58,7 +59,9 @@ export default function AdminActions({ admin }: AdminActionsProps) {
             className="fixed inset-0 z-10" 
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden">
+          <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden ${
+            alignTop ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}>
             <button
               onClick={handleToggleStatus}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
