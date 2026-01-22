@@ -20,7 +20,7 @@ export default async function SuperAdminProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/admin')
   }
 
   // Fetch basic profile info
@@ -35,7 +35,7 @@ export default async function SuperAdminProfilePage() {
   }
 
   return (
-    <ProfilePageClient 
+    <ProfilePageClient
       admin={{
         email: user.email!,
         full_name: profile.full_name || null,
@@ -46,7 +46,7 @@ export default async function SuperAdminProfilePage() {
           slug: 'system',
           active: true
         }
-      }} 
+      }}
       isSuperAdmin={true}
     />
   )

@@ -17,7 +17,7 @@ export default function AdminController({
         // Trigger the signout action
         const response = await fetch('/auth/signout', { method: 'POST' })
         if (response.ok) {
-            router.push('/admin/login')
+            router.push('/admin')
             router.refresh()
         }
     }, [router])
