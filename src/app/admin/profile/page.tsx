@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { AlertCircle } from 'lucide-react'
 import { currentUser } from '@clerk/nextjs/server'
-import { getSupabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import ProfilePageClient from './ProfilePageClient'
 
 export default async function ProfilePage() {
@@ -11,10 +11,8 @@ export default async function ProfilePage() {
     redirect('/admin')
   }
 
-  const supabase = await getSupabaseServer()
-
-  // 1. Fetch profile info
-  const { data: profile, error: profileError } = await supabase
+  // 1. Fetch profile info using Service Role to bypass potential RLS issues
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from('admins')
     .select(`
       id,
@@ -35,29 +33,29 @@ export default async function ProfilePage() {
     return (
       <div className="max-w-2xl mx-auto mt-12 p-12 bg-white rounded-[2rem] border-2 border-dashed border-gray-200 text-center space-y-6">
         <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto text-amber-500">
-           <AlertCircle size={40} />
+          <AlertCircle size={40} />
         </div>
         <div className="space-y-2">
-           <h2 className="text-3xl font-black text-gray-900">Finalizing Setup</h2>
-           <p className="text-gray-500 font-medium leading-relaxed">
-             Almost there! Please ensure the profile columns are added to your database.
-           </p>
+          <h2 className="text-3xl font-black text-gray-900">Finalizing Setup</h2>
+          <p className="text-gray-500 font-medium leading-relaxed">
+            Almost there! Please ensure the profile columns are added to your database.
+          </p>
         </div>
-        
+
         <div className="bg-gray-100 text-left p-6 rounded-2xl overflow-x-auto">
-           <code className="text-gray-600 text-xs font-mono">
-{`ALTER TABLE public.admins 
+          <code className="text-gray-600 text-xs font-mono">
+            {`ALTER TABLE public.admins 
 ADD COLUMN IF NOT EXISTS full_name TEXT,
 ADD COLUMN IF NOT EXISTS email TEXT,
 ADD COLUMN IF NOT EXISTS avatar_url TEXT;`}
-           </code>
+          </code>
         </div>
 
-        <a 
+        <a
           href="/admin/profile"
           className="inline-block px-8 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-95"
         >
-           Done, Refresh
+          Done, Refresh
         </a>
       </div>
     )
@@ -69,14 +67,14 @@ ADD COLUMN IF NOT EXISTS avatar_url TEXT;`}
   }
 
   return (
-    <ProfilePageClient 
+    <ProfilePageClient
       admin={{
         email: profile.email || user.emailAddresses[0].emailAddress,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         role: profile.role,
         school: profile.school as any
-      }} 
+      }}
     />
   )
 }
