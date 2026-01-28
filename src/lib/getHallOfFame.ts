@@ -1,5 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { supabasePublic } from './supabaseServer'
 
 export interface Inductee {
   id: string
@@ -16,27 +15,8 @@ export interface Inductee {
 
 export async function getHallOfFame(schoolId: string): Promise<Inductee[]> {
   try {
-    const cookieStore = await cookies()
-    
-    // Create authenticated client to respect RLS
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value
-            },
-          },
-        }
-      )
 
-    // Authenticated access check (Optional for read)
-    const { data: { user } } = await supabase.auth.getUser()
-    // We allow public access for Kiosk, but warn for logging
-    if (!user) {
-        console.log('[getHallOfFame] Public access (no user)')
-    }
+    const supabase = supabasePublic;
 
     const { data, error } = await supabase
       .from('hall_of_fame')

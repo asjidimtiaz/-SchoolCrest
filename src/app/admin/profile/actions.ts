@@ -3,15 +3,15 @@
 import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { getSupabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function updateProfile(prevState: any, formData: FormData) {
   const fullName = formData.get('fullName') as string
   const { userId } = await auth()
-  
+
   if (!userId) return { error: 'Not authenticated', success: false }
 
-  const supabase = await getSupabaseServer()
+  const supabase = supabaseAdmin
 
   // Fetch admin data early to use for both upload path and redirect logic
   const { data: adminData } = await supabase
@@ -29,7 +29,7 @@ export async function updateProfile(prevState: any, formData: FormData) {
   // Handle Image Upload
   if (avatarFile && avatarFile.size > 0 && typeof avatarFile !== 'string') {
     let filePath = ''
-    
+
     if (school_id) {
       const fileExt = avatarFile.name.split('.').pop()
       const fileName = `${userId}-${Date.now()}.${fileExt}`
@@ -42,47 +42,70 @@ export async function updateProfile(prevState: any, formData: FormData) {
     }
 
     if (filePath) {
-      const { error: uploadError } = await supabase.storage
-        .from('school-assets')
-        .upload(filePath, avatarFile)
+      try {
+        // Check if bucket exists
+        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
+        if (bucketError) {
+          console.error('[updateProfile] Failed to list buckets:', bucketError)
+          return { error: `Storage configuration error: ${bucketError.message}`, success: false }
+        }
 
-      if (uploadError) {
-        console.error('Avatar upload error:', uploadError.message)
-        return { error: `Upload failed: ${uploadError.message}`, success: false }
+        const bucketExists = buckets?.some(b => b.name === 'school-assets')
+        if (!bucketExists) {
+          await supabase.storage.createBucket('school-assets', { public: true })
+        }
+
+        // Convert File to ArrayBuffer for more reliable upload in Node environments
+        const arrayBuffer = await avatarFile.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('school-assets')
+          .upload(filePath, buffer, {
+            upsert: true,
+            contentType: avatarFile.type || 'image/png'
+          })
+
+        if (uploadError) {
+          console.error('[updateProfile] Avatar upload error details:', uploadError)
+          return { error: `Upload failed: ${uploadError.message}`, success: false }
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('school-assets')
+          .getPublicUrl(filePath)
+
+        avatar_url = publicUrl
+      } catch (uploadExc: any) {
+        console.error('[updateProfile] CRITICAL EXCEPTION during upload:', uploadExc)
+        return { error: `Server error during upload: ${uploadExc.message || 'Unknown error'}`, success: false }
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('school-assets')
-        .getPublicUrl(filePath)
-      
-      avatar_url = publicUrl
     }
   }
 
   const { error } = await supabase
     .from('admins')
-    .update({ 
+    .update({
       full_name: fullName,
       avatar_url: avatar_url
     })
     .eq('id', userId)
 
   if (error) {
-    console.error('Profile update error:', error.message)
     return { error: error.message, success: false }
   }
-  
+
   // Comprehensive cache invalidation
   revalidatePath('/admin/profile')
   revalidatePath('/admin', 'layout')
   revalidatePath('/admin')
-  
+
   if (isSuperAdmin) {
     revalidatePath('/admin/super/profile')
     revalidatePath('/admin/super', 'layout')
-    redirect('/admin/super/profile')
+    // Avoid redirect to prevent state reset on current page
+    return { success: true }
   }
-  
-  // Force a redirect to ensure layout refetches
-  redirect('/admin/profile')
+
+  return { success: true }
 }

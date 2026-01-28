@@ -37,7 +37,6 @@ export default async function AdminLayout({
     }
   } catch (error) {
     clerkError = error
-    console.error('[AdminLayout] Clerk error:', error)
   }
 
   // Redirect Super Admins to their dashboard if they hit the root /admin
@@ -100,13 +99,8 @@ export default async function AdminLayout({
 
   const primaryColor = school.primary_color || '#000'
 
-  // Fetch admin role for conditional navigation
-  const supabase = await getSupabaseServer()
-  const { data: profile } = await supabase
-    .from('admins')
-    .select('role, full_name, avatar_url')
-    .eq('id', user?.id)
-    .maybeSingle()
+  // No need to re-fetch profile, we have it from syncAdminIdentity
+  const profile = adminProfile;
 
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: 'LayoutGrid' },

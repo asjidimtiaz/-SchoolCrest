@@ -17,7 +17,7 @@ export default async function AdminAccountsPage() {
       created_at
     `)
     .order('created_at', { ascending: false })
-  
+
   // Get schools for mapping
   const { data: schools } = await supabaseAdmin
     .from('schools')
@@ -26,7 +26,7 @@ export default async function AdminAccountsPage() {
   // Prepare data for display
   const adminsWithDetails = admins?.map(admin => {
     const school = schools?.find(s => s.id === admin.school_id)
-    
+
     return {
       ...admin,
       email: admin.email || 'Invite Sent',
@@ -48,14 +48,14 @@ export default async function AdminAccountsPage() {
           <p className="text-gray-500 mt-1 font-medium">Manage administrator access across all schools</p>
         </div>
         <div className="flex gap-3">
-          <Link 
+          <Link
             href="/admin/super/admins/invite"
             className="flex items-center gap-2 px-6 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg"
           >
             <Send size={18} />
             Invite Admin
           </Link>
-          <Link 
+          <Link
             href="/admin/super/admins/new"
             className="flex items-center gap-2 px-6 py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-black/10"
           >
@@ -95,73 +95,73 @@ export default async function AdminAccountsPage() {
 
       {/* Admin List */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-100">
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Email</th>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">School</th>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Role</th>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
-              <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Last Login</th>
-              <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-widest">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {adminsWithDetails.map((admin, index) => (
-              <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-8 py-6">
-                  <div className="flex items-center gap-3">
-                    <Mail size={18} className="text-gray-400" />
-                    <span className="font-bold text-gray-900">{admin.email}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-6">
-                  <div className="flex items-center gap-2">
-                    <Building2 size={16} className="text-gray-400" />
-                    <span className="font-medium text-gray-600">{admin.school_name}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-6">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                    admin.role === 'super_admin' 
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {admin.role === 'super_admin' ? 'Super' : 'School'}
-                  </span>
-                </td>
-                <td className="px-8 py-6">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                    admin.active !== false
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {admin.active !== false ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-8 py-6">
-                  <span className="text-sm text-gray-500 font-medium">
-                    {admin.last_login
-                      ? new Date(admin.last_login).toLocaleDateString() 
-                      : 'Never'}
-                  </span>
-                </td>
-                <td className="px-8 py-6 text-right">
-                  <AdminActions 
-                    admin={{
-                      id: admin.id,
-                      email: admin.email,
-                      role: admin.role,
-                      active: admin.active !== false,
-                      school_name: admin.school_name
-                    }} 
-                    alignTop={index >= adminsWithDetails.length - 2 && index !== 0}
-                  />
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="px-4 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-[25%]">Email</th>
+                <th className="px-4 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-[20%]">School</th>
+                <th className="px-4 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-[12%]">Role</th>
+                <th className="px-4 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-[12%]">Status</th>
+                <th className="px-4 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-[15%]">Last Login</th>
+                <th className="px-4 py-4 text-right text-xs font-black text-gray-400 uppercase tracking-widest w-[16%]">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {adminsWithDetails.map((admin, index) => (
+                <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <Mail size={18} className="text-gray-400" />
+                      <span className="font-bold text-gray-900">{admin.email}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <Building2 size={16} className="text-gray-400" />
+                      <span className="font-medium text-gray-600">{admin.school_name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${admin.role === 'super_admin'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-gray-100 text-gray-700'
+                      }`}>
+                      {admin.role === 'super_admin' ? 'Super' : 'School'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${admin.active !== false
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                      }`}>
+                      {admin.active !== false ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-sm text-gray-500 font-medium">
+                      {admin.last_login
+                        ? new Date(admin.last_login).toLocaleDateString()
+                        : 'Never'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-right">
+                    <AdminActions
+                      admin={{
+                        id: admin.id,
+                        email: admin.email,
+                        role: admin.role,
+                        active: admin.active !== false,
+                        school_name: admin.school_name
+                      }}
+                      alignTop={index >= adminsWithDetails.length - 2 && index !== 0}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

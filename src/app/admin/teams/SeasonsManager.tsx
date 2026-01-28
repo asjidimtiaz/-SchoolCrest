@@ -41,21 +41,20 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
     }
 
     // Calculate the next logical year (highest year + 1)
-    const nextSuggestedYear = seasons.length > 0 
-        ? Math.max(...seasons.map(s => s.year)) + 1 
+    const nextSuggestedYear = seasons.length > 0
+        ? Math.max(...seasons.map(s => s.year)) + 1
         : new Date().getFullYear()
 
     return (
         <div className="space-y-6 text-left pb-20">
             <div className="flex items-center justify-between">
                 <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Archive History</h2>
-                <button 
+                <button
                     onClick={() => setIsAddOpen(!isAddOpen)}
-                    className={`flex items-center gap-3 px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${
-                        isAddOpen 
-                        ? 'bg-white text-gray-400 hover:text-black hover:shadow-2xl' 
-                        : 'bg-black text-white hover:bg-gray-800'
-                    }`}
+                    className={`flex items-center gap-3 px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${isAddOpen
+                            ? 'bg-white text-gray-400 hover:text-black hover:shadow-2xl'
+                            : 'bg-black text-white hover:bg-gray-800'
+                        }`}
                 >
                     {isAddOpen ? <X size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
                     {isAddOpen ? 'Cancel' : 'Add Season'}
@@ -64,13 +63,13 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
 
             {isAddOpen && (
                 <div className="animate-slide-up relative bg-white/30 rounded-[3rem] p-1 border border-gray-100/50 mb-12">
-                     <SeasonForm 
-                        team_id={teamId} 
+                    <SeasonForm
+                        team_id={teamId}
                         schoolId={schoolId}
                         suggestedYear={nextSuggestedYear}
                         onSuccess={() => {
                             setIsAddOpen(false)
-                        }} 
+                        }}
                     />
                 </div>
             )}
@@ -78,7 +77,7 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
             <div className="grid grid-cols-1 gap-6">
                 {seasons.map((season) => {
                     const playerCount = Array.isArray(season.roster) ? season.roster.length : 0
-                    
+
                     return (
                         <div key={season.id} className="glass-card p-4 rounded-[1.5rem] border-none shadow-soft group hover:translate-y-[-2px] transition-all duration-300">
                             <div className="flex items-center gap-5">
@@ -99,14 +98,14 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                                             {season.year} Season
                                         </h3>
                                         <div className="flex items-center gap-2">
-                                            <button 
+                                            <button
                                                 onClick={() => handleOpenRoster(season)}
                                                 className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
                                             >
                                                 <Users size={14} />
                                                 Manage Roster
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleOpenEdit(season)}
                                                 className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                                             >
@@ -118,7 +117,7 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                             {playerCount} Players
@@ -137,7 +136,7 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                                                 <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Season Summary</span>
                                             </div>
                                             <p className="text-[11px] text-gray-600 font-medium line-clamp-2">
-                                                { (season as any).summary }
+                                                {(season as any).summary}
                                             </p>
                                         </div>
                                     )}
@@ -149,7 +148,7 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                                                 <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Individual Honors</span>
                                             </div>
                                             <p className="text-[10px] text-emerald-700 font-bold line-clamp-1 truncate">
-                                                { (season as any).individual_accomplishments }
+                                                {(season as any).individual_accomplishments}
                                             </p>
                                         </div>
                                     )}
@@ -160,17 +159,27 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
                 })}
 
                 {seasons.length === 0 && (
-                    <div className="bg-gray-50 rounded-[1.5rem] p-12 border border-dashed border-gray-200 text-center">
-                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-gray-200 mx-auto mb-4 shadow-sm border border-gray-100">
-                           <Users size={32} />
+                    <div className="bg-gray-50 rounded-[3rem] p-16 border border-dashed border-gray-200 text-center flex flex-col items-center">
+                        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-gray-200 mb-6 shadow-sm border border-gray-100">
+                            <Users size={40} strokeWidth={1.5} />
                         </div>
-                        <p className="text-gray-400 font-black uppercase tracking-widest text-[11px]">No season history found</p>
+                        <h3 className="text-xl font-black text-gray-900 mb-2">No Season History</h3>
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mb-8 max-w-xs mx-auto">
+                            This program doesn't have any historical seasons yet. Start by adding the most recent one.
+                        </p>
+                        <button
+                            onClick={() => setIsAddOpen(true)}
+                            className="flex items-center gap-3 px-10 py-4 bg-black text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all shadow-2xl active:scale-95"
+                        >
+                            <Plus size={18} strokeWidth={3} />
+                            Add Your First Season
+                        </button>
                     </div>
                 )}
             </div>
 
             {isRosterOpen && selectedSeasonForRoster && (
-                <RosterModal 
+                <RosterModal
                     seasonId={selectedSeasonForRoster.id}
                     teamId={teamId}
                     teamName={teamName}
@@ -181,7 +190,7 @@ export default function SeasonsManager({ seasons, teamId, teamName, schoolId }: 
             )}
 
             {isEditOpen && selectedSeasonForEdit && (
-                <SeasonEditModal 
+                <SeasonEditModal
                     season={selectedSeasonForEdit}
                     schoolId={schoolId}
                     onClose={() => setIsEditOpen(false)}

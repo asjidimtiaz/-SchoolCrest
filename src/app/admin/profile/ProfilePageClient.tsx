@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProfile } from './actions'
 import { User, Mail, Shield, Building2, Globe, CheckCircle, AlertCircle, Loader2, Save, ArrowRight } from 'lucide-react'
@@ -32,7 +32,15 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
   // @ts-ignore
   const [state, formAction, isPending] = useActionState(updateProfile, initialState)
 
-  // Force router refresh when profile updates successfully
+  // Controlled state for full name to ensure it updates when props change
+  const [fullName, setFullName] = useState(admin.full_name || '')
+
+  // Update internal state if props change (e.g., after success or mount)
+  useEffect(() => {
+    setFullName(admin.full_name || '')
+  }, [admin.full_name])
+
+  // Refresh router on success
   useEffect(() => {
     if (state?.success) {
       router.refresh()
@@ -43,8 +51,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
     <div className="space-y-4 pb-4 animate-fade-in">
       <div className="space-y-0.5">
         <div className="flex items-center gap-1.5">
-           <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[8px] font-black uppercase tracking-[0.1em]">System Active</span>
-           <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
         <p className="text-sm text-gray-400 font-medium tracking-tight uppercase tracking-widest text-[9px]">Administrative Identity & Credentials</p>
@@ -67,29 +74,30 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
 
               <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-1.5">
-                {!isSuperAdmin ? (
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Full Legal Name</label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
-                        <User size={16} />
+                  {!isSuperAdmin ? (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Full Name</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
+                          <User size={16} />
+                        </div>
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="e.g. John Doe"
+                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm shadow-soft"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        name="fullName"
-                        defaultValue={admin.full_name || ''}
-                        placeholder="e.g. John Doe"
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm shadow-soft"
-                      />
                     </div>
-                  </div>
-                ) : (
-                  <input type="hidden" name="fullName" value={admin.full_name || ''} />
-                )}
+                  ) : (
+                    <input type="hidden" name="fullName" value={admin.full_name || ''} />
+                  )}
                 </div>
 
                 <div className="space-y-4">
-                  <ImageUpload 
+                  <ImageUpload
                     name="avatar_file"
                     label="Profile Avatar"
                     description="Upload your console avatar (square recommended)"
@@ -104,7 +112,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                   <div className="space-y-2 opacity-60">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                       Email address
-                      <span className="text-[7px] bg-gray-100 px-1.5 py-0.5 rounded-full font-black">Locked</span>
+
                     </label>
                     <div className="relative">
                       <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
@@ -120,7 +128,6 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                   <div className="space-y-2 opacity-60">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                       Platform Role
-                      <span className="text-[7px] bg-gray-100 px-1.5 py-0.5 rounded-full font-black">Locked</span>
                     </label>
                     <div className="relative">
                       <Shield size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
@@ -178,35 +185,35 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
           <div className="glass-card p-5 rounded-[1.5rem] space-y-4 border-none relative overflow-hidden bg-white/40">
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100/50">
-                 <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center border border-gray-100 shadow-sm">
-                    <Building2 size={16} />
-                 </div>
-                 <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Institution Data</h2>
+                <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center border border-gray-100 shadow-sm">
+                  <Building2 size={16} />
+                </div>
+                <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Institution Data</h2>
               </div>
 
               {admin.school ? (
                 <div className="space-y-4">
                   <div className="group">
-                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Host Institution</label>
-                     <p className="font-extrabold text-base text-gray-900 group-hover:text-black transition-colors leading-tight">{admin.school.name}</p>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Host Institution</label>
+                    <p className="font-extrabold text-base text-gray-900 group-hover:text-black transition-colors leading-tight">{admin.school.name}</p>
                   </div>
 
                   <div className="group">
-                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Public Access</label>
-                     <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-soft font-bold text-gray-600 text-xs">
-                        <Globe size={14} className="text-blue-500" />
-                        <span className="truncate">{admin.school?.slug}.schoolcrest...</span>
-                     </div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Public Access</label>
+                    <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-soft font-bold text-gray-600 text-xs">
+                      <Globe size={14} className="text-blue-500" />
+                      <span className="truncate">{admin.school?.slug}.schoolcrest...</span>
+                    </div>
                   </div>
 
                   <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100 flex items-center justify-between">
-                     <div>
-                       <label className="text-[7px] font-black text-green-600/70 uppercase tracking-widest block mb-px">Status</label>
-                       <span className="font-black text-green-700 text-[10px]">ACTIVE & SYNCED</span>
-                     </div>
-                     <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                     </div>
+                    <div>
+                      <label className="text-[7px] font-black text-green-600/70 uppercase tracking-widest block mb-px">Status</label>
+                      <span className="font-black text-green-700 text-[10px]">ACTIVE & SYNCED</span>
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -215,11 +222,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                 </div>
               )}
 
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                 <p className="text-[9px] text-gray-400 leading-relaxed font-medium uppercase tracking-widest">
-                    School identity is locked by Super Admins. 
-                 </p>
-              </div>
+
             </div>
           </div>
         </div>

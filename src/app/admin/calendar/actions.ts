@@ -1,45 +1,13 @@
 'use server'
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-async function getSupabase() {
-  const cookieStore = await cookies()
-  
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables are missing in calendar/actions.ts");
-  }
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // Handle edge case
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // Handle edge case
-          }
-        },
-      },
-    }
-  )
-}
 
 export async function deleteEvent(id: string) {
   try {
-    const supabase = await getSupabase()
-    const { error } = await supabase.from('events').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('events').delete().eq('id', id)
     if (error) {
       console.error("Error in deleteEvent:", error.message)
       throw new Error(error.message)
@@ -53,8 +21,6 @@ export async function deleteEvent(id: string) {
 
 export async function upsertEvent(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase()
-    
     const id = formData.get('id') as string | null
     const school_id = formData.get('school_id') as string
     const title = formData.get('title') as string
@@ -69,9 +35,9 @@ export async function upsertEvent(prevState: any, formData: FormData) {
 
     let result;
     if (id) {
-      result = await supabase.from('events').update(payload).eq('id', id)
+      result = await supabaseAdmin.from('events').update(payload).eq('id', id)
     } else {
-      result = await supabase.from('events').insert(payload)
+      result = await supabaseAdmin.from('events').insert(payload)
     }
 
     if (result.error) {

@@ -21,6 +21,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
     const [isRosterOpen, setIsRosterOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
 
+
     const handleOpenRoster = async (team: TeamWithSeason) => {
         if (team.latestSeason) {
             setSelectedTeam(team)
@@ -28,7 +29,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
         } else {
             // Create a default season for the current year
             if (!confirm(`No season found for ${team.name}. Create ${new Date().getFullYear()} season to manage roster?`)) return
-            
+
             startTransition(async () => {
                 const formData = new FormData()
                 formData.append('team_id', team.id)
@@ -36,7 +37,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                 formData.append('record', '')
                 formData.append('coach', '')
                 formData.append('roster', '[]')
-                
+
                 const result = await upsertSeason(null, formData)
                 if (result.success) {
                     // This is a bit tricky because we're in a client component and the parent is server-rendered.
@@ -63,11 +64,11 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/30">
-                            {teams.map((team) => {
+                            {teams.map((team, index) => {
                                 const playerCount = Array.isArray(team.latestSeason?.roster) ? team.latestSeason.roster.length : 0
-                                
+
                                 return (
-                                    <tr key={team.id} className="hover:bg-white/50 transition-colors group">
+                                    <tr key={team.id && team.id !== 'null' ? team.id : `team-fallback-${index}`} className="hover:bg-white/50 transition-colors group">
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shadow-soft flex items-center justify-center text-gray-300 flex-shrink-0">
@@ -82,23 +83,29 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
                                                         {team.name}
                                                     </span>
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                                        {team.gender} 
+                                                        {team.gender}
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                       
+
                                         <td className="px-6 py-5 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link 
-                                                    href={`/admin/teams/${team.id}#seasons`}
-                                                    className="flex items-center gap-1.5 px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                                <Link
+                                                    href={team.id && team.id !== 'null' ? `/admin/teams/${team.id}#seasons` : '#'}
+                                                    onClick={(e) => {
+                                                        if (!team.id || team.id === 'null') {
+                                                            e.preventDefault();
+                                                            alert('This program entry is corrupted (missing ID) and cannot be viewed. Please use the SQL cleanup script provided earlier to remove it.');
+                                                        }
+                                                    }}
+                                                    className={`flex items-center gap-1.5 px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 rounded-xl transition-all shadow-sm ${!team.id || team.id === 'null' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 hover:text-white'}`}
                                                     title="View Program Seasons"
                                                 >
                                                     <ChevronRight size={14} strokeWidth={3} />
                                                     View Seasons
                                                 </Link>
-                                                <Link 
+                                                <Link
                                                     href={`/admin/teams/${team.id}/edit`}
                                                     className="p-2.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-all"
                                                     title="Edit Team"
@@ -117,7 +124,7 @@ export default function TeamsAdminTable({ teams }: TeamsAdminTableProps) {
             </div>
 
             {isRosterOpen && selectedTeam && selectedTeam.latestSeason && (
-                <RosterModal 
+                <RosterModal
                     seasonId={selectedTeam.latestSeason.id}
                     teamId={selectedTeam.id}
                     teamName={selectedTeam.name}

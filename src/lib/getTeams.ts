@@ -46,12 +46,13 @@ export async function getTeams(schoolId: string): Promise<Team[]> {
 }
 
 export async function getTeam(teamId: string): Promise<Team | null> {
+  if (!teamId || teamId === 'null' || teamId === 'undefined') return null
   try {
     const { data, error } = await supabasePublic
       .from('teams')
       .select('*')
       .eq('id', teamId)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error('Error fetching Team:', error.message)
@@ -66,6 +67,7 @@ export async function getTeam(teamId: string): Promise<Team | null> {
 }
 
 export async function getTeamSeasons(teamId: string): Promise<TeamSeason[]> {
+  if (!teamId || teamId === 'null' || teamId === 'undefined') return []
   try {
     const { data, error } = await supabasePublic
       .from('team_seasons')
@@ -88,7 +90,7 @@ export async function getTeamSeasons(teamId: string): Promise<TeamSeason[]> {
 export async function getTeamsWithLatestSeason(schoolId: string): Promise<(Team & { latestSeason?: TeamSeason | null })[]> {
   try {
     const teams = await getTeams(schoolId)
-    
+
     // Fetch latest season for each team
     const teamsWithSeason = await Promise.all(teams.map(async (team) => {
       const { data: seasons, error } = await supabasePublic
@@ -127,7 +129,7 @@ export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWit
       .from('teams')
       .select('*')
       .eq('school_id', schoolId)
-      
+
     if (teamsError || !teams) {
       console.error('Error fetching teams for seasons:', teamsError?.message)
       return []
@@ -149,7 +151,7 @@ export async function getAllTeamSeasons(schoolId: string): Promise<TeamSeasonWit
     if (seasonsError) {
       // Fallback if the join fails (e.g. RLS on joined table or missing FK alias)
       console.warn('Join fetch failed, trying manual composition...', seasonsError.message)
-      
+
       const teamIds = teams.map(t => t.id)
       const { data: rawSeasons, error: rawError } = await supabasePublic
         .from('team_seasons')

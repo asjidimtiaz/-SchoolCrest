@@ -23,7 +23,7 @@ export async function sendAdminInvite(prevState: any, formData: FormData) {
     // 2. Pre-create record in Supabase for authorization
     // We use the email as a temporary ID until they sign in
     const { supabaseAdmin } = await import('@/lib/supabaseAdmin')
-    
+
     const { error: adminError } = await supabaseAdmin
       .from('admins')
       .upsert({
@@ -38,11 +38,6 @@ export async function sendAdminInvite(prevState: any, formData: FormData) {
       console.error("Error pre-creating admin record:", adminError.message)
       // We don't fail the whole invite if DB sync fails, but we log it
     }
-
-    console.log('=== CLERK ADMIN INVITE SENT ===')
-    console.log(`Email: ${email}`)
-    console.log(`Invitation ID: ${invitation.id}`)
-    console.log('==============================')
 
     revalidatePath('/admin/super/admins/invite')
     return { success: true }

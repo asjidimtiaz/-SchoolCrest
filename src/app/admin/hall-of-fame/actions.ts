@@ -1,45 +1,13 @@
 'use server'
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-async function getSupabase() {
-  const cookieStore = await cookies()
-  
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables are missing in hall-of-fame/actions.ts");
-  }
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // Handle edge case
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // Handle edge case
-          }
-        },
-      },
-    }
-  )
-}
 
 export async function deleteInductee(id: string) {
   try {
-    const supabase = await getSupabase()
-    const { error } = await supabase.from('hall_of_fame').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('hall_of_fame').delete().eq('id', id)
 
     if (error) {
       console.error("Error in deleteInductee:", error.message)
@@ -55,9 +23,6 @@ export async function deleteInductee(id: string) {
 
 export async function createInductee(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase()
-
-    const { data: { user } } = await supabase.auth.getUser()
     const name = formData.get('name') as string
     const year = formData.get('year') as string
     const induction_year = parseInt(formData.get('induction_year') as string) || null
@@ -75,7 +40,7 @@ export async function createInductee(prevState: any, formData: FormData) {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
       const filePath = `inductees/${school_id}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('school-assets')
         .upload(filePath, photoFile)
 
@@ -84,10 +49,10 @@ export async function createInductee(prevState: any, formData: FormData) {
         return { error: `Upload failed: ${uploadError.message}` }
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseAdmin.storage
         .from('school-assets')
         .getPublicUrl(filePath)
-      
+
       photo_url = publicUrl
     }
 
@@ -100,7 +65,7 @@ export async function createInductee(prevState: any, formData: FormData) {
       const fileName = `${Date.now()}-video-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
       const filePath = `inductees/${school_id}/videos/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('school-assets')
         .upload(filePath, videoFile)
 
@@ -109,14 +74,14 @@ export async function createInductee(prevState: any, formData: FormData) {
         return { error: `Video upload failed: ${uploadError.message}` }
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseAdmin.storage
         .from('school-assets')
         .getPublicUrl(filePath)
-      
+
       video_url = publicUrl
     }
 
-    const { error } = await supabase.from('hall_of_fame').insert({
+    const { error } = await supabaseAdmin.from('hall_of_fame').insert({
       name, year, category, photo_url, video_url, bio, achievements, school_id, induction_year
     })
 
@@ -135,9 +100,6 @@ export async function createInductee(prevState: any, formData: FormData) {
 
 export async function updateInductee(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase()
-  
-    const { data: { user } } = await supabase.auth.getUser()
     const id = formData.get('id') as string
     const name = formData.get('name') as string
     const year = formData.get('year') as string
@@ -156,7 +118,7 @@ export async function updateInductee(prevState: any, formData: FormData) {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
       const filePath = `inductees/${school_id}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('school-assets')
         .upload(filePath, photoFile)
 
@@ -165,10 +127,10 @@ export async function updateInductee(prevState: any, formData: FormData) {
         return { error: `Upload failed: ${uploadError.message}` }
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseAdmin.storage
         .from('school-assets')
         .getPublicUrl(filePath)
-      
+
       photo_url = publicUrl
     }
 
@@ -181,7 +143,7 @@ export async function updateInductee(prevState: any, formData: FormData) {
       const fileName = `${Date.now()}-video-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
       const filePath = `inductees/${school_id}/videos/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('school-assets')
         .upload(filePath, videoFile)
 
@@ -190,22 +152,22 @@ export async function updateInductee(prevState: any, formData: FormData) {
         return { error: `Video upload failed: ${uploadError.message}` }
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseAdmin.storage
         .from('school-assets')
         .getPublicUrl(filePath)
-      
+
       video_url = publicUrl
     }
 
-    const { error } = await supabase.from('hall_of_fame').update({
+    const { error } = await supabaseAdmin.from('hall_of_fame').update({
       name, year, category, photo_url, video_url, bio, achievements, induction_year
     }).eq('id', id)
-  
+
     if (error) {
       console.error("Error in updateInductee:", error.message)
       return { error: error.message }
     }
-  
+
     revalidatePath('/admin/hall-of-fame')
     return { success: true }
   } catch (err) {

@@ -1,61 +1,49 @@
 "use server";
 
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables are missing in actions.ts");
-  }
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Handle edge case where set is called in a component
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch (error) {
-            // Handle edge case where remove is called in a component
-          }
-        },
-      },
-    },
-  );
-}
 
 export async function deleteTeam(id: string) {
   try {
-    const supabase = await getSupabase();
-    const { error } = await supabase.from("teams").delete().eq("id", id);
+    if (!id || id === 'null' || id === 'undefined') {
+      return { error: 'Invalid ID provided for deletion.' };
+    }
+
+    // 1. Delete associated seasons first (to avoid foreign key constraint issues)
+    const { error: seasonError } = await supabaseAdmin
+      .from("team_seasons")
+      .delete()
+      .eq("team_id", id);
+
+    if (seasonError) {
+      console.error("Error deleting associated seasons:", seasonError.message);
+      return { error: `Failed to delete team seasons: ${seasonError.message}` };
+    }
+
+    // 2. Delete the team itself
+    const { error } = await supabaseAdmin.from("teams").delete().eq("id", id);
     if (error) {
       console.error("Error in deleteTeam:", error.message);
-      throw new Error(error.message);
+      return { error: error.message };
     }
+
     revalidatePath("/admin/teams");
-  } catch (err) {
+    return { success: true };
+  } catch (err: any) {
     console.error("FATAL in deleteTeam:", err);
-    throw err;
+    return { error: "Connection error: " + (err?.message || "fetch failed") };
   }
 }
 
 export async function createTeam(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase();
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!serviceKey) {
+      console.error('[CRITICAL] SUPABASE_SERVICE_ROLE_KEY is MISSING!');
+    }
 
     const name = formData.get("name") as string;
     const gender = formData.get("gender") as string;
@@ -81,7 +69,7 @@ export async function createTeam(prevState: any, formData: FormData) {
     // So helper check:
     const isState = formData.get("wc_state") === 'on';
     const isRegion = formData.get("wc_region") === 'on';
-    
+
     // Note: The new column needs to exist in DB
     const individual_accomplishments = formData.get("individual_accomplishments") as string || '';
 
@@ -93,9 +81,9 @@ export async function createTeam(prevState: any, formData: FormData) {
     const rosterRaw = formData.get("roster") as string;
     let initialRoster = [];
     try {
-        if (rosterRaw) initialRoster = JSON.parse(rosterRaw);
+      if (rosterRaw) initialRoster = JSON.parse(rosterRaw);
     } catch (e) {
-        console.warn("Failed to parse initial roster:", e);
+      console.warn("Failed to parse initial roster:", e);
     }
 
     // 1. Upsert/Find Team (Program)
@@ -103,78 +91,77 @@ export async function createTeam(prevState: any, formData: FormData) {
     let teamId = '';
     let teamName = name;
 
-    const { data: existingTeam } = await supabase
-        .from("teams")
-        .select("id, name")
-        .eq("school_id", school_id)
-        .eq("name", name)
-        .eq("gender", gender)
-        .single();
+    const { data: existingTeam } = await supabaseAdmin
+      .from("teams")
+      .select("id, name")
+      .eq("school_id", school_id)
+      .eq("name", name)
+      .eq("gender", gender)
+      .maybeSingle();
 
     if (existingTeam) {
-        return { error: `A program named "${name}" (${gender}) already exists. Please use a unique name or manage the existing program from the dashboard.` };
+      return { error: `A program named "${name}" (${gender}) already exists. Please use a unique name or manage the existing program from the dashboard.` };
     } else {
-        const { data: newTeam, error: createError } = await supabase.from("teams").insert({
-            name,
-            gender,
-            sport_category,
-            head_coach,
-            photo_url,
-            background_url,
-            media_type,
-            school_id,
-        }).select().single();
+      const { data: newTeam, error: createError } = await supabaseAdmin.from("teams").insert({
+        name,
+        gender,
+        sport_category,
+        head_coach,
+        photo_url,
+        background_url,
+        media_type,
+        school_id,
+      }).select().single();
 
-        if (createError) {
-            console.error("Error creating team program:", createError.message);
-            return { error: createError.message };
-        }
-        teamId = newTeam.id;
-        teamName = newTeam.name;
+      if (createError) {
+        console.error("Error creating team program:", createError.message);
+        return { error: createError.message };
+      }
+
+      teamId = newTeam?.id;
+      teamName = newTeam?.name;
     }
 
     // 2. Create Season
     const achievements: string[] = [];
     if (isState) achievements.push("State Champions");
     if (isRegion) achievements.push("Region Champions");
-    
+
     const season_photo_url = formData.get("season_photo_url") as string || '';
 
-    const { data: seasonData, error: seasonError } = await supabase.from("team_seasons").insert({
-        team_id: teamId,
-        year: season_year,
-        record: '', // Optional start
-        coach: head_coach, // Default to program coach
-        achievements: achievements,
-        individual_accomplishments: individual_accomplishments,
-        summary: formData.get("summary") as string || '',
-        roster: initialRoster,
-        photo_url: season_photo_url
+    const { data: seasonData, error: seasonError } = await supabaseAdmin.from("team_seasons").insert({
+      team_id: teamId,
+      year: season_year,
+      record: '', // Optional start
+      coach: head_coach, // Default to program coach
+      achievements: achievements,
+      individual_accomplishments: individual_accomplishments,
+      summary: formData.get("summary") as string || '',
+      roster: initialRoster,
+      photo_url: season_photo_url
     }).select().single();
 
     if (seasonError) {
-        console.warn("Failed to create season:", seasonError.message);
-        // If it failed (e.g. duplicate year for team), return error
-        return { error: "Failed to create season (maybe it already exists?): " + seasonError.message };
+      console.warn("Failed to create season:", seasonError.message);
+      return { error: "Failed to create season: " + seasonError.message };
     }
 
     revalidatePath("/admin/teams");
-    return { 
-        success: true, 
-        teamId: teamId, 
-        teamName: teamName,
-        seasonId: seasonData.id,
-        seasonYear: seasonData.year
+    return {
+      success: true,
+      teamId: teamId,
+      teamName: teamName,
+      seasonId: seasonData.id,
+      seasonYear: seasonData.year
     };
-  } catch (err) {
-    console.error("FATAL in createTeam:", err instanceof Error ? err.message : err);
-    return { error: "An unexpected error occurred." };
+  } catch (err: any) {
+    console.error("FATAL in createTeam:", err);
+    return { error: "Failed to create program. Please check your connection." };
   }
 }
 
 export async function updateTeam(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase();
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -188,17 +175,17 @@ export async function updateTeam(prevState: any, formData: FormData) {
     const background_url = formData.get("existing_background_url") as string || '';
 
     const updates: any = {
-        name,
-        gender,
-        sport_category,
-        head_coach,
-        media_type
+      name,
+      gender,
+      sport_category,
+      head_coach,
+      media_type
     };
 
     if (photo_url) updates.photo_url = photo_url;
     if (background_url) updates.background_url = background_url;
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("teams")
       .update(updates)
       .eq("id", id);
@@ -218,22 +205,21 @@ export async function updateTeam(prevState: any, formData: FormData) {
 // Season Actions
 export async function deleteSeason(id: string, teamId: string) {
   try {
-    const supabase = await getSupabase();
-    const { error } = await supabase.from("team_seasons").delete().eq("id", id);
+    const { error } = await supabaseAdmin.from("team_seasons").delete().eq("id", id);
     if (error) {
       console.error("Error in deleteSeason:", error.message);
-      throw new Error(error.message);
+      return { error: error.message };
     }
     revalidatePath(`/admin/teams/${teamId}`);
+    return { success: true };
   } catch (err) {
     console.error("FATAL in deleteSeason:", err);
-    throw err;
+    return { error: "An unexpected error occurred while deleting the season." };
   }
 }
 
 export async function upsertSeason(prevState: any, formData: FormData) {
   try {
-    const supabase = await getSupabase();
 
     const id = formData.get("id") as string | null;
     const team_id = formData.get("team_id") as string;
@@ -248,14 +234,14 @@ export async function upsertSeason(prevState: any, formData: FormData) {
     const rosterRaw = formData.get("roster") as string;
     let roster = rosterRaw;
     try {
-        // Attempt to parse if it's a JSON string, otherwise keep as string or empty array
-        if (rosterRaw && (rosterRaw.startsWith('[') || rosterRaw.startsWith('{'))) {
-            roster = JSON.parse(rosterRaw);
-        } else if (!rosterRaw) {
-            roster = '[]' as any;
-        }
+      // Attempt to parse if it's a JSON string, otherwise keep as string or empty array
+      if (rosterRaw && (rosterRaw.startsWith('[') || rosterRaw.startsWith('{'))) {
+        roster = JSON.parse(rosterRaw);
+      } else if (!rosterRaw) {
+        roster = '[]' as any;
+      }
     } catch (e) {
-        console.warn('Roster is not valid JSON, storing as string/text');
+      console.warn('Roster is not valid JSON, storing as string/text');
     }
 
     const photo_url = formData.get("existing_photo_url") as string || '';
@@ -276,9 +262,9 @@ export async function upsertSeason(prevState: any, formData: FormData) {
 
     let result;
     if (id) {
-      result = await supabase.from("team_seasons").update(payload).eq("id", id);
+      result = await supabaseAdmin.from("team_seasons").update(payload).eq("id", id);
     } else {
-      result = await supabase.from("team_seasons").insert(payload);
+      result = await supabaseAdmin.from("team_seasons").insert(payload);
     }
 
     if (result.error) {
@@ -295,12 +281,11 @@ export async function upsertSeason(prevState: any, formData: FormData) {
 
 export async function updateRoster(seasonId: string, teamId: string, roster: any) {
   try {
-    const supabase = await getSupabase();
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("team_seasons")
       .update({ roster })
       .eq("id", seasonId);
-    
+
     if (error) {
       console.error("Error in updateRoster:", error.message);
       throw new Error(error.message);

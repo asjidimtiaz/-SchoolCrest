@@ -5,9 +5,9 @@ import { deleteTeam, deleteSeason } from './actions'
 import { useTransition } from 'react'
 
 interface DeleteButtonProps {
-    id: string
-    teamId?: string // If present, deleting a season
-    type: 'team' | 'season'
+  id: string
+  teamId?: string // If present, deleting a season
+  type: 'team' | 'season'
 }
 
 export default function DeleteButton({ id, teamId, type }: DeleteButtonProps) {
@@ -16,16 +16,28 @@ export default function DeleteButton({ id, teamId, type }: DeleteButtonProps) {
   return (
     <button
       onClick={() => {
-        const msg = type === 'team' 
-            ? 'Are you sure you want to delete this team? All seasons will also be deleted.' 
-            : 'Are you sure you want to delete this season?';
-        
+        if (!id || id === 'null') {
+          alert('Error: This item has no valid ID and cannot be deleted. Please refresh the page.');
+          return;
+        }
+
+        const msg = type === 'team'
+          ? 'Are you sure you want to delete this team? All seasons will also be deleted.'
+          : 'Are you sure you want to delete this season?';
+
         if (confirm(msg)) {
           startTransition(async () => {
+            let result;
             if (type === 'team') {
-                await deleteTeam(id)
+              result = await deleteTeam(id)
             } else {
-                await deleteSeason(id, teamId!)
+              result = await deleteSeason(id, teamId!)
+            }
+
+            if (result?.success) {
+              // Success - the transition will trigger a re-render via revalidatePath
+            } else if (result?.error) {
+              alert(result.error)
             }
           })
         }
