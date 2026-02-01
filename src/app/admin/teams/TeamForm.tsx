@@ -21,8 +21,8 @@ const initialState = { error: '', success: false }
 export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormProps) {
     const router = useRouter()
 
-    // @ts-ignore
-    const [state, formAction, isPending] = useActionState(isEdit ? updateTeam : createTeam, initialState as any)
+    const [actionState, setActionState] = useState(initialState)
+    const [isInternalPending, setIsInternalPending] = useState(false)
     const [step, setStep] = useState<1 | 2>(1)
     const [createdData, setCreatedData] = useState<{ teamId: string, seasonId: string, teamName: string, seasonYear: number } | null>(null)
     const [uploading, setUploading] = useState(false)
@@ -77,22 +77,22 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     }, [step, createdData?.teamId])
 
     useEffect(() => {
-        if (state?.success) {
+        if (actionState?.success) {
             if (isEdit) {
                 router.push('/admin/teams')
-            } else if ((state as any).teamId) {
+            } else if ((actionState as any).teamId) {
                 setCreatedData({
-                    teamId: (state as any).teamId,
-                    seasonId: (state as any).seasonId,
-                    teamName: (state as any).teamName,
-                    seasonYear: (state as any).seasonYear
+                    teamId: (actionState as any).teamId,
+                    seasonId: (actionState as any).seasonId,
+                    teamName: (actionState as any).teamName,
+                    seasonYear: (actionState as any).seasonYear
                 })
                 setStep(2)
             } else {
                 router.push('/admin/teams')
             }
         }
-    }, [state?.success, isEdit, state, router])
+    }, [actionState?.success, isEdit, actionState, router])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target
@@ -105,10 +105,33 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
 
     // Handle Step 2 Success (Legacy/Final)
     useEffect(() => {
-        if (state?.success && isEdit) {
+        if (actionState?.success && isEdit) {
             router.push('/admin/teams')
         }
-    }, [state?.success, isEdit, router])
+    }, [actionState?.success, isEdit, router])
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsInternalPending(true)
+        setCustomError('')
+        setActionState(initialState)
+
+        try {
+            const formData = new FormData(e.currentTarget)
+
+            // REMOVE FILE BINARIES - They cause 413 Payload Too Large on Vercel
+            // We already uploaded them and stored the URLs in hidden fields
+            formData.delete('photo_file_input')
+            formData.delete('background_file_input')
+
+            const result = await (isEdit ? updateTeam(null, formData) : createTeam(null, formData)) as { success: boolean; error: string }
+            setActionState(result)
+        } catch (err: any) {
+            setCustomError(err.message || 'Submission failed')
+        } finally {
+            setIsInternalPending(false)
+        }
+    }
 
     const nextStep = () => setStep(2)
     const prevStep = () => setStep(1)
@@ -116,7 +139,7 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
     return (
         <div className="flex flex-col xl:flex-row gap-8 pb-10 text-left">
             {step === 1 ? (
-                <form action={formAction} className="flex-1 space-y-6">
+                <form onSubmit={handleSubmit} className="flex-1 space-y-6">
                     <input type="hidden" name="school_id" value={schoolId} />
                     {isEdit && <input type="hidden" name="id" value={team?.id} />}
                     <input type="hidden" name="media_type" value={formData.media_type} />
@@ -281,9 +304,9 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
                         {/* Integration of Roster Manager into Step 1 */}
                         {/* Roster Management is now handled exclusively in Step 2 (Archive History) */}
                     </div>
-                    {(state?.error || customError) && (
+                    {(actionState?.error || customError) && (
                         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up">
-                            {state?.error || customError}
+                            {actionState?.error || customError}
                         </div>
                     )}
 
@@ -298,11 +321,11 @@ export default function TeamForm({ team, schoolId, isEdit = false }: TeamFormPro
 
                         <button
                             type="submit"
-                            disabled={isPending || uploading || !formData.name}
+                            disabled={isInternalPending || uploading || !formData.name}
                             className="flex items-center gap-2 px-8 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_20px_40px_rgba(0,0,0,0.15)] disabled:opacity-50 text-[11px] uppercase tracking-widest"
                         >
-                            {uploading ? <Plus className="animate-spin" size={14} /> : isPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
-                            {uploading ? 'Uploading Media...' : isPending ? 'Processing...' : isEdit ? 'Update Program' : 'Create Program & Continue'}
+                            {uploading ? <Plus className="animate-spin" size={14} /> : isInternalPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
+                            {uploading ? 'Uploading Media...' : isInternalPending ? 'Processing...' : isEdit ? 'Update Program' : 'Create Program & Continue'}
                         </button>
                     </div>
                 </form>

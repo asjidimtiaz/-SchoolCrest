@@ -31,8 +31,8 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
     const [uploading, setUploading] = useState(false)
     const [customError, setCustomError] = useState('')
     const [currentPhotoUrl, setCurrentPhotoUrl] = useState((season as any)?.photo_url || '')
-    // @ts-ignore
-    const [state, formAction, isPending] = useActionState(upsertSeason, initialState)
+    const [actionState, setActionState] = useState(initialState)
+    const [isInternalPending, setIsInternalPending] = useState(false)
 
     const [achievements, setAchievements] = useState<string[]>(season?.achievements || [])
 
@@ -52,7 +52,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
     }
 
     useEffect(() => {
-        if (state?.success) {
+        if (actionState?.success) {
             onSuccess?.()
             if (!season) {
                 const form = document.querySelector('form') as HTMLFormElement
@@ -61,11 +61,32 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                 setRoster([])
             }
         }
-    }, [state?.success, season, onSuccess])
+    }, [actionState?.success, season, onSuccess])
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsInternalPending(true)
+        setCustomError('')
+        setActionState(initialState)
+
+        try {
+            const formData = new FormData(e.currentTarget)
+
+            // REMOVE FILE BINARIES - They cause 413 Payload Too Large on Vercel
+            formData.delete('photo_file_input')
+
+            const result = await upsertSeason(null, formData) as { success: boolean; error: string }
+            setActionState(result)
+        } catch (err: any) {
+            setCustomError(err.message || 'Submission failed')
+        } finally {
+            setIsInternalPending(false)
+        }
+    }
 
 
     return (
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             <input type="hidden" name="team_id" value={team_id} />
             {season && <input type="hidden" name="id" value={season.id} />}
             <input type="hidden" name="existing_photo_url" value={currentPhotoUrl} />
@@ -192,8 +213,8 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                                             type="button"
                                             onClick={() => toggleAchievement(id)}
                                             className={`px-5 py-2.5 rounded-xl border font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2 ${achievements.includes(id)
-                                                    ? 'bg-black border-black text-white shadow-lg active:scale-95'
-                                                    : 'bg-white border-gray-200 text-gray-400 hover:border-black/5 hover:text-gray-600'
+                                                ? 'bg-black border-black text-white shadow-lg active:scale-95'
+                                                : 'bg-white border-gray-200 text-gray-400 hover:border-black/5 hover:text-gray-600'
                                                 }`}
                                         >
                                             <div className={`w-1 h-1 rounded-full ${achievements.includes(id) ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
@@ -243,10 +264,10 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
             <input type="hidden" name="achievements" value={achievements.join('\n')} />
             <input type="hidden" name="roster" value={JSON.stringify(roster)} />
 
-            {(state?.error || customError) && (
+            {(actionState?.error || customError) && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up flex items-center gap-3 shadow-sm mt-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    {state?.error || customError}
+                    {actionState?.error || customError}
                 </div>
             )}
 
@@ -260,10 +281,10 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                 </button>
                 <button
                     type="submit"
-                    disabled={isPending || uploading}
+                    disabled={isInternalPending || uploading}
                     className="flex items-center gap-2.5 px-8 py-3.5 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 uppercase tracking-[0.2em] text-[10px]"
                 >
-                    {isPending ? 'Processing...' : 'Save archive'}
+                    {isInternalPending ? 'Processing...' : 'Save archive'}
                 </button>
             </div>
         </form>
