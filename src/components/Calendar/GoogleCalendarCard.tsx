@@ -55,10 +55,6 @@ export default function GoogleCalendarCard({ event, primaryColor }: GoogleCalend
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-        <div className="flex items-center gap-2">
-          <Globe size={10} className="text-[#4285F4]" />
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#4285F4]">Google Calendar</span>
-        </div>
 
         <h3 className="text-xl font-bold text-white leading-tight tracking-tight truncate pr-4">
           {event.summary}
