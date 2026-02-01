@@ -7,19 +7,28 @@ import { supabaseAdmin } from './supabaseAdmin'
  */
 export async function syncAdminIdentity() {
   // 1. First attempt: Quick check using auth() (No Secret Key API call needed)
+  // 1. First attempt: Quick check using auth() (No Secret Key API call needed)
   try {
     const { userId } = await auth()
     if (userId) {
       const { data: existingProfile } = await supabaseAdmin
         .from('admins')
-        .select('id, role, school_id')
+        .select('*')
         .eq('id', userId)
         .maybeSingle()
 
-      if (existingProfile) return existingProfile
+      if (existingProfile) {
+        // If profile exists but is missing name/avatar (legacy schema), try to update it?
+        // We can't easily get Clerk details here without `currentUser()`, so we'll skip the quick check
+        // if important fields are missing, and let it fall through to the full sync below.
+        if (existingProfile.full_name && existingProfile.avatar_url) {
+          return existingProfile
+        }
+        // Fall through to full sync to get Clerk data
+      }
     }
   } catch (e) {
-    console.warn('[syncAdminIdentity] Quick auth check failed:', e)
+    // Fail silently in quick check
   }
 
   // 2. Second attempt: Full sync using currentUser() (Requires valid Secret Key)
@@ -30,13 +39,47 @@ export async function syncAdminIdentity() {
   if (!email) return null
 
   // 1. Check if we already have the profile by Clerk ID
+  // 1. Check if we already have the profile by Clerk ID
   const { data: profileById } = await supabaseAdmin
     .from('admins')
-    .select('id, role, school_id')
+    .select('*')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profileById) return profileById
+  if (profileById) {
+    // Only backfill if fields are actually NULL/missing (not just different from Clerk)
+    // This prevents overwriting user's manual profile edits
+    const needsUpdate =
+      profileById.full_name === null ||
+      profileById.avatar_url === null ||
+      profileById.email === null;
+
+    if (needsUpdate) {
+      const updateData: any = {}
+
+      // Only update fields that are actually NULL
+      if (profileById.email === null) {
+        updateData.email = email
+      }
+      if (profileById.full_name === null) {
+        updateData.full_name = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+      }
+      if (profileById.avatar_url === null) {
+        updateData.avatar_url = user.imageUrl
+      }
+
+      const { data: updated, error: updateErr } = await supabaseAdmin
+        .from('admins')
+        .update(updateData)
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (!updateErr && updated) return updated;
+    }
+
+    return profileById
+  }
 
   // 2. If not found by ID, check if they were pre-invited by email
   const { data: profileByEmail } = await supabaseAdmin
@@ -61,7 +104,7 @@ export async function syncAdminIdentity() {
       .eq('id', profileByEmail.id)
 
     if (deleteError) {
-      console.error('[syncAdminIdentity] Failed to remove temp record:', deleteError.message)
+      // Log only critical errors in production if needed, or keep generic
     }
 
     const { data: syncedProfile, error: insertError } = await supabaseAdmin
@@ -79,11 +122,9 @@ export async function syncAdminIdentity() {
       .single()
 
     if (insertError) {
-      console.error('[syncAdminIdentity] Failed to insert synced record:', insertError.message)
       return null
     }
 
-    console.log(`[syncAdminIdentity] Synced Clerk user ${user.id} with email ${email}`)
     return syncedProfile
   }
 

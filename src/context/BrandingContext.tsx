@@ -80,11 +80,11 @@ export function useBranding() {
     accentColor: context.accentColor || '#3b82f6',
     name: context.name || 'School Crest Kiosk',
     navHallOfFameLabel: context.navHallOfFameLabel || 'Hall of Fame',
-    navTeamsLabel: context.navTeamsLabel || 'Athletic Teams',
+    navTeamsLabel: context.navTeamsLabel || 'Programs',
     navCalendarLabel: context.navCalendarLabel || 'Campus Events',
     navInfoLabel: context.navInfoLabel || 'School Profile',
     navHallOfFameTagline: context.navHallOfFameTagline || 'Honoring exceptional alumni and staff',
-    navTeamsTagline: context.navTeamsTagline || 'Explore our sports and history',
+    navTeamsTagline: context.navTeamsTagline || 'Explore our programs and history',
     navCalendarTagline: context.navCalendarTagline || 'Stay updated with school activities',
     navInfoTagline: context.navInfoTagline || 'Information about our community',
   }

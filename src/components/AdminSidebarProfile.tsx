@@ -20,6 +20,7 @@ interface SidebarProfileProps {
   schoolName: string;
   profileLink?: string;
   primaryColor?: string;
+  isSuperAdmin?: boolean;
 }
 
 export default function AdminSidebarProfile({
@@ -27,6 +28,7 @@ export default function AdminSidebarProfile({
   schoolName,
   profileLink = "/admin/profile",
   primaryColor = "#3b82f6",
+  isSuperAdmin = false,
 }: SidebarProfileProps) {
   const { signOut } = useClerk();
   const [isOpen, setIsOpen] = useState(false);
@@ -46,11 +48,10 @@ export default function AdminSidebarProfile({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center gap-2.5 p-2 rounded-2xl transition-all duration-300 group border ${
-          isOpen
-            ? "bg-gray-100 border-gray-200 shadow-inner"
-            : "bg-white border-gray-100 hover:border-gray-300 shadow-sm"
-        }`}
+        className={`w-full flex items-center gap-2.5 p-2 rounded-2xl transition-all duration-300 group border ${isOpen
+          ? "bg-gray-100 border-gray-200 shadow-inner"
+          : "bg-white border-gray-100 hover:border-gray-300 shadow-sm"
+          }`}
       >
         <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-gray-100 bg-gray-50 overflow-hidden shadow-sm">
           {admin.avatar_url ? (
@@ -120,6 +121,16 @@ export default function AdminSidebarProfile({
             </div>
 
             <div className="w-full space-y-2">
+              {isSuperAdmin && (
+                <Link
+                  href="/admin/super"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-black text-white border border-black rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-sm active:scale-[0.98]"
+                >
+                  <ShieldCheck size={12} className="opacity-70" />
+                  Super Admin Panel
+                </Link>
+              )}
+
               <Link
                 href={profileLink}
                 onClick={() => setIsOpen(false)}
@@ -129,7 +140,7 @@ export default function AdminSidebarProfile({
                 Manage Account
               </Link>
 
-              <button 
+              <button
                 onClick={() => signOut()}
                 className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50/50 hover:bg-red-50 text-red-500 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all border border-transparent hover:border-red-100 active:scale-[0.98]"
               >

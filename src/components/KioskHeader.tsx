@@ -15,29 +15,29 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
   return (
     <header className="sticky top-0 shrink-0 z-50 bg-gray-100">
       {/* Main Header with Gradient */}
-      <div 
-        className="px-8 lg:px-16 py-0.5 flex items-center justify-between shadow-xl relative overflow-hidden"
+      <div
+        className="px-8 lg:px-16 py-3 flex items-center justify-between shadow-xl relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
         }}
       >
         {/* Subtle overlay for depth */}
         <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-white/10" />
-        
-        <Link 
+
+        <Link
           href="/home"
           className="flex items-center gap-4 relative z-10 active:scale-[0.98] transition-all cursor-pointer group"
         >
           {/* Logo Container */}
           <div className="relative">
             {branding.logoUrl ? (
-              <img 
-                src={branding.logoUrl} 
-                alt={branding.name} 
-                className="h-12 w-12 lg:h-14 lg:w-14 object-contain rounded-xl drop-shadow-xl bg-white p-1 transition-colors my-2" 
+              <img
+                src={branding.logoUrl}
+                alt={branding.name}
+                className="h-12 w-12 lg:h-14 lg:w-14 object-contain rounded-xl drop-shadow-xl bg-white p-1 transition-colors my-2"
               />
             ) : (
-              <div 
+              <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-lg border border-white/30 transition-colors"
               >
                 <GraduationCap size={28} strokeWidth={2} className="text-white" />
@@ -68,13 +68,13 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
           <FullScreenToggle />
         </div>
       </div>
-      
+
       {/* Bottom accent line - solid color */}
-      <div 
-        className="h-1" 
-        style={{ 
+      <div
+        className="h-1"
+        style={{
           backgroundColor: branding.accentColor
-        }} 
+        }}
       />
     </header>
   )

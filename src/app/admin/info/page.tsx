@@ -1,4 +1,7 @@
 import BrandingForm from './BrandingForm'
+// Force HMR refresh
+import { getSchool } from '@/lib/getSchool'
+import { getScreensaverImages } from '@/lib/getScreensaverImages'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,9 +10,6 @@ export default async function SchoolInfoAdminPage() {
   if (!school) return null
 
   const galleryImages = await getScreensaverImages(school.id) // Fetch Gallery Images
-
-  console.log('[InfoPage] School:', school ? 'Found' : 'Null');
-  console.log('[InfoPage] GalleryImages:', galleryImages);
 
   // Sanitize data to ensure no serialization issues (e.g. Dates, hidden props)
   const cleanSchool = JSON.parse(JSON.stringify(school));

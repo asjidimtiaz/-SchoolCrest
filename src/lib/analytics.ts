@@ -46,10 +46,7 @@ class KioskAnalytics {
       session_id: this.sessionId,
     }
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Page View:', event)
-    }
+    // In production, we'd send via sendEvent
 
     // In production, you could send to:
     // - Supabase table
@@ -72,9 +69,7 @@ class KioskAnalytics {
       timestamp: new Date(),
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics] Interaction:', event)
-    }
+    // In production, we'd send via sendEvent
 
     this.sendEvent('interaction', event)
   }

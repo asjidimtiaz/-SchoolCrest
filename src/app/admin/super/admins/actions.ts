@@ -23,25 +23,6 @@ export async function toggleAdminStatus(adminId: string, newStatus: boolean) {
   }
 }
 
-export async function changeAdminRole(adminId: string, newRole: string) {
-  try {
-    const { error } = await supabaseAdmin
-      .from('admins')
-      .update({ role: newRole })
-      .eq('id', adminId)
-
-    if (error) {
-      console.error("Error changing admin role:", error.message)
-      return { error: error.message }
-    }
-
-    revalidatePath('/admin/super/admins')
-    return { success: true }
-  } catch (err) {
-    console.error("FATAL in changeAdminRole:", err)
-    return { error: "Failed to change admin role" }
-  }
-}
 
 export async function reassignAdminToSchool(adminId: string, newSchoolId: string | null) {
   try {

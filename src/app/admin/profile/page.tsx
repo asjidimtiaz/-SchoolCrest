@@ -4,6 +4,9 @@ import { currentUser } from '@clerk/nextjs/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import ProfilePageClient from './ProfilePageClient'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function ProfilePage() {
   const user = await currentUser()
 
@@ -14,20 +17,32 @@ export default async function ProfilePage() {
   // 1. Fetch profile info using Service Role to bypass potential RLS issues
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('admins')
-    .select(`
-      id,
-      role,
-      full_name,
-      avatar_url,
-      email,
-      school:schools (
-        name,
-        slug,
-        active
-      )
-    `)
+    .select('id, role, full_name, avatar_url, email, school_id')
     .eq('id', user.id)
     .maybeSingle()
+
+  // 2. Fetch school: Prefer profile.school_id, fallback to current context school (for Super Admins masquerading)
+  let school = null;
+
+  if (profile?.school_id) {
+    const { data: schoolData } = await supabaseAdmin
+      .from('schools')
+      .select('name, slug, active')
+      .eq('id', profile.school_id)
+      .maybeSingle()
+    school = schoolData
+  } else {
+    // Fallback: Check if they are masquerading/viewing a specific school context
+    const { getSchool } = await import('@/lib/getSchool');
+    const contextSchool = await getSchool();
+    if (contextSchool) {
+      school = {
+        name: contextSchool.name,
+        slug: contextSchool.slug,
+        active: contextSchool.active
+      }
+    }
+  }
 
   if (profileError && profileError.message.includes('full_name')) {
     return (
@@ -62,19 +77,23 @@ ADD COLUMN IF NOT EXISTS avatar_url TEXT;`}
   }
 
   if (profileError || !profile) {
-    // If sync failed or something went wrong, redirect to dashboard which will re-trigger sync
     redirect('/admin')
   }
 
   return (
     <ProfilePageClient
       admin={{
-        email: profile.email || user.emailAddresses[0].emailAddress,
+        email: profile.email,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         role: profile.role,
-        school: profile.school as any
+        school: school ? {
+          name: school.name,
+          slug: school.slug,
+          active: school.active
+        } : null
       }}
+      isSuperAdmin={profile.role === 'super_admin'}
     />
   )
 }

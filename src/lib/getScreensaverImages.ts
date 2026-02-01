@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from './supabaseAdmin'
 
 export interface ScreensaverImage {
   id: string
@@ -10,19 +10,7 @@ export interface ScreensaverImage {
 
 export async function getScreensaverImages(schoolId: string): Promise<ScreensaverImage[]> {
   try {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error('Missing Supabase vars in getScreensaverImages');
-      return [];
-    }
-
-    // Create fresh client to avoid singleton issues
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { auth: { persistSession: false } }
-    )
-
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('screensaver_images')
       .select('*')
       .eq('school_id', schoolId)

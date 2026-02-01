@@ -14,10 +14,10 @@ interface ImageUploadProps {
   recommendation?: string
 }
 
-export default function ImageUpload({ 
-  onImageSelect, 
-  currentImageUrl, 
-  label = "Profile Photo", 
+export default function ImageUpload({
+  onImageSelect,
+  currentImageUrl,
+  label = "Profile Photo",
   description = "Drag and drop or click to upload",
   className = "",
   name = "photo_file",
@@ -38,6 +38,11 @@ export default function ImageUpload({
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image file is too large. Maximum size is 5MB. Most phone photos can be uploaded, but very large high-res images may need to be resized.')
       return
     }
 
@@ -82,8 +87,8 @@ export default function ImageUpload({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">{label}</label>
-      
-      <div 
+
+      <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -92,14 +97,14 @@ export default function ImageUpload({
           relative group cursor-pointer
           aspect-square md:aspect-video lg:aspect-[16/6] rounded-2xl
           border-2 border-dashed transition-all duration-300 overflow-hidden
-          ${isDragging 
-            ? 'border-black bg-black/[0.02] scale-[0.99]' 
+          ${isDragging
+            ? 'border-black bg-black/[0.02] scale-[0.99]'
             : 'border-gray-100 bg-white/50 hover:border-gray-300 hover:bg-white/80'
           }
         `}
       >
-        <input 
-          type="file" 
+        <input
+          type="file"
           ref={fileInputRef}
           onChange={onFileChange}
           accept="image/*"
@@ -110,20 +115,20 @@ export default function ImageUpload({
 
         {preview ? (
           <div className="relative w-full h-full animate-fade-in">
-            <img 
-              src={preview} 
-              alt="Preview" 
+            <img
+              src={preview}
+              alt="Preview"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                   className="px-4 py-2 bg-white text-black font-black text-[10px] uppercase rounded-lg hover:scale-105 transition-transform"
                 >
                   Change
                 </button>
-                <button 
+                <button
                   onClick={clearImage}
                   className="p-2 bg-red-500 text-white rounded-lg hover:scale-105 transition-transform"
                 >

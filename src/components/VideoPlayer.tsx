@@ -34,17 +34,20 @@ export default function VideoPlayer({ src, poster, className = "" }: VideoPlayer
   }
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
+    if (videoRef.current && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) {
       const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100
       setProgress(currentProgress)
     }
   }
 
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (videoRef.current) {
-      const newTime = (parseFloat(e.target.value) / 100) * videoRef.current.duration
-      videoRef.current.currentTime = newTime
-      setProgress(parseFloat(e.target.value))
+    if (videoRef.current && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) {
+      const val = parseFloat(e.target.value)
+      const newTime = (val / 100) * videoRef.current.duration
+      if (isFinite(newTime)) {
+        videoRef.current.currentTime = newTime
+        setProgress(val)
+      }
     }
   }
 
@@ -84,21 +87,21 @@ export default function VideoPlayer({ src, poster, className = "" }: VideoPlayer
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <button 
+              <button
                 onClick={togglePlay}
                 className="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center hover:scale-110 active:scale-90 transition-all font-bold"
               >
                 {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
               </button>
 
-              <button 
+              <button
                 onClick={restart}
                 className="p-3 text-white/60 hover:text-white transition-colors"
               >
                 <RotateCcw size={20} />
               </button>
 
-              <button 
+              <button
                 onClick={toggleMute}
                 className="p-3 text-white/60 hover:text-white transition-colors flex items-center gap-2"
               >
@@ -107,7 +110,7 @@ export default function VideoPlayer({ src, poster, className = "" }: VideoPlayer
             </div>
 
             <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                Cinema View Active
+              Cinema View Active
             </div>
           </div>
         </div>
@@ -115,13 +118,13 @@ export default function VideoPlayer({ src, poster, className = "" }: VideoPlayer
 
       {/* Center Play Button Overlay (when paused) */}
       {!isPlaying && (
-        <div 
-            onClick={togglePlay}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
+        <div
+          onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
         >
-            <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white scale-100 group-hover/player:scale-110 transition-transform duration-500">
-                <Play size={40} fill="currentColor" className="ml-2" />
-            </div>
+          <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white scale-100 group-hover/player:scale-110 transition-transform duration-500">
+            <Play size={40} fill="currentColor" className="ml-2" />
+          </div>
         </div>
       )}
     </div>

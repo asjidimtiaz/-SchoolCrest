@@ -3,10 +3,9 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  console.log('[DEBUG] API Upload: Request received')
   try {
     const cookieStore = await cookies()
-    
+
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
@@ -18,19 +17,17 @@ export async function POST(request: NextRequest) {
         cookies: {
           get(name: string) { return cookieStore.get(name)?.value },
           set(name: string, value: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value, ...options }) } catch (e) {}
+            try { cookieStore.set({ name, value, ...options }) } catch (e) { }
           },
           remove(name: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value: '', ...options }) } catch (e) {}
+            try { cookieStore.set({ name, value: '', ...options }) } catch (e) { }
           },
         },
       }
     )
 
-    console.log('[DEBUG] API Upload: Parsing FormData...')
     const formData = await request.formData()
     const file = formData.get('file') as File
-    console.log('[DEBUG] API Upload: File parsed:', file?.name, file?.size)
     const folder = formData.get('folder') as string || 'misc'
     const schoolId = formData.get('schoolId') as string
 
@@ -51,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data } = supabase.storage.from('school-assets').getPublicUrl(path)
-    
+
     return NextResponse.json({ url: data.publicUrl })
   } catch (err) {
     console.error('API error:', err)

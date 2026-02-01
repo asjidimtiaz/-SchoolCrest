@@ -1,4 +1,5 @@
 import { syncAdminIdentity } from '@/lib/syncAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { LayoutDashboard, Users, Settings } from 'lucide-react'
 import { redirect } from 'next/navigation'
@@ -48,6 +49,21 @@ export default async function SuperAdminLayout({
 
   if (!user) {
     redirect('/')
+  }
+
+  // Double-check role directly from DB if sync returns something else (or nothing)
+  // This prevents infinite redirect loops if the synced profile is stale
+  if (profile?.role !== 'super_admin' && user) {
+    const { data: roleData } = await supabaseAdmin
+      .from('admins')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (roleData?.role === 'super_admin') {
+      // Manually patch the profile object so the layout renders
+      profile = { ...profile, role: 'super_admin', full_name: profile?.full_name ?? 'Super Admin' }
+    }
   }
 
   if (profile?.role !== 'super_admin') {

@@ -1,7 +1,7 @@
 'use client'
 
 import { SchoolEvent } from '@/lib/getEvents'
-import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react'
+import { MapPin, Clock } from 'lucide-react'
 
 interface EventCardProps {
   event: SchoolEvent
@@ -13,49 +13,64 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
   const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
   return (
-    <div className="group relative flex items-center gap-6 py-5 px-10 bg-white/10 backdrop-blur-2xl rounded-full transition-all duration-500 hover:bg-white/15 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] ml-20 mb-3 ring-1 ring-white/10 hover:ring-white/30 overflow-hidden active:scale-[0.98]">
-      
-      {/* Premium Glossy Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+    <div className="group relative flex gap-6 p-6 bg-white/10 backdrop-blur-xl rounded-2xl transition-all duration-300 hover:bg-white/15 border border-white/10 shadow-lg hover:shadow-xl mb-4 ml-4 ring-1 ring-white/5 overflow-hidden">
 
-      {/* Time Column: Prominent & Clean */}
-      <div className="flex-shrink-0">
-        <span className="text-sm font-black text-white/80 tracking-widest uppercase">{timeStr}</span>
-      </div>
-
-      {/* Branded Separator Dot: Glowing Accent */}
-      <div 
-        className="w-2.5 h-2.5 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] ring-2 ring-white/10 flex-shrink-0" 
-        style={{ 
-          backgroundColor: primaryColor,
-          boxShadow: `0 0 20px ${primaryColor}60`
-        }}
+      {/* Accent Bar */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-1.5"
+        style={{ backgroundColor: primaryColor }}
       />
 
-      {/* Content: Centered & Balanced */}
-      <div className="flex-1 min-w-0 flex items-center gap-6">
-        <h3 className="text-xl font-black text-white leading-none tracking-tight truncate lowercase">
-            {event.title}
-        </h3>
-        
-        {/* Location Indicator: Minimal & High-End */}
-        {event.location && (
-          <div className="flex items-center gap-3">
-             <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 truncate max-w-[200px]">
-                 {event.location}
-             </span>
-          </div>
-        )}
+      {/* Date & Time Column */}
+      <div className="flex flex-col items-center justify-center min-w-[5.5rem] text-center border-r border-white/10 pr-6 gap-1">
+        <div className="flex flex-col items-center mb-1">
+          <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] leading-none mb-1">
+            {startDate.toLocaleDateString('en-US', { month: 'short' })}
+          </span>
+          <span className="text-3xl font-black text-white leading-none tracking-tighter">
+            {startDate.getDate()}
+          </span>
+        </div>
+
+        <div className="h-px w-4 bg-white/10 my-1" />
+
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-black text-white/80 leading-none tracking-tight">
+            {startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false })}
+          </span>
+          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
+            {startDate.toLocaleTimeString('en-US', { minute: '2-digit' }) === '00' ? '' : startDate.toLocaleTimeString('en-US', { minute: '2-digit' })}
+            <span className="ml-0.5">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).slice(-2)}</span>
+          </span>
+        </div>
       </div>
 
-      {/* Details Indicator: Subtle Pulse (if description exists) */}
-      {event.description && (
-          <div className="relative flex items-center justify-center w-2 h-2">
-            <div className="absolute inset-0 rounded-full bg-white/40 animate-ping opacity-20" />
-            <div className="w-1.5 h-1.5 rounded-full bg-white/30 group-hover:bg-white/60 transition-colors" />
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+        <h3 className="text-xl font-bold text-white leading-tight tracking-tight truncate pr-4">
+          {event.title}
+        </h3>
+
+        <div className="flex items-center gap-4">
+          {/* Category / Time Detail */}
+          <div className="flex items-center gap-1.5 text-white/60">
+            <Clock size={12} strokeWidth={2.5} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              {timeStr}
+            </span>
           </div>
-      )}
+
+          {/* Location */}
+          {event.location && (
+            <div className="flex items-center gap-1.5 text-white/60">
+              <MapPin size={12} strokeWidth={2.5} />
+              <span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-[200px]">
+                {event.location}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

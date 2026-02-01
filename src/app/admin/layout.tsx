@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { syncAdminIdentity } from '@/lib/syncAdmin'
 import AdminController from '@/components/AdminController'
 import AdminSidebarProfile from '@/components/AdminSidebarProfile'
@@ -36,12 +37,31 @@ export default async function AdminLayout({
       adminProfile = await syncAdminIdentity()
     }
   } catch (error) {
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     clerkError = error
-    console.error('[AdminLayout] Clerk error:', error)
+  }
+
+  // Ensure we have the latest role (syncAdminIdentity might return cached/incomplete data)
+  let isSuperAdmin = adminProfile?.role === 'super_admin';
+
+  if (user && !isSuperAdmin) {
+    // Double check the DB directly just in case (e.g. syncAdminIdentity failed or returned old data)
+    const { data: roleData } = await supabaseAdmin
+      .from('admins')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (roleData?.role === 'super_admin') {
+      isSuperAdmin = true;
+    }
   }
 
   // Redirect Super Admins to their dashboard if they hit the root /admin
-  if (adminProfile?.role === 'super_admin' && !pathname.startsWith('/admin/super')) {
+  // Now using the ROBUST isSuperAdmin check
+  if (isSuperAdmin && !pathname.startsWith('/admin/super')) {
     redirect('/admin/super')
   }
 
@@ -100,18 +120,14 @@ export default async function AdminLayout({
 
   const primaryColor = school.primary_color || '#000'
 
-  // Fetch admin role for conditional navigation
-  const supabase = await getSupabaseServer()
-  const { data: profile } = await supabase
-    .from('admins')
-    .select('role, full_name, avatar_url')
-    .eq('id', user?.id)
-    .maybeSingle()
+  // No need to re-fetch profile, we have it from syncAdminIdentity
+  const profile = adminProfile;
+
 
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: 'LayoutGrid' },
     { label: 'Hall of Fame', href: '/admin/hall-of-fame', icon: 'Trophy' },
-    { label: 'Programs', href: '/admin/teams', icon: 'Shapes' },
+    { label: 'Programs', href: '/admin/programs', icon: 'Shapes' },
     { label: 'Events', href: '/admin/calendar', icon: 'Calendar' },
     { label: 'Calendar', href: '/admin/school-calendar', icon: 'Calendar' },
     { label: 'School Info', href: '/admin/info', icon: 'Info' },
@@ -120,7 +136,7 @@ export default async function AdminLayout({
 
   const kioskUrl = school.slug === 'schoolcrestinteractive'
     ? '/'
-    : `http://${school.slug}.schoolcrestinteractive.com:3000` // Adjust for production later
+    : `https://${school.slug}.schoolcrestinteractive.com`
 
   return (
     <AdminController>
@@ -136,6 +152,7 @@ export default async function AdminLayout({
               }}
               schoolName={school.name}
               primaryColor={primaryColor}
+              isSuperAdmin={isSuperAdmin}
             />
           </div>
 

@@ -1,11 +1,12 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProfile } from './actions'
 import { User, Mail, Shield, Building2, Globe, CheckCircle, AlertCircle, Loader2, Save, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import ImageUpload from '@/components/ImageUpload'
+import { uploadFileClient } from '@/lib/supabaseClient'
 
 interface ProfileProps {
   admin: {
@@ -29,22 +30,78 @@ const initialState = {
 
 export default function ProfilePageClient({ admin, isSuperAdmin = false }: ProfileProps) {
   const router = useRouter()
-  // @ts-ignore
-  const [state, formAction, isPending] = useActionState(updateProfile, initialState)
+  const [actionState, setActionState] = useState(initialState)
+  const [isUploading, setIsUploading] = useState(false)
 
-  // Force router refresh when profile updates successfully
+  // Track selected avatar locally
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null)
+
+  // @ts-ignore
+  const [state, formAction, isPendingAction] = useActionState(updateProfile, initialState)
+
+  const isPending = isPendingAction || isUploading
+
+  // Controlled state for full name to ensure it updates when props change
+  const [fullName, setFullName] = useState(admin.full_name || '')
+
+  // Update internal state if props change (e.g., after success or mount)
   useEffect(() => {
-    if (state?.success) {
+    setFullName(admin.full_name || '')
+  }, [admin.full_name])
+
+  // Refresh router on success
+  useEffect(() => {
+    if (state?.success || actionState?.success) {
       router.refresh()
     }
-  }, [state?.success, router])
+    if (state?.error) {
+      setActionState({ error: state.error, success: false })
+    }
+  }, [state, actionState?.success, router])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsUploading(true)
+    setActionState({ error: '', success: false })
+
+    try {
+      const form = e.currentTarget
+      const formData = new FormData(form)
+
+      // 1. Upload Avatar if selected
+      if (selectedAvatar) {
+        const ext = selectedAvatar.name.split('.').pop()
+        const path = `avatars/${admin.school?.slug || 'system'}/${Date.now()}_avatar.${ext}`
+        const publicUrl = await uploadFileClient(selectedAvatar, 'school-assets', path)
+        if (publicUrl) {
+          formData.set('avatarUrl', publicUrl)
+          formData.delete('avatar_file')
+        } else {
+          throw new Error('Failed to upload avatar. Please try again.')
+        }
+      }
+
+      // 2. Call Server Action
+      const result = await updateProfile(null, formData)
+
+      if (result.success) {
+        setActionState({ error: '', success: true })
+      } else {
+        setActionState({ error: result.error || 'Failed to update profile.', success: false })
+      }
+    } catch (err: any) {
+      console.error('Profile Update Error:', err)
+      setActionState({ error: err.message || 'An unexpected error occurred.', success: false })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   return (
     <div className="space-y-4 pb-4 animate-fade-in">
       <div className="space-y-0.5">
         <div className="flex items-center gap-1.5">
-           <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[8px] font-black uppercase tracking-[0.1em]">System Active</span>
-           <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]" />
         </div>
         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
         <p className="text-sm text-gray-400 font-medium tracking-tight uppercase tracking-widest text-[9px]">Administrative Identity & Credentials</p>
@@ -53,7 +110,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Form */}
         <div className="lg:col-span-2 space-y-4">
-          <form action={formAction} className="glass-card rounded-[1.5rem] overflow-hidden border-none p-1">
+          <form onSubmit={handleSubmit} className="glass-card rounded-[1.5rem] overflow-hidden border-none p-1">
             <div className="bg-white/50 p-5 space-y-6 rounded-xl">
               <div className="flex items-center gap-4 pb-5 border-b border-gray-100">
                 <div className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center border border-gray-100 shadow-sm">
@@ -67,33 +124,35 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
 
               <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-1.5">
-                {!isSuperAdmin ? (
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Full Legal Name</label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
-                        <User size={16} />
+                  {!isSuperAdmin ? (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Full Name</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors">
+                          <User size={16} />
+                        </div>
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="e.g. John Doe"
+                          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm shadow-soft"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        name="fullName"
-                        defaultValue={admin.full_name || ''}
-                        placeholder="e.g. John Doe"
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black transition-all outline-none font-bold text-sm shadow-soft"
-                      />
                     </div>
-                  </div>
-                ) : (
-                  <input type="hidden" name="fullName" value={admin.full_name || ''} />
-                )}
+                  ) : (
+                    <input type="hidden" name="fullName" value={admin.full_name || ''} />
+                  )}
                 </div>
 
                 <div className="space-y-4">
-                  <ImageUpload 
+                  <ImageUpload
                     name="avatar_file"
                     label="Profile Avatar"
                     description="Upload your console avatar (square recommended)"
                     currentImageUrl={admin.avatar_url}
+                    onImageSelect={(file) => setSelectedAvatar(file)}
                   />
                   {/* Hidden field to preserve existing URL if no new file is selected */}
                   <input type="hidden" name="avatarUrl" value={admin.avatar_url || ''} />
@@ -104,7 +163,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                   <div className="space-y-2 opacity-60">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                       Email address
-                      <span className="text-[7px] bg-gray-100 px-1.5 py-0.5 rounded-full font-black">Locked</span>
+
                     </label>
                     <div className="relative">
                       <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
@@ -120,7 +179,6 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                   <div className="space-y-2 opacity-60">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                       Platform Role
-                      <span className="text-[7px] bg-gray-100 px-1.5 py-0.5 rounded-full font-black">Locked</span>
                     </label>
                     <div className="relative">
                       <Shield size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
@@ -135,14 +193,14 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                 </div>
               </div>
 
-              {state.error && (
+              {actionState.error && (
                 <div className="p-3.5 bg-red-50 text-red-600 rounded-xl text-xs font-black flex items-center gap-2.5 border border-red-100">
                   <AlertCircle size={16} />
-                  {state.error}
+                  {actionState.error}
                 </div>
               )}
 
-              {state.success && (
+              {actionState.success && (
                 <div className="p-3.5 bg-green-50 text-green-600 rounded-xl text-xs font-black flex items-center gap-2.5 border border-green-100">
                   <CheckCircle size={16} />
                   Profile updated successfully!
@@ -178,35 +236,35 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
           <div className="glass-card p-5 rounded-[1.5rem] space-y-4 border-none relative overflow-hidden bg-white/40">
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100/50">
-                 <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center border border-gray-100 shadow-sm">
-                    <Building2 size={16} />
-                 </div>
-                 <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Institution Data</h2>
+                <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center border border-gray-100 shadow-sm">
+                  <Building2 size={16} />
+                </div>
+                <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Institution Data</h2>
               </div>
 
               {admin.school ? (
                 <div className="space-y-4">
                   <div className="group">
-                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Host Institution</label>
-                     <p className="font-extrabold text-base text-gray-900 group-hover:text-black transition-colors leading-tight">{admin.school.name}</p>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Host Institution</label>
+                    <p className="font-extrabold text-base text-gray-900 group-hover:text-black transition-colors leading-tight">{admin.school.name}</p>
                   </div>
 
                   <div className="group">
-                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Public Access</label>
-                     <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-soft font-bold text-gray-600 text-xs">
-                        <Globe size={14} className="text-blue-500" />
-                        <span className="truncate">{admin.school?.slug}.schoolcrest...</span>
-                     </div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1 px-1">Public Access</label>
+                    <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-soft font-bold text-gray-600 text-xs">
+                      <Globe size={14} className="text-blue-500" />
+                      <span className="truncate">{admin.school?.slug}.schoolcrest...</span>
+                    </div>
                   </div>
 
                   <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100 flex items-center justify-between">
-                     <div>
-                       <label className="text-[7px] font-black text-green-600/70 uppercase tracking-widest block mb-px">Status</label>
-                       <span className="font-black text-green-700 text-[10px]">ACTIVE & SYNCED</span>
-                     </div>
-                     <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                     </div>
+                    <div>
+                      <label className="text-[7px] font-black text-green-600/70 uppercase tracking-widest block mb-px">Status</label>
+                      <span className="font-black text-green-700 text-[10px]">ACTIVE & SYNCED</span>
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -215,11 +273,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                 </div>
               )}
 
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                 <p className="text-[9px] text-gray-400 leading-relaxed font-medium uppercase tracking-widest">
-                    School identity is locked by Super Admins. 
-                 </p>
-              </div>
+
             </div>
           </div>
         </div>

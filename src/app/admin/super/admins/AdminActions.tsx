@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { UserCheck, UserX, Trash2, MoreVertical, Shield, Building2 } from 'lucide-react'
-import { toggleAdminStatus, changeAdminRole, deleteAdmin } from './actions'
+import { UserCheck, UserX, Trash2, MoreVertical } from 'lucide-react'
+import { toggleAdminStatus, deleteAdmin } from './actions'
 
 interface AdminActionsProps {
   admin: {
@@ -26,13 +26,6 @@ export default function AdminActions({ admin, alignTop = false }: AdminActionsPr
     })
   }
 
-  const handleToggleRole = () => {
-    const newRole = admin.role === 'super_admin' ? 'school_admin' : 'super_admin'
-    startTransition(async () => {
-      await changeAdminRole(admin.id, newRole)
-      setShowMenu(false)
-    })
-  }
 
   const handleDelete = () => {
     if (confirm(`Are you sure you want to delete ${admin.email}? This cannot be undone.`)) {
@@ -55,13 +48,12 @@ export default function AdminActions({ admin, alignTop = false }: AdminActionsPr
 
       {showMenu && (
         <>
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => setShowMenu(false)}
           />
-          <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden ${
-            alignTop ? 'bottom-full mb-2' : 'top-full mt-2'
-          }`}>
+          <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden ${alignTop ? 'bottom-full mb-2' : 'top-full mt-2'
+            }`}>
             <button
               onClick={handleToggleStatus}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
@@ -79,15 +71,6 @@ export default function AdminActions({ admin, alignTop = false }: AdminActionsPr
               )}
             </button>
 
-            <button
-              onClick={handleToggleRole}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
-            >
-              <Shield size={16} className="text-purple-500" />
-              <span className="text-sm font-medium">
-                {admin.role === 'super_admin' ? 'Demote to School' : 'Promote to Super'}
-              </span>
-            </button>
 
             <div className="border-t border-gray-100" />
 

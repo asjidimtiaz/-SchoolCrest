@@ -1,0 +1,438 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createProgram, updateProgram } from './actions'
+import { useRouter } from 'next/navigation'
+import { Program } from '@/lib/getPrograms'
+import { Save, Users, ChevronRight, Film, Plus, ArrowRight } from 'lucide-react'
+import MediaUpload from '@/components/MediaUpload'
+import SeasonsManager from './SeasonsManager'
+import { supabasePublic, uploadFileClient } from '@/lib/supabaseClient'
+
+interface ProgramFormProps {
+    program?: Program
+    schoolId: string
+    isEdit?: boolean
+}
+
+const initialState = { error: '', success: false }
+
+export default function ProgramForm({ program, schoolId, isEdit = false }: ProgramFormProps) {
+    const router = useRouter()
+
+    const [actionState, setActionState] = useState(initialState)
+    const [isInternalPending, setIsInternalPending] = useState(false)
+    const [step, setStep] = useState<1 | 2>(1)
+    const [createdData, setCreatedData] = useState<{ programId: string, seasonId: string, programName: string, seasonYear: number } | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [customError, setCustomError] = useState('')
+
+    // Live Preview State
+    const [formData, setFormData] = useState({
+        name: program?.name || '',
+        gender: program?.gender || 'Boys',
+        sport_category: program?.sport_category || '',
+        photo_url: program?.photo_url || '',
+        background_url: program?.background_url || '',
+        media_type: program?.media_type || 'image' as 'image' | 'video',
+
+        // New Season Fields (for Creation)
+        create_season: false,
+        season_year: new Date().getFullYear().toString(),
+        season_photo_url: '',
+        wc_state: false,
+        wc_region: false,
+        wc_individual: false,
+        individual_accomplishments: '',
+        summary: '',
+        roster: [] as any[]
+    })
+
+    const defaultSportCategories = ['Athletics', 'Clubs', 'Academics', 'Fine Arts', 'Activities']
+    const [isCustomCategory, setIsCustomCategory] = useState(
+        formData.sport_category !== '' && !defaultSportCategories.includes(formData.sport_category)
+    )
+
+    const [seasons, setSeasons] = useState<any[]>([])
+    const [loadingSeasons, setLoadingSeasons] = useState(false)
+
+    // Fetch seasons for Step 2
+    useEffect(() => {
+        async function fetchSeasons() {
+            if (step === 2 && createdData?.programId) {
+                setLoadingSeasons(true)
+                const { data, error } = await supabasePublic
+                    .from('team_seasons')
+                    .select('*')
+                    .eq('team_id', createdData.programId)
+                    .order('year', { ascending: false })
+
+                if (!error && data) {
+                    setSeasons(data)
+                }
+                setLoadingSeasons(false)
+            }
+        }
+        fetchSeasons()
+    }, [step, createdData?.programId])
+
+    useEffect(() => {
+        if (actionState?.success) {
+            if (isEdit) {
+                router.push('/admin/programs')
+            } else if ((actionState as any).programId) {
+                setCreatedData({
+                    programId: (actionState as any).programId,
+                    seasonId: (actionState as any).seasonId,
+                    programName: (actionState as any).programName,
+                    seasonYear: (actionState as any).seasonYear
+                })
+                setStep(2)
+            } else {
+                router.push('/admin/programs')
+            }
+        }
+    }, [actionState?.success, isEdit, actionState, router])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target
+        if (type === 'checkbox') {
+            setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }))
+        }
+    }
+
+    // Handle Step 2 Success (Legacy/Final)
+    useEffect(() => {
+        if (actionState?.success && isEdit) {
+            router.push('/admin/programs')
+        }
+    }, [actionState?.success, isEdit, router])
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsInternalPending(true)
+        setCustomError('')
+        setActionState(initialState)
+
+        try {
+            const formData = new FormData(e.currentTarget)
+
+            // REMOVE FILE BINARIES - They cause 413 Payload Too Large on Vercel
+            // We already uploaded them and stored the URLs in hidden fields
+            formData.delete('photo_file_input')
+            formData.delete('background_file_input')
+
+            const result = await (isEdit ? updateProgram(null, formData) : createProgram(null, formData))
+            setActionState({
+                success: result.success || false,
+                error: result.error || '',
+                ...result // Keep other properties like programId
+            } as any)
+        } catch (err: any) {
+            setCustomError(err.message || 'Submission failed')
+        } finally {
+            setIsInternalPending(false)
+        }
+    }
+
+    return (
+        <div className="flex flex-col xl:flex-row gap-8 pb-10 text-left">
+            {step === 1 ? (
+                <form onSubmit={handleSubmit} className="flex-1 space-y-6">
+                    <input type="hidden" name="school_id" value={schoolId} />
+                    {isEdit && <input type="hidden" name="id" value={program?.id} />}
+                    <input type="hidden" name="media_type" value={formData.media_type} />
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Program Category</label>
+                        <div className="space-y-2">
+                            {/* Always send the category value */}
+                            <input type="hidden" name="sport_category" value={formData.sport_category} />
+
+                            <div className="relative">
+                                <select
+                                    value={defaultSportCategories.includes(formData.sport_category) ? formData.sport_category : 'Other'}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        if (val === 'Other') {
+                                            setIsCustomCategory(true)
+                                            setFormData(prev => ({ ...prev, sport_category: '' }))
+                                        } else {
+                                            setIsCustomCategory(false)
+                                            setFormData(prev => ({ ...prev, sport_category: val }))
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+                                >
+                                    {defaultSportCategories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                    <option value="Other">Other...</option>
+                                </select>
+                                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 rotate-90 pointer-events-none" size={14} />
+                            </div>
+
+                            {(isCustomCategory || (formData.sport_category !== '' && !defaultSportCategories.includes(formData.sport_category))) && (
+                                <input
+                                    value={formData.sport_category}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, sport_category: e.target.value }))}
+                                    required
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
+                                    placeholder="Enter custom category (e.g. Winter Sports, Clubs, etc.)"
+                                    autoFocus={isCustomCategory}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    <input type="hidden" name="roster" value={JSON.stringify(formData.roster)} />
+                    <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+                        <div className="glass-card p-6 rounded-2xl border-none space-y-5">
+                            {!isEdit && (
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="px-2 py-0.5 bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-600 rounded-full border border-blue-100">Step 1 of 2</span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                </div>
+                            )}
+
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Program Name</label>
+                                <input
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                                    placeholder="e.g. Basketball"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Gender</label>
+                                    <div className="relative">
+                                        <select
+                                            name="gender"
+                                            value={formData.gender}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+                                        >
+                                            <option value="Boys">Boys</option>
+                                            <option value="Girls">Girls</option>
+                                            <option value="Co-ed">Co-ed</option>
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 rotate-90 pointer-events-none" size={14} />
+                                    </div>
+                                </div>
+
+                                {!isEdit && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="create_season"
+                                                id="create_season"
+                                                checked={formData.create_season}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                                            />
+                                            <label htmlFor="create_season" className="text-[10px] font-black text-gray-500 uppercase tracking-widest cursor-pointer select-none">
+                                                Add Inaugural Season?
+                                            </label>
+                                        </div>
+
+                                        {formData.create_season && (
+                                            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Season Year</label>
+                                                <input
+                                                    type="number"
+                                                    name="season_year"
+                                                    value={formData.season_year}
+                                                    onChange={handleChange}
+                                                    required={formData.create_season}
+                                                    min="1900"
+                                                    max="2100"
+                                                    className="w-full px-4 py-2 bg-white/50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                                                    placeholder="2026"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100 space-y-8">
+                                {/* 1. Card Photo Upload */}
+                                <MediaUpload
+                                    name="photo_file_input"
+                                    label="Program Card Photo"
+                                    description="This image appears on the main program selection card (vertical)."
+                                    recommendation="Recommended ratio: 3:4 (Portrait)"
+                                    currentMediaUrl={formData.photo_url}
+                                    onFileSelect={async (file) => {
+                                        if (!file) return;
+                                        setUploading(true);
+                                        setCustomError('');
+                                        try {
+                                            const ext = file.name.split('.').pop();
+                                            const path = `programs/${schoolId}/${Date.now()}_card.${ext}`;
+
+                                            const publicUrl = await uploadFileClient(file, 'school-assets', path);
+                                            if (!publicUrl) throw new Error('Upload failed');
+
+                                            setFormData(prev => ({ ...prev, photo_url: publicUrl }));
+                                        } catch (err: any) {
+                                            setCustomError("Upload failed: " + err.message);
+                                        } finally {
+                                            setUploading(false);
+                                        }
+                                    }}
+                                />
+                                <input type="hidden" name="existing_photo_url" value={formData.photo_url || ''} />
+
+                                {/* 2. Background Photo Upload */}
+                                <MediaUpload
+                                    name="background_file_input"
+                                    label="Program Hero Background"
+                                    description="This large image appears at the top of the Program Detail page."
+                                    recommendation="Recommended: 1920x1080px (Landscape)"
+                                    currentMediaUrl={formData.background_url}
+                                    onFileSelect={async (file) => {
+                                        if (!file) return;
+                                        setUploading(true);
+                                        setCustomError('');
+                                        try {
+                                            const ext = file.name.split('.').pop();
+                                            const path = `programs_bg/${schoolId}/${Date.now()}_bg.${ext}`;
+
+                                            const publicUrl = await uploadFileClient(file, 'school-assets', path);
+                                            if (!publicUrl) throw new Error('Upload failed');
+
+                                            setFormData(prev => ({ ...prev, background_url: publicUrl }));
+                                        } catch (err: any) {
+                                            setCustomError("Upload failed: " + err.message);
+                                        } finally {
+                                            setUploading(false);
+                                        }
+                                    }}
+                                />
+                                <input type="hidden" name="existing_background_url" value={formData.background_url || ''} />
+                            </div>
+                        </div>
+                    </div>
+                    {(actionState?.error || customError) && (
+                        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 animate-slide-up">
+                            {actionState?.error || customError}
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-4 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => router.back()}
+                            className="px-4 py-2 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-gray-900 transition-colors"
+                        >
+                            Discard Changes
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={isInternalPending || uploading || !formData.name}
+                            className="flex items-center gap-2 px-8 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-[0_20px_40px_rgba(0,0,0,0.15)] disabled:opacity-50 text-[11px] uppercase tracking-widest"
+                        >
+                            {uploading ? <Plus className="animate-spin" size={14} /> : isInternalPending ? <Plus className="animate-spin" size={14} /> : isEdit ? <Save size={14} /> : <ArrowRight size={14} />}
+                            {uploading ? 'Uploading Media...' : isInternalPending ? 'Processing...' : isEdit ? 'Update Program' : 'Create Program & Continue'}
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                <div className="flex-1 space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-0.5 bg-emerald-50 text-[10px] font-black uppercase tracking-widest text-emerald-600 rounded-full border border-emerald-100">Step 2 of 2</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        </div>
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Manage Program Archive</h2>
+                        <p className="text-sm text-gray-400 font-medium">Add as many historical seasons as you want. Each season can have its own summary, achievements, and unique program photo.</p>
+                    </div>
+
+                    <div className="bg-gray-50/30 rounded-[2.5rem] border border-gray-100/50 p-1">
+                        {createdData && (
+                            <SeasonsManager
+                                seasons={seasons}
+                                programId={createdData.programId}
+                                programName={createdData.programName}
+                                schoolId={schoolId}
+                            />
+                        )}
+                    </div>
+
+                    <div className="flex items-center justify-between p-10 bg-black text-white rounded-[2rem] shadow-2xl">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-1">Success</span>
+                            <h3 className="text-xl font-black leading-none">{formData.name} Created</h3>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => router.push('/admin/programs')}
+                            className="px-10 py-4 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-gray-100 transition-all active:scale-95 flex items-center gap-3"
+                        >
+                            Finish & Close Wizard
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="xl:w-64 space-y-4 sticky top-8">
+                <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Program Preview</h2>
+
+                <div className="glass-card rounded-[2rem] border-none overflow-hidden p-6 flex flex-col items-center text-center shadow-soft">
+                    <div className="w-full aspect-video rounded-2xl bg-gray-50 border border-gray-100 shadow-inner overflow-hidden mb-4 flex items-center justify-center text-gray-200 relative group transition-all duration-500">
+                        {formData.photo_url ? (
+                            formData.media_type === 'video' ? (
+                                <video
+                                    src={formData.photo_url}
+                                    className="w-full h-full object-cover"
+                                    muted
+                                    loop
+                                    autoPlay
+                                    playsInline
+                                />
+                            ) : (
+                                <img src={formData.photo_url} alt="" className="w-full h-full object-cover" />
+                            )
+                        ) : (
+                            <Users size={32} />
+                        )}
+
+                        {formData.media_type === 'video' && formData.photo_url && (
+                            <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-full text-white">
+                                <Film size={12} />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-3 w-full">
+                        <div>
+                            <h3 className="text-base font-black text-gray-900 leading-tight truncate">
+                                {formData.name || 'Program Name'}
+                            </h3>
+                            <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mt-1">
+                                {formData.gender} Athletics
+                            </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-gray-50 flex justify-center items-center text-[10px] font-bold text-gray-400">
+                            {isEdit ? 'Program' : (formData.season_year || 'Year')}
+                        </div>
+                    </div>
+                </div>
+
+                <p className="text-[8px] text-gray-400 text-center px-6 font-bold uppercase tracking-tight leading-tight">
+                    How the program will appear in the main athletic directory.
+                </p>
+            </div>
+        </div>
+    )
+}
