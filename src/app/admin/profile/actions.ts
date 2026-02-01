@@ -23,65 +23,7 @@ export async function updateProfile(prevState: any, formData: FormData) {
   const school_id = adminData?.school_id
   const isSuperAdmin = adminData?.role === 'super_admin'
 
-  let avatar_url = formData.get('avatarUrl') as string || ''
-  const avatarFile = formData.get('avatar_file') as File | null
-
-  // Handle Image Upload
-  if (avatarFile && avatarFile.size > 0 && typeof avatarFile !== 'string') {
-    let filePath = ''
-
-    if (school_id) {
-      const fileExt = avatarFile.name.split('.').pop()
-      const fileName = `${userId}-${Date.now()}.${fileExt}`
-      filePath = `avatars/${school_id}/${fileName}`
-    } else if (isSuperAdmin) {
-      // Fallback for super admins or system users
-      const fileExt = avatarFile.name.split('.').pop()
-      const fileName = `${userId}-${Date.now()}.${fileExt}`
-      filePath = `avatars/system/${fileName}`
-    }
-
-    if (filePath) {
-      try {
-        // Check if bucket exists
-        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
-        if (bucketError) {
-          console.error('[updateProfile] Failed to list buckets:', bucketError)
-          return { error: `Storage configuration error: ${bucketError.message}`, success: false }
-        }
-
-        const bucketExists = buckets?.some(b => b.name === 'school-assets')
-        if (!bucketExists) {
-          await supabase.storage.createBucket('school-assets', { public: true })
-        }
-
-        // Convert File to ArrayBuffer for more reliable upload in Node environments
-        const arrayBuffer = await avatarFile.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('school-assets')
-          .upload(filePath, buffer, {
-            upsert: true,
-            contentType: avatarFile.type || 'image/png'
-          })
-
-        if (uploadError) {
-          console.error('[updateProfile] Avatar upload error details:', uploadError)
-          return { error: `Upload failed: ${uploadError.message}`, success: false }
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('school-assets')
-          .getPublicUrl(filePath)
-
-        avatar_url = publicUrl
-      } catch (uploadExc: any) {
-        console.error('[updateProfile] CRITICAL EXCEPTION during upload:', uploadExc)
-        return { error: `Server error during upload: ${uploadExc.message || 'Unknown error'}`, success: false }
-      }
-    }
-  }
+  const avatar_url = formData.get('avatarUrl') as string || ''
 
   const { error } = await supabase
     .from('admins')

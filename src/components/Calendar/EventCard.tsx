@@ -21,15 +21,28 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
         style={{ backgroundColor: primaryColor }}
       />
 
-      {/* Time Column */}
-      <div className="flex flex-col items-center pt-1 min-w-[4rem] text-center border-r border-white/10 pr-6">
-        <span className="text-xl font-black text-white leading-none tracking-tight">
-          {startDate.toLocaleTimeString('en-US', { hour: 'numeric' })}
-        </span>
-        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">
-          {startDate.toLocaleTimeString('en-US', { minute: '2-digit' }) === '00' ? '' : startDate.toLocaleTimeString('en-US', { minute: '2-digit' })}
-          <span className="ml-1">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).slice(-2)}</span>
-        </span>
+      {/* Date & Time Column */}
+      <div className="flex flex-col items-center justify-center min-w-[5.5rem] text-center border-r border-white/10 pr-6 gap-1">
+        <div className="flex flex-col items-center mb-1">
+          <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] leading-none mb-1">
+            {startDate.toLocaleDateString('en-US', { month: 'short' })}
+          </span>
+          <span className="text-3xl font-black text-white leading-none tracking-tighter">
+            {startDate.getDate()}
+          </span>
+        </div>
+
+        <div className="h-px w-4 bg-white/10 my-1" />
+
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-black text-white/80 leading-none tracking-tight">
+            {startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false })}
+          </span>
+          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
+            {startDate.toLocaleTimeString('en-US', { minute: '2-digit' }) === '00' ? '' : startDate.toLocaleTimeString('en-US', { minute: '2-digit' })}
+            <span className="ml-0.5">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).slice(-2)}</span>
+          </span>
+        </div>
       </div>
 
       {/* Content */}

@@ -6,6 +6,7 @@ import { updateProfile } from './actions'
 import { User, Mail, Shield, Building2, Globe, CheckCircle, AlertCircle, Loader2, Save, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import ImageUpload from '@/components/ImageUpload'
+import { uploadFileClient } from '@/lib/supabaseClient'
 
 interface ProfileProps {
   admin: {
@@ -29,8 +30,16 @@ const initialState = {
 
 export default function ProfilePageClient({ admin, isSuperAdmin = false }: ProfileProps) {
   const router = useRouter()
+  const [actionState, setActionState] = useState(initialState)
+  const [isUploading, setIsUploading] = useState(false)
+
+  // Track selected avatar locally
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null)
+
   // @ts-ignore
-  const [state, formAction, isPending] = useActionState(updateProfile, initialState)
+  const [state, formAction, isPendingAction] = useActionState(updateProfile, initialState)
+
+  const isPending = isPendingAction || isUploading
 
   // Controlled state for full name to ensure it updates when props change
   const [fullName, setFullName] = useState(admin.full_name || '')
@@ -42,10 +51,51 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
 
   // Refresh router on success
   useEffect(() => {
-    if (state?.success) {
+    if (state?.success || actionState?.success) {
       router.refresh()
     }
-  }, [state?.success, router])
+    if (state?.error) {
+      setActionState({ error: state.error, success: false })
+    }
+  }, [state, actionState?.success, router])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsUploading(true)
+    setActionState({ error: '', success: false })
+
+    try {
+      const form = e.currentTarget
+      const formData = new FormData(form)
+
+      // 1. Upload Avatar if selected
+      if (selectedAvatar) {
+        const ext = selectedAvatar.name.split('.').pop()
+        const path = `avatars/${admin.school?.slug || 'system'}/${Date.now()}_avatar.${ext}`
+        const publicUrl = await uploadFileClient(selectedAvatar, 'school-assets', path)
+        if (publicUrl) {
+          formData.set('avatarUrl', publicUrl)
+          formData.delete('avatar_file')
+        } else {
+          throw new Error('Failed to upload avatar. Please try again.')
+        }
+      }
+
+      // 2. Call Server Action
+      const result = await updateProfile(null, formData)
+
+      if (result.success) {
+        setActionState({ error: '', success: true })
+      } else {
+        setActionState({ error: result.error || 'Failed to update profile.', success: false })
+      }
+    } catch (err: any) {
+      console.error('Profile Update Error:', err)
+      setActionState({ error: err.message || 'An unexpected error occurred.', success: false })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   return (
     <div className="space-y-4 pb-4 animate-fade-in">
@@ -60,7 +110,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Form */}
         <div className="lg:col-span-2 space-y-4">
-          <form action={formAction} className="glass-card rounded-[1.5rem] overflow-hidden border-none p-1">
+          <form onSubmit={handleSubmit} className="glass-card rounded-[1.5rem] overflow-hidden border-none p-1">
             <div className="bg-white/50 p-5 space-y-6 rounded-xl">
               <div className="flex items-center gap-4 pb-5 border-b border-gray-100">
                 <div className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center border border-gray-100 shadow-sm">
@@ -102,6 +152,7 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                     label="Profile Avatar"
                     description="Upload your console avatar (square recommended)"
                     currentImageUrl={admin.avatar_url}
+                    onImageSelect={(file) => setSelectedAvatar(file)}
                   />
                   {/* Hidden field to preserve existing URL if no new file is selected */}
                   <input type="hidden" name="avatarUrl" value={admin.avatar_url || ''} />
@@ -142,14 +193,14 @@ export default function ProfilePageClient({ admin, isSuperAdmin = false }: Profi
                 </div>
               </div>
 
-              {state.error && (
+              {actionState.error && (
                 <div className="p-3.5 bg-red-50 text-red-600 rounded-xl text-xs font-black flex items-center gap-2.5 border border-red-100">
                   <AlertCircle size={16} />
-                  {state.error}
+                  {actionState.error}
                 </div>
               )}
 
-              {state.success && (
+              {actionState.success && (
                 <div className="p-3.5 bg-green-50 text-green-600 rounded-xl text-xs font-black flex items-center gap-2.5 border border-green-100">
                   <CheckCircle size={16} />
                   Profile updated successfully!

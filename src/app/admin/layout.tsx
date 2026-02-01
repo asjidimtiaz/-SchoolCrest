@@ -114,7 +114,7 @@ export default async function AdminLayout({
 
   const kioskUrl = school.slug === 'schoolcrestinteractive'
     ? '/'
-    : `http://${school.slug}.schoolcrestinteractive.com:3000` // Adjust for production later
+    : `https://${school.slug}.schoolcrestinteractive.com`
 
   return (
     <AdminController>

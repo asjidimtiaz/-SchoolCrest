@@ -31,55 +31,8 @@ export async function createInductee(prevState: any, formData: FormData) {
     const achievements = (formData.get('achievements') as string).split('\n').filter(Boolean)
     const school_id = formData.get('school_id') as string
 
-    // Image Handling
-    const photoFile = formData.get('photo_file') as File | null
-    let photo_url = formData.get('photo_url') as string || ''
-
-    if (photoFile && photoFile.size > 0 && typeof photoFile !== 'string') {
-      const fileExt = photoFile.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
-      const filePath = `inductees/${school_id}/${fileName}`
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('school-assets')
-        .upload(filePath, photoFile)
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError.message)
-        return { error: `Upload failed: ${uploadError.message}` }
-      }
-
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from('school-assets')
-        .getPublicUrl(filePath)
-
-      photo_url = publicUrl
-    }
-
-    // Video Handling
-    const videoFile = formData.get('video_file') as File | null
-    let video_url = formData.get('video_url') as string || ''
-
-    if (videoFile && videoFile.size > 0 && typeof videoFile !== 'string') {
-      const fileExt = videoFile.name.split('.').pop()
-      const fileName = `${Date.now()}-video-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
-      const filePath = `inductees/${school_id}/videos/${fileName}`
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('school-assets')
-        .upload(filePath, videoFile)
-
-      if (uploadError) {
-        console.error("Video upload error:", uploadError.message)
-        return { error: `Video upload failed: ${uploadError.message}` }
-      }
-
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from('school-assets')
-        .getPublicUrl(filePath)
-
-      video_url = publicUrl
-    }
+    const photo_url = formData.get('photo_url') as string || ''
+    const video_url = formData.get('video_url') as string || ''
 
     const { error } = await supabaseAdmin.from('hall_of_fame').insert({
       name, year, category, photo_url, video_url, bio, achievements, school_id, induction_year
@@ -108,56 +61,8 @@ export async function updateInductee(prevState: any, formData: FormData) {
     const bio = formData.get('bio') as string
     const achievements = (formData.get('achievements') as string).split('\n').filter(Boolean)
     const school_id = formData.get('school_id') as string // We need this for the upload path
-
-    // Image Handling
-    const photoFile = formData.get('photo_file') as File | null
-    let photo_url = formData.get('photo_url') as string || ''
-
-    if (photoFile && photoFile.size > 0 && typeof photoFile !== 'string') {
-      const fileExt = photoFile.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
-      const filePath = `inductees/${school_id}/${fileName}`
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('school-assets')
-        .upload(filePath, photoFile)
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError.message)
-        return { error: `Upload failed: ${uploadError.message}` }
-      }
-
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from('school-assets')
-        .getPublicUrl(filePath)
-
-      photo_url = publicUrl
-    }
-
-    // Video Handling
-    const videoFile = formData.get('video_file') as File | null
-    let video_url = formData.get('video_url') as string || ''
-
-    if (videoFile && videoFile.size > 0 && typeof videoFile !== 'string') {
-      const fileExt = videoFile.name.split('.').pop()
-      const fileName = `${Date.now()}-video-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
-      const filePath = `inductees/${school_id}/videos/${fileName}`
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('school-assets')
-        .upload(filePath, videoFile)
-
-      if (uploadError) {
-        console.error("Video upload error:", uploadError.message)
-        return { error: `Video upload failed: ${uploadError.message}` }
-      }
-
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from('school-assets')
-        .getPublicUrl(filePath)
-
-      video_url = publicUrl
-    }
+    const photo_url = formData.get('photo_url') as string || ''
+    const video_url = formData.get('video_url') as string || ''
 
     const { error } = await supabaseAdmin.from('hall_of_fame').update({
       name, year, category, photo_url, video_url, bio, achievements, induction_year

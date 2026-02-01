@@ -11,7 +11,7 @@ export default async function AdminDashboard() {
 
   // Fetch real-time counts using authenticated client
   const supabase = await getSupabaseServer()
-  
+
   const [hofRes, teamsRes, eventsRes] = await Promise.all([
     supabase.from('hall_of_fame').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('school_id', school.id),
@@ -30,16 +30,16 @@ export default async function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5">
-             <span className="px-2 py-0.5 bg-black text-white rounded-full text-[8px] font-black uppercase tracking-[0.1em]">Console</span>
-             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="px-2 py-0.5 bg-black text-white rounded-full text-[8px] font-black uppercase tracking-[0.1em]">Console</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           </div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
             Node Status: <span className="text-slate-500">{school?.name || 'Authorized'}</span>
           </h1>
           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Administrative Control Overview</p>
         </div>
-        
-        <Link 
+
+        <Link
           href="/admin/info"
           className="flex items-center gap-1.5 px-4 py-2 bg-white rounded-lg border border-gray-100 shadow-soft hover:shadow-premium transition-all font-bold text-gray-700 text-xs whitespace-nowrap"
         >
@@ -75,10 +75,10 @@ export default async function AdminDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight">Quick Actions</h2>
             <div className="w-6 h-6 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">
-               <PlusCircle size={14} />
+              <PlusCircle size={14} />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-2">
             <Link href="/admin/hall-of-fame/new" className="p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-soft transition-all text-left space-y-2 group">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-amber-600 shadow-sm border border-gray-50 group-hover:bg-amber-600 group-hover:text-white transition-colors">
@@ -111,22 +111,30 @@ export default async function AdminDashboard() {
                 Live
               </div>
             </div>
-            
+
             <h2 className="text-xl font-black leading-tight tracking-tight">Kiosk active at {school?.name}.</h2>
-            
-            <a 
-              href="/" 
-              target="_blank"
-              className="inline-flex items-center gap-1.5 px-6 py-2 bg-white text-black rounded-lg font-black text-xs hover:bg-gray-200 transition-all active:scale-95 shadow-lg shadow-white/5"
-            >
-              <ExternalLink size={14} />
-              Open Live View
-            </a>
+
+            {(() => {
+              const kioskUrl = school.slug === 'schoolcrestinteractive'
+                ? '/'
+                : `https://${school.slug}.schoolcrestinteractive.com`
+
+              return (
+                <a
+                  href={kioskUrl}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 px-6 py-2 bg-white text-black rounded-lg font-black text-xs hover:bg-gray-200 transition-all active:scale-95 shadow-lg shadow-white/5"
+                >
+                  <ExternalLink size={14} />
+                  Open Live View
+                </a>
+              )
+            })()}
           </div>
 
 
 
-          
+
           {/* Abstract decoration */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-20 -mt-20" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 blur-[60px] rounded-full -ml-10 -mb-10" />

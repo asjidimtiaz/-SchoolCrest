@@ -5,6 +5,7 @@ import { upsertSeason } from './actions'
 import { TeamSeason } from '@/lib/getTeams'
 import MediaUpload from '@/components/MediaUpload'
 import RosterManager from './RosterManager'
+import { uploadFileClient } from '@/lib/supabaseClient'
 
 
 interface SeasonFormProps {
@@ -34,18 +35,18 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
     const [state, formAction, isPending] = useActionState(upsertSeason, initialState)
 
     const [achievements, setAchievements] = useState<string[]>(season?.achievements || [])
-    
+
     // Manage Roster State
     const [roster, setRoster] = useState<Player[]>(() => {
         if (!season?.roster) return [];
         if (typeof season.roster === 'string') {
-            try { return JSON.parse(season.roster); } catch(e) { return []; }
+            try { return JSON.parse(season.roster); } catch (e) { return []; }
         }
         return Array.isArray(season.roster) ? season.roster : [];
     });
 
     const toggleAchievement = (ach: string) => {
-        setAchievements(prev => 
+        setAchievements(prev =>
             prev.includes(ach) ? prev.filter(a => a !== ach) : [...prev, ach]
         )
     }
@@ -86,10 +87,10 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                 {/* 1. Media Section - Integrated & Compact */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                         <label className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Season Team Photo</label>
                     </div>
-                    <MediaUpload 
+                    <MediaUpload
                         name="photo_file_input"
                         label=""
                         currentMediaUrl={currentPhotoUrl}
@@ -99,20 +100,13 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                             setUploading(true);
                             setCustomError('');
                             try {
-                                const uploadFormData = new FormData();
-                                uploadFormData.append('file', file);
-                                uploadFormData.append('schoolId', schoolId || '');
-                                uploadFormData.append('folder', 'seasons');
-                                
-                                const res = await fetch('/api/upload', {
-                                    method: 'POST',
-                                    body: uploadFormData
-                                });
-                                
-                                if (!res.ok) throw new Error('Upload failed');
-                                
-                                const { url } = await res.json();
-                                setCurrentPhotoUrl(url);
+                                const ext = file.name.split('.').pop();
+                                const path = `seasons/${schoolId}/${Date.now()}_season.${ext}`;
+
+                                const publicUrl = await uploadFileClient(file, 'school-assets', path);
+                                if (!publicUrl) throw new Error('Upload failed');
+
+                                setCurrentPhotoUrl(publicUrl);
                             } catch (err: any) {
                                 setCustomError("Upload failed: " + err.message);
                             } finally {
@@ -128,11 +122,11 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         <label className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Season Statistics</label>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         <div className="md:col-span-1 lg:col-span-1 space-y-1.5">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Year</label>
-                            <input 
+                            <input
                                 name="year"
                                 type="number"
                                 defaultValue={season?.year || suggestedYear || new Date().getFullYear()}
@@ -144,7 +138,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
 
                         <div className="md:col-span-1 lg:col-span-2 space-y-1.5">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Record Highlights</label>
-                            <input 
+                            <input
                                 name="record"
                                 defaultValue={season?.record}
                                 className="w-full px-6 py-3 bg-gray-50/50 border-2 border-transparent focus:border-black focus:bg-white rounded-xl outline-none text-sm font-bold text-gray-700 transition-all shadow-sm"
@@ -154,7 +148,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
 
                         <div className="md:col-span-2 lg:col-span-2 space-y-1.5">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Head Coach</label>
-                            <input 
+                            <input
                                 name="coach"
                                 defaultValue={season?.coach || ''}
                                 className="w-full px-6 py-3 bg-gray-50/50 border-2 border-transparent focus:border-black focus:bg-white rounded-xl outline-none text-sm font-black text-gray-900 transition-all shadow-sm"
@@ -166,7 +160,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
 
                 {/* 3. Narrative Section - Grouped with smooth transitions */}
                 <div className="bg-gray-50/40 p-6 rounded-[2.5rem] border border-gray-100 shadow-soft space-y-5">
-                     <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                         <label className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Season Achievements</label>
                     </div>
@@ -174,7 +168,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <div className="lg:col-span-3 space-y-1.5">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Season Summary</label>
-                            <textarea 
+                            <textarea
                                 name="summary"
                                 defaultValue={(season as any)?.summary}
                                 rows={3}
@@ -193,15 +187,14 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                                         { id: 'Region Champions', label: 'Region' },
                                         { id: 'Individual Honors', label: 'Individual' }
                                     ].map(({ id, label }) => (
-                                        <button 
+                                        <button
                                             key={id}
                                             type="button"
                                             onClick={() => toggleAchievement(id)}
-                                            className={`px-5 py-2.5 rounded-xl border font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2 ${
-                                                achievements.includes(id) 
-                                                ? 'bg-black border-black text-white shadow-lg active:scale-95' 
-                                                : 'bg-white border-gray-200 text-gray-400 hover:border-black/5 hover:text-gray-600'
-                                            }`}
+                                            className={`px-5 py-2.5 rounded-xl border font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2 ${achievements.includes(id)
+                                                    ? 'bg-black border-black text-white shadow-lg active:scale-95'
+                                                    : 'bg-white border-gray-200 text-gray-400 hover:border-black/5 hover:text-gray-600'
+                                                }`}
                                         >
                                             <div className={`w-1 h-1 rounded-full ${achievements.includes(id) ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
                                             {label}
@@ -215,7 +208,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                     {achievements.includes('Individual Honors') && (
                         <div className="space-y-2 animate-slide-up pt-2">
                             <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1">Names and Honors Won</label>
-                            <textarea 
+                            <textarea
                                 name="individual_accomplishments"
                                 defaultValue={(season as any)?.individual_accomplishments}
                                 rows={2}
@@ -234,7 +227,7 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
                     </div>
 
                     <div className="px-1">
-                        <RosterManager 
+                        <RosterManager
                             initialRoster={roster}
                             onChange={(newRoster) => setRoster(newRoster)}
                             seasonYear={season?.year || suggestedYear || 0}
@@ -258,14 +251,14 @@ export default function SeasonForm({ team_id, schoolId, season, suggestedYear, o
             )}
 
             <div className="flex items-center justify-end gap-6 pt-8 mt-4 border-t border-gray-100/60">
-                <button 
+                <button
                     type="button"
                     onClick={onSuccess}
                     className="px-6 py-2.5 text-gray-400 font-black uppercase tracking-[0.2em] text-[9px] hover:text-black transition-colors"
                 >
                     Discard Changes
                 </button>
-                <button 
+                <button
                     type="submit"
                     disabled={isPending || uploading}
                     className="flex items-center gap-2.5 px-8 py-3.5 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 uppercase tracking-[0.2em] text-[10px]"

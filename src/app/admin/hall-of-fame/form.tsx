@@ -10,6 +10,7 @@ import ImageUpload from '@/components/ImageUpload'
 import VideoUpload from '@/components/VideoUpload'
 import { Video } from 'lucide-react'
 import { useBranding } from '@/context/BrandingContext'
+import { uploadFileClient } from '@/lib/supabaseClient'
 
 
 interface InducteeFormProps {
@@ -23,8 +24,19 @@ const initialState = { error: '', success: false }
 export default function InducteeForm({ inductee, schoolId, isEdit = false }: InducteeFormProps) {
   const router = useRouter()
   const branding = useBranding()
+  const [actionState, setActionState] = useState(initialState)
+  const [isUploading, setIsUploading] = useState(false)
+
+  // Track selected files locally
+  const [selectedFiles, setSelectedFiles] = useState<{
+    photo?: File | null,
+    video?: File | null
+  }>({})
+
   // @ts-ignore
-  const [state, formAction, isPending] = useActionState(isEdit ? updateInductee : createInductee, initialState)
+  const [state, formAction, isPendingAction] = useActionState(isEdit ? updateInductee : createInductee, initialState)
+
+  const isPending = isPendingAction || isUploading
 
   // Achievements cleanup: recursive to handle nested stringification
   const cleanAchievements = (val: any): string => {
@@ -66,10 +78,65 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
   })
 
   useEffect(() => {
-    if (state?.success) {
+    if (state?.success || actionState?.success) {
       router.push('/admin/hall-of-fame')
     }
-  }, [state?.success, router])
+    if (state?.error) {
+      setActionState({ error: state.error, success: false })
+    }
+  }, [state, actionState?.success, router])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsUploading(true)
+    setActionState({ error: '', success: false })
+
+    try {
+      const form = e.currentTarget
+      const formData = new FormData(form)
+
+      // 1. Upload Photo if selected
+      if (selectedFiles.photo) {
+        const ext = selectedFiles.photo.name.split('.').pop()
+        const path = `inductees/${schoolId}/${Date.now()}_photo.${ext}`
+        const publicUrl = await uploadFileClient(selectedFiles.photo, 'school-assets', path)
+        if (publicUrl) {
+          formData.set('photo_url', publicUrl)
+          // Explicitly clear photo_file to prevent it being sent as binary if some middleware/action still tries to read it
+          formData.delete('photo_file')
+        } else {
+          throw new Error('Failed to upload photo. Please try again.')
+        }
+      }
+
+      // 2. Upload Video if selected
+      if (selectedFiles.video) {
+        const ext = selectedFiles.video.name.split('.').pop()
+        const path = `inductees/${schoolId}/videos/${Date.now()}_video.${ext}`
+        const publicUrl = await uploadFileClient(selectedFiles.video, 'school-assets', path)
+        if (publicUrl) {
+          formData.set('video_url', publicUrl)
+          formData.delete('video_file')
+        } else {
+          throw new Error('Failed to upload video. Please try again.')
+        }
+      }
+
+      // 3. Call Server Action
+      const result = await (isEdit ? updateInductee(null, formData) : createInductee(null, formData))
+
+      if (result.success) {
+        setActionState({ error: '', success: true })
+      } else {
+        setActionState({ error: result.error || 'Failed to save inductee.', success: false })
+      }
+    } catch (err: any) {
+      console.error('Submit Error:', err)
+      setActionState({ error: err.message || 'An unexpected error occurred.', success: false })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -78,250 +145,252 @@ export default function InducteeForm({ inductee, schoolId, isEdit = false }: Ind
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 pb-10">
-      <form action={formAction} className="flex-1 space-y-6">
+      <form onSubmit={handleSubmit} className="flex-1 space-y-6">
         <input type="hidden" name="school_id" value={schoolId} />
         {isEdit && <input type="hidden" name="id" value={inductee?.id} />}
 
         <div className="glass-card p-6 rounded-2xl border-none space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
-                    <input
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                        placeholder="e.g. Michael Jordan"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Years Involved</label>
-                    <input
-                        name="year"
-                        type="text"
-                        value={formData.year}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                        placeholder="e.g. 1998 or 1995-2005"
-                    />
-                </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Year Inducted</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                placeholder="e.g. Michael Jordan"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Years Involved</label>
+              <input
+                name="year"
+                type="text"
+                value={formData.year}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+                placeholder="e.g. 1998 or 1995-2005"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Year Inducted</label>
+            <input
+              name="induction_year"
+              type="number"
+              defaultValue={inductee?.induction_year || ''}
+              className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
+              placeholder="e.g. 2010"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Selection Category</label>
+            <div className="space-y-2">
+              {/* Always send the category value */}
+              <input type="hidden" name="category" value={formData.category} />
+
+              <select
+                value={defaultCategories.includes(formData.category) ? formData.category : 'Other'}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === 'Other') {
+                    setIsCustomCategory(true)
+                    setFormData(prev => ({ ...prev, category: '' }))
+                  } else {
+                    setIsCustomCategory(false)
+                    setFormData(prev => ({ ...prev, category: val }))
+                  }
+                }}
+                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
+              >
+                <option value="Athlete">Athlete</option>
+                <option value="Coach">Coach</option>
+                <option value="Contributor">Contributor</option>
+                <option value="Team">Team</option>
+                <option value="Other">Other...</option>
+              </select>
+
+              {(isCustomCategory || !defaultCategories.includes(formData.category)) && (
                 <input
-                    name="induction_year"
-                    type="number"
-                    defaultValue={inductee?.induction_year || ''}
-                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft"
-                    placeholder="e.g. 2010"
+                  // Don't name this since the hidden input takes priority
+                  value={formData.category}
+                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  required
+                  className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
+                  placeholder="Enter custom category (e.g. Administrator, Fan, etc.)"
+                  autoFocus={isCustomCategory}
                 />
+              )}
             </div>
+          </div>
 
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Selection Category</label>
-                <div className="space-y-2">
-                    {/* Always send the category value */}
-                    <input type="hidden" name="category" value={formData.category} />
+          <ImageUpload
+            currentImageUrl={formData.photo_url}
+            recommendation="Recommended: 600x800px (3:4 ratio)"
+            onImageSelect={(file) => {
+              setSelectedFiles(prev => ({ ...prev, photo: file }))
+              if (file) {
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                  setFormData(prev => ({ ...prev, photo_url: reader.result as string }))
+                }
+                reader.readAsDataURL(file)
+              } else {
+                setFormData(prev => ({ ...prev, photo_url: inductee?.photo_url || '' }))
+              }
+            }}
+          />
+          {/* Hidden field to preserve existing URL if no new file is selected */}
+          <input type="hidden" name="photo_url" value={inductee?.photo_url || ''} />
 
-                    <select
-                        value={defaultCategories.includes(formData.category) ? formData.category : 'Other'}
-                        onChange={(e) => {
-                            const val = e.target.value
-                            if (val === 'Other') {
-                                setIsCustomCategory(true)
-                                setFormData(prev => ({ ...prev, category: '' }))
-                            } else {
-                                setIsCustomCategory(false)
-                                setFormData(prev => ({ ...prev, category: val }))
-                            }
-                        }}
-                        className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft appearance-none cursor-pointer"
-                    >
-                        <option value="Athlete">Athlete</option>
-                        <option value="Coach">Coach</option>
-                        <option value="Contributor">Contributor</option>
-                        <option value="Team">Team</option>
-                        <option value="Other">Other...</option>
-                    </select>
+          <VideoUpload
+            currentVideoUrl={formData.video_url}
+            recommendation="Recommended: 1080p MP4 (Max 20MB)"
+            onVideoSelect={(file) => {
+              setSelectedFiles(prev => ({ ...prev, video: file }))
+              if (file) {
+                const url = URL.createObjectURL(file)
+                setFormData(prev => ({ ...prev, video_url: url }))
+              } else {
+                setFormData(prev => ({ ...prev, video_url: inductee?.video_url || '' }))
+              }
+            }}
+          />
+          <input type="hidden" name="video_url" value={inductee?.video_url || ''} />
 
-                    {(isCustomCategory || !defaultCategories.includes(formData.category)) && (
-                        <input
-                            // Don't name this since the hidden input takes priority
-                            value={formData.category}
-                            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                            required
-                            className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-sm shadow-soft animate-in fade-in slide-in-from-top-2 duration-300"
-                            placeholder="Enter custom category (e.g. Administrator, Fan, etc.)"
-                            autoFocus={isCustomCategory}
-                        />
-                    )}
-                </div>
-            </div>
-
-            <ImageUpload 
-                currentImageUrl={formData.photo_url}
-                recommendation="Recommended: 600x800px (3:4 ratio)"
-                onImageSelect={(file) => {
-                  if (file) {
-                    const reader = new FileReader()
-                    reader.onloadend = () => {
-                      setFormData(prev => ({ ...prev, photo_url: reader.result as string }))
-                    }
-                    reader.readAsDataURL(file)
-                  } else {
-                    setFormData(prev => ({ ...prev, photo_url: inductee?.photo_url || '' }))
-                  }
-                }}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Short Biography</label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-xs shadow-soft leading-tight resize-none"
+              placeholder="Briefly describe their legacy..."
             />
-            {/* Hidden field to preserve existing URL if no new file is selected */}
-            <input type="hidden" name="photo_url" value={inductee?.photo_url || ''} />
+          </div>
 
-            <VideoUpload 
-                currentVideoUrl={formData.video_url}
-                recommendation="Recommended: 1080p MP4 (Max 20MB)"
-                onVideoSelect={(file) => {
-                  if (file) {
-                    const url = URL.createObjectURL(file)
-                    setFormData(prev => ({ ...prev, video_url: url }))
-                  } else {
-                    setFormData(prev => ({ ...prev, video_url: inductee?.video_url || '' }))
-                  }
-                }}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Key Achievements (One per line)</label>
+            <textarea
+              name="achievements"
+              value={formData.achievements}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-xs shadow-soft leading-tight resize-none"
+              placeholder="State Champion 1998&#10;MVP 1999"
             />
-            <input type="hidden" name="video_url" value={inductee?.video_url || ''} />
-
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Short Biography</label>
-                <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-xs shadow-soft leading-tight resize-none"
-                    placeholder="Briefly describe their legacy..."
-                />
-            </div>
-
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Key Achievements (One per line)</label>
-                <textarea
-                    name="achievements"
-                    value={formData.achievements}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none font-bold text-xs shadow-soft leading-tight resize-none"
-                    placeholder="State Champion 1998&#10;MVP 1999"
-                />
-            </div>
+          </div>
         </div>
 
-        {state?.error && (
+        {actionState?.error && (
           <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100">
-            {state.error}
+            {actionState.error}
           </div>
         )}
 
         <div className="flex items-center justify-end gap-4 pt-2">
-            <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 text-gray-400 font-bold uppercase tracking-widest text-[9px] hover:text-gray-900 transition-colors"
-            >
-                Discard Changes
-            </button>
-            <button
-                type="submit"
-                disabled={isPending}
-                className="flex items-center gap-2 px-6 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 text-[10px] uppercase tracking-widest"
-            >
-                <Save size={14} />
-                {isPending ? 'Processing...' : isEdit ? 'Update Profile' : 'Publish Inductee'}
-            </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 text-gray-400 font-bold uppercase tracking-widest text-[9px] hover:text-gray-900 transition-colors"
+          >
+            Discard Changes
+          </button>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="flex items-center gap-2 px-6 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98] shadow-lg disabled:opacity-50 text-[10px] uppercase tracking-widest"
+          >
+            <Save size={14} />
+            {isPending ? 'Processing...' : isEdit ? 'Update Profile' : 'Publish Inductee'}
+          </button>
         </div>
       </form>
 
       {/* 🔮 Preview Side-bar */}
       <div className="xl:w-64 space-y-4">
         <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Profile Preview</h2>
-        
+
         {/* Modal-style Preview matching Detail Modal */}
         <div className="relative w-full bg-[#FAFAFA] rounded-[1.5rem] shadow-xl overflow-hidden flex flex-col border border-gray-100 scale-90 -translate-y-4">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-sm font-black text-slate-900 tracking-tighter uppercase truncate max-w-[120px]">
-                        {formData.name || 'Inductee Name'}
-                    </h2>
-                    <div className="px-2 py-0.5 bg-black text-white rounded-full text-[6px] font-black uppercase tracking-widest self-start">
-                        Years {formData.year || '----'}
-                    </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-sm font-black text-slate-900 tracking-tighter uppercase truncate max-w-[120px]">
+                {formData.name || 'Inductee Name'}
+              </h2>
+              <div className="px-2 py-0.5 bg-black text-white rounded-full text-[6px] font-black uppercase tracking-widest self-start">
+                Years {formData.year || '----'}
+              </div>
+            </div>
+            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+              <X size={10} className="text-slate-900" />
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="p-3 space-y-3">
+            {/* Media Box */}
+            <div className="aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-gray-200 relative bg-gray-900">
+              {formData.photo_url ? (
+                <>
+                  {/* Blurred Background */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center blur-md opacity-50 scale-110"
+                    style={{ backgroundImage: `url(${formData.photo_url})` }}
+                  />
+                  <img
+                    src={formData.photo_url}
+                    alt="Preview"
+                    className="w-full h-full object-contain relative z-10"
+                  />
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/20">
+                  <ImageIcon size={32} strokeWidth={1} />
                 </div>
-                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                    <X size={10} className="text-slate-900" />
-                </div>
+              )}
             </div>
 
-            {/* Content Area */}
-            <div className="p-3 space-y-3">
-                {/* Media Box */}
-                <div className="aspect-video w-full rounded-xl overflow-hidden shadow-sm border border-gray-200 relative bg-gray-900">
-                    {formData.photo_url ? (
-                        <>
-                            {/* Blurred Background */}
-                            <div 
-                                className="absolute inset-0 bg-cover bg-center blur-md opacity-50 scale-110"
-                                style={{ backgroundImage: `url(${formData.photo_url})` }}
-                            />
-                            <img
-                                src={formData.photo_url}
-                                alt="Preview"
-                                className="w-full h-full object-contain relative z-10"
-                            />
-                        </>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/20">
-                            <ImageIcon size={32} strokeWidth={1} />
-                        </div>
-                    )}
-                </div>
+            {/* Info Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+              <div className="space-y-1">
+                <h3 className="font-black text-slate-900 text-[8px] tracking-tight uppercase">Inductee Details</h3>
+                <div className="h-0.5 w-6 rounded-full" style={{ backgroundColor: branding.primaryColor || '#000' }} />
+              </div>
 
-                {/* Info Card */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-                    <div className="space-y-1">
-                        <h3 className="font-black text-slate-900 text-[8px] tracking-tight uppercase">Inductee Details</h3>
-                        <div className="h-0.5 w-6 rounded-full" style={{ backgroundColor: branding.primaryColor || '#000' }} />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-2">
-                        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
-                            <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Category</span>
-                            <span className="text-[10px] font-bold text-slate-900">{formData.category}</span>
-                        </div>
-                        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
-                            <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Induction Year</span>
-                            <span className="text-[10px] font-bold text-slate-900">{formData.induction_year || '----'}</span>
-                        </div>
-                    </div>
+              <div className="grid grid-cols-1 gap-2">
+                <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                  <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Category</span>
+                  <span className="text-[10px] font-bold text-slate-900">{formData.category}</span>
                 </div>
+                <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                  <span className="block text-[6px] font-black uppercase tracking-widest text-slate-400">Induction Year</span>
+                  <span className="text-[10px] font-bold text-slate-900">{formData.induction_year || '----'}</span>
+                </div>
+              </div>
             </div>
+          </div>
 
-            {/* Back to Menu mockup */}
-            <div className="pb-3 flex justify-center">
-                <div className="px-4 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full border border-slate-400 flex items-center justify-center">
-                        <div className="w-1 h-1 bg-slate-400 rounded-full" />
-                    </div>
-                    <span className="text-[6px] font-black uppercase tracking-widest text-slate-900">Back to Menu</span>
-                </div>
+          {/* Back to Menu mockup */}
+          <div className="pb-3 flex justify-center">
+            <div className="px-4 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full border border-slate-400 flex items-center justify-center">
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
+              </div>
+              <span className="text-[6px] font-black uppercase tracking-widest text-slate-900">Back to Menu</span>
             </div>
+          </div>
         </div>
 
         <p className="text-[8px] text-gray-400 text-center px-6 font-bold uppercase tracking-tight leading-tight -mt-4">
-            How the inductee will appear in the detail window.
+          How the inductee will appear in the detail window.
         </p>
       </div>
     </div>

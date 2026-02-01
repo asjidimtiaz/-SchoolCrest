@@ -1,8 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || ''
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || ''
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('[CRITICAL] Supabase environment variables are missing! Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.')
+}
+
 export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-  process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+  supabaseUrl,
+  supabaseKey,
   {
     auth: {
       autoRefreshToken: false,
