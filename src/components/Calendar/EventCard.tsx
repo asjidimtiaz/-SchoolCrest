@@ -13,41 +13,35 @@ export default function EventCard({ event, primaryColor }: EventCardProps) {
   const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
   return (
-    <div className="group relative flex gap-6 p-6 bg-white/10 backdrop-blur-xl rounded-2xl transition-all duration-300 hover:bg-white/15 border border-white/10 shadow-lg hover:shadow-xl mb-4 ml-4 ring-1 ring-white/5 overflow-hidden">
+    <div
+      className="group relative flex gap-6 p-6 backdrop-blur-xl rounded-2xl transition-all duration-300 hover:scale-[1.02] border shadow-lg hover:shadow-xl mb-4 ml-4 ring-1 ring-white/10 overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, ${primaryColor}25 0%, rgba(20,20,30,0.4) 100%)`,
+        borderColor: `${primaryColor}60`,
+        boxShadow: `0 8px 32px -8px ${primaryColor}20`
+      }}
+    >
 
       {/* Accent Bar */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1.5"
+        className="absolute left-0 top-0 bottom-0 w-2"
         style={{ backgroundColor: primaryColor }}
       />
 
-      {/* Date & Time Column */}
-      <div className="flex flex-col items-center justify-center min-w-[5.5rem] text-center border-r border-white/10 pr-6 gap-1">
+      <div className="flex flex-col items-center justify-center min-w-[6rem] text-center border-r border-white/10 pr-6 gap-2">
         <div className="flex flex-col items-center mb-1">
-          <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] leading-none mb-1">
+          <span className="text-[11px] font-black text-white/50 uppercase tracking-[0.25em] leading-none mb-1.5">
             {startDate.toLocaleDateString('en-US', { month: 'short' })}
           </span>
-          <span className="text-3xl font-black text-white leading-none tracking-tighter">
+          <span className="text-5xl font-black text-white leading-none tracking-tighter drop-shadow-xl scale-y-110">
             {startDate.getDate()}
-          </span>
-        </div>
-
-        <div className="h-px w-4 bg-white/10 my-1" />
-
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-black text-white/80 leading-none tracking-tight">
-            {startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false })}
-          </span>
-          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
-            {startDate.toLocaleTimeString('en-US', { minute: '2-digit' }) === '00' ? '' : startDate.toLocaleTimeString('en-US', { minute: '2-digit' })}
-            <span className="ml-0.5">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).slice(-2)}</span>
           </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-        <h3 className="text-xl font-bold text-white leading-tight tracking-tight truncate pr-4">
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-3 py-1">
+        <h3 className="text-2xl font-bold text-white leading-tight tracking-tight pr-4 drop-shadow-md break-words whitespace-normal line-clamp-2">
           {event.title}
         </h3>
 

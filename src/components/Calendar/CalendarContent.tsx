@@ -78,7 +78,7 @@ export default function CalendarContent({ school, events }: CalendarContentProps
 
                             {school.google_api_key && (googleEvents.length > 0 || isLoadingGoogle) ? (
                                 /* Native Cards View */
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                                <div className="grid grid-cols-1 gap-6 pb-4">
                                     {isLoadingGoogle ? (
                                         /* Skeleton Loading State */
                                         Array(4).fill(0).map((_, i) => (

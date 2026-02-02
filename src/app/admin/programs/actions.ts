@@ -194,7 +194,13 @@ export async function deleteSeason(id: string, programId: string) {
       console.error("Error in deleteSeason:", error.message);
       return { error: error.message };
     }
-    revalidatePath(`/admin/programs/${programId}`);
+
+    if (programId && programId !== 'null' && programId !== 'undefined') {
+      revalidatePath(`/admin/programs/${programId}`);
+    } else {
+      revalidatePath('/admin/programs');
+    }
+
     return { success: true };
   } catch (err) {
     console.error("FATAL in deleteSeason:", err);

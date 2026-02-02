@@ -175,7 +175,7 @@ export default function SeasonsManager({ seasons, programId, programName, school
                     )
                 })}
 
-                {seasons.length === 0 && (
+                {seasons.length === 0 && !isAddOpen && (
                     <div className="bg-gray-50 rounded-[3rem] p-16 border border-dashed border-gray-200 text-center flex flex-col items-center">
                         <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-gray-200 mb-6 shadow-sm border border-gray-100">
                             <Users size={40} strokeWidth={1.5} />

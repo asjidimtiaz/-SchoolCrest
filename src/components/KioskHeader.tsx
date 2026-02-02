@@ -16,7 +16,7 @@ export default function KioskHeader({ pageTitle }: KioskHeaderProps = {}) {
     <header className="sticky top-0 shrink-0 z-50 bg-gray-100">
       {/* Main Header with Gradient */}
       <div
-        className="px-8 lg:px-16 py-3 flex items-center justify-between shadow-xl relative overflow-hidden"
+        className="px-8 lg:px-16 py-1 flex items-center justify-between shadow-xl relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
         }}
