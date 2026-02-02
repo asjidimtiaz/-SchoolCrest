@@ -7,23 +7,27 @@ interface MediaUploadProps {
   onFileSelect?: (file: File | null) => void
   onMediaChange?: (url: string | null, type: 'image' | 'video') => void
   currentMediaUrl?: string | null
-  currentMediaType?: 'image' | 'video' 
+  currentMediaType?: 'image' | 'video'
   label?: string
   description?: string
   className?: string
+  rootClassName?: string
+  boxClassName?: string
   name?: string
   required?: boolean
   recommendation?: string
 }
 
-export default function MediaUpload({ 
-  onFileSelect, 
+export default function MediaUpload({
+  onFileSelect,
   onMediaChange,
-  currentMediaUrl, 
+  currentMediaUrl,
   currentMediaType = 'image',
-  label = "Program Media", 
+  label = "Program Media",
   description = "Upload a photo or video",
   className = "",
+  rootClassName = "",
+  boxClassName = "",
   name,
   required = false,
   recommendation
@@ -91,10 +95,10 @@ export default function MediaUpload({
   }
 
   return (
-    <div className={`space-y-1 ${className}`}>
+    <div className={`space-y-1 ${rootClassName || className}`}>
       {label && <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{label}</label>}
-      
-      <div 
+
+      <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -103,14 +107,15 @@ export default function MediaUpload({
           relative group cursor-pointer
           aspect-square md:aspect-video lg:aspect-[16/6] rounded-2xl
           border-2 border-dashed transition-all duration-300 overflow-hidden
-          ${isDragging 
-            ? 'border-black bg-black/[0.02] scale-[0.99]' 
+          ${isDragging
+            ? 'border-black bg-black/[0.02] scale-[0.99]'
             : 'border-gray-100 bg-white/30 hover:border-gray-200 hover:bg-white/50'
           }
+          ${boxClassName}
         `}
       >
-        <input 
-          type="file" 
+        <input
+          type="file"
           ref={fileInputRef}
           onChange={onFileChange}
           accept="image/*,video/*"
@@ -123,32 +128,32 @@ export default function MediaUpload({
         {preview ? (
           <div className="relative w-full h-full animate-fade-in bg-black">
             {mediaType === 'video' ? (
-                <video 
-                    src={preview} 
-                    className="w-full h-full object-cover" 
-                    controls={false} // Hide controls in preview, show play icon
-                    muted
-                    loop
-                    autoPlay
-                    playsInline
-                />
+              <video
+                src={preview}
+                className="w-full h-full object-cover"
+                controls={false} // Hide controls in preview, show play icon
+                muted
+                loop
+                autoPlay
+                playsInline
+              />
             ) : (
-                <img 
-                    src={preview} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                />
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
             )}
-            
+
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                   className="px-4 py-2 bg-white text-black font-black text-[10px] uppercase rounded-lg hover:scale-105 transition-transform"
                 >
                   Change
                 </button>
-                <button 
+                <button
                   onClick={clearMedia}
                   className="p-2 bg-red-500 text-white rounded-lg hover:scale-105 transition-transform"
                 >
@@ -156,7 +161,7 @@ export default function MediaUpload({
                 </button>
               </div>
             </div>
-            
+
             {/* Success Badge */}
             <div className="absolute top-3 right-3 px-2 py-1 bg-green-500 text-white rounded-full flex items-center gap-1 shadow-lg animate-slide-up z-10">
               <CheckCircle2 size={10} />
@@ -165,13 +170,13 @@ export default function MediaUpload({
               </span>
             </div>
 
-             {/* Video Indicator if video */}
-             {mediaType === 'video' && (
-                <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center gap-1 shadow-sm">
-                    <Film size={10} />
-                    <span className="text-[8px] font-black uppercase tracking-tight">Video</span>
-                </div>
-             )}
+            {/* Video Indicator if video */}
+            {mediaType === 'video' && (
+              <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-full flex items-center gap-1 shadow-sm">
+                <Film size={10} />
+                <span className="text-[8px] font-black uppercase tracking-tight">Video</span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center space-y-2">

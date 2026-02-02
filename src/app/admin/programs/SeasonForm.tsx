@@ -80,6 +80,7 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
                 success: result.success || false,
                 error: result.error || ''
             })
+
         } catch (err: any) {
             setCustomError(err.message || 'Submission failed')
         } finally {
@@ -107,7 +108,7 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
                 </div>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
                 {/* 1. Media Section - Integrated & Compact */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -118,7 +119,8 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
                         name="photo_file_input"
                         label=""
                         currentMediaUrl={currentPhotoUrl}
-                        className="!aspect-video shadow-soft !rounded-[2rem] border-0 bg-gray-50/50 !p-0 !mb-0 hover:scale-100"
+                        className="!mb-0"
+                        boxClassName="!aspect-[21/9] md:!aspect-[16/6] lg:!aspect-[16/5] shadow-soft !rounded-[2rem] border-0 bg-gray-50/50 !p-0 hover:scale-[1.01] transition-all"
                         onFileSelect={async (file) => {
                             if (!file) return;
                             setUploading(true);
@@ -141,7 +143,7 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
                 </div>
 
                 {/* 2. Meta Info Section - Clean Institutional Style */}
-                <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-soft space-y-4">
+                <div className="bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-soft space-y-3">
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         <label className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Season Statistics</label>
@@ -183,7 +185,7 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
                 </div>
 
                 {/* 3. Narrative Section - Grouped with smooth transitions */}
-                <div className="bg-gray-50/40 p-6 rounded-[2.5rem] border border-gray-100 shadow-soft space-y-5">
+                <div className="bg-gray-50/40 p-5 rounded-[2.5rem] border border-gray-100 shadow-soft space-y-4">
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                         <label className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Season Achievements</label>

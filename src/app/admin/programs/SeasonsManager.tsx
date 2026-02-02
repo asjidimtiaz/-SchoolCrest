@@ -7,7 +7,7 @@ import RosterModal from './RosterModal'
 import SeasonEditModal from './SeasonEditModal'
 import SeasonForm from './SeasonForm'
 import { Edit, Users, Plus, X, Film } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { isVideoUrl } from '@/lib/mediaDetection'
 
 interface SeasonsManagerProps {
@@ -15,10 +15,12 @@ interface SeasonsManagerProps {
     programId: string
     programName: string
     schoolId: string
+    onRefresh?: () => void
 }
 
-export default function SeasonsManager({ seasons, programId, programName, schoolId }: SeasonsManagerProps) {
+export default function SeasonsManager({ seasons, programId, programName, schoolId, onRefresh }: SeasonsManagerProps) {
     const searchParams = useSearchParams()
+    const router = useRouter()
     const [selectedSeasonForRoster, setSelectedSeasonForRoster] = useState<ProgramSeason | null>(null)
     const [selectedSeasonForEdit, setSelectedSeasonForEdit] = useState<ProgramSeason | null>(null)
     const [isRosterOpen, setIsRosterOpen] = useState(false)
@@ -51,7 +53,12 @@ export default function SeasonsManager({ seasons, programId, programName, school
             <div className="flex items-center justify-between">
                 <h2 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Archive History</h2>
                 <button
-                    onClick={() => setIsAddOpen(!isAddOpen)}
+                    onClick={() => {
+                        setIsAddOpen(!isAddOpen)
+                        if (!isAddOpen) {
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                        }
+                    }}
                     className={`flex items-center gap-3 px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${isAddOpen
                         ? 'bg-white text-gray-400 hover:text-black hover:shadow-2xl'
                         : 'bg-black text-white hover:bg-gray-800'
@@ -70,9 +77,30 @@ export default function SeasonsManager({ seasons, programId, programName, school
                         suggestedYear={nextSuggestedYear}
                         onSuccess={() => {
                             setIsAddOpen(false)
+                            if (onRefresh) {
+                                onRefresh()
+                            } else {
+                                router.refresh()
+                            }
                         }}
                     />
                 </div>
+            )}
+
+            {isEditOpen && selectedSeasonForEdit && (
+                <SeasonEditModal
+                    onClose={() => setIsEditOpen(false)}
+                    season={selectedSeasonForEdit}
+                    schoolId={schoolId}
+                    onSuccess={() => {
+                        setIsEditOpen(false)
+                        if (onRefresh) {
+                            onRefresh()
+                        } else {
+                            router.refresh()
+                        }
+                    }}
+                />
             )}
 
             <div className="grid grid-cols-1 gap-6">
@@ -185,7 +213,10 @@ export default function SeasonsManager({ seasons, programId, programName, school
                             This program doesn't have any historical seasons yet. Start by adding the most recent one.
                         </p>
                         <button
-                            onClick={() => setIsAddOpen(true)}
+                            onClick={() => {
+                                setIsAddOpen(true)
+                                window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
                             className="flex items-center gap-3 px-10 py-4 bg-black text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all shadow-2xl active:scale-95"
                         >
                             <Plus size={18} strokeWidth={3} />

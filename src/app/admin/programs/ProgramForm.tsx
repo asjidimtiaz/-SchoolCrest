@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createProgram, updateProgram } from './actions'
 import { useRouter } from 'next/navigation'
 import { Program } from '@/lib/getPrograms'
@@ -57,24 +57,27 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
     const [loadingSeasons, setLoadingSeasons] = useState(false)
 
     // Fetch seasons for Step 2
-    useEffect(() => {
-        async function fetchSeasons() {
-            if (step === 2 && createdData?.programId) {
-                setLoadingSeasons(true)
-                const { data, error } = await supabasePublic
-                    .from('team_seasons')
-                    .select('*')
-                    .eq('team_id', createdData.programId)
-                    .order('year', { ascending: false })
+    const fetchSeasons = useCallback(async () => {
+        if (createdData?.programId) {
+            setLoadingSeasons(true)
+            const { data, error } = await supabasePublic
+                .from('team_seasons')
+                .select('*')
+                .eq('team_id', createdData.programId)
+                .order('year', { ascending: false })
 
-                if (!error && data) {
-                    setSeasons(data)
-                }
-                setLoadingSeasons(false)
+            if (!error && data) {
+                setSeasons(data)
             }
+            setLoadingSeasons(false)
         }
-        fetchSeasons()
-    }, [step, createdData?.programId])
+    }, [createdData?.programId])
+
+    useEffect(() => {
+        if (step === 2) {
+            fetchSeasons()
+        }
+    }, [step, fetchSeasons])
 
     useEffect(() => {
         if (actionState?.success) {
@@ -363,6 +366,7 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
                                 programId={createdData.programId}
                                 programName={createdData.programName}
                                 schoolId={schoolId}
+                                onRefresh={fetchSeasons}
                             />
                         )}
                     </div>

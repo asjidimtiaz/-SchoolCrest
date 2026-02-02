@@ -8,9 +8,10 @@ interface SeasonEditModalProps {
     season: ProgramSeason
     schoolId: string
     onClose: () => void
+    onSuccess?: () => void
 }
 
-export default function SeasonEditModal({ season, schoolId, onClose }: SeasonEditModalProps) {
+export default function SeasonEditModal({ season, schoolId, onClose, onSuccess }: SeasonEditModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[4px] animate-fade-in text-left">
             <div className="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] border border-white overflow-hidden flex flex-col max-h-[90vh]">
@@ -47,7 +48,10 @@ export default function SeasonEditModal({ season, schoolId, onClose }: SeasonEdi
                             program_id={season.team_id}
                             schoolId={schoolId}
                             season={season}
-                            onSuccess={onClose}
+                            onSuccess={() => {
+                                onSuccess?.()
+                                onClose()
+                            }}
                         />
                     </div>
                 </div>
