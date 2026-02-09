@@ -68,6 +68,14 @@ export async function createProgram(prevState: any, formData: FormData) {
       console.warn("Failed to parse initial roster:", e);
     }
 
+    const recordsRaw = formData.get("records") as string;
+    let records = [];
+    try {
+      if (recordsRaw) records = JSON.parse(recordsRaw);
+    } catch (e) {
+      console.warn("Failed to parse records:", e);
+    }
+
     let programId = '';
     let programName = name;
 
@@ -91,6 +99,7 @@ export async function createProgram(prevState: any, formData: FormData) {
         background_url,
         media_type,
         school_id,
+        records,
       }).select().single();
 
       if (createError) {
@@ -158,12 +167,21 @@ export async function updateProgram(prevState: any, formData: FormData) {
     const photo_url = formData.get("existing_photo_url") as string || '';
     const background_url = formData.get("existing_background_url") as string || '';
 
+    const recordsRaw = formData.get("records") as string;
+    let records = [];
+    try {
+      if (recordsRaw) records = JSON.parse(recordsRaw);
+    } catch (e) {
+      console.warn("Failed to parse records:", e);
+    }
+
     const updates: any = {
       name,
       gender,
       sport_category,
       head_coach,
-      media_type
+      media_type,
+      records
     };
 
     if (photo_url) updates.photo_url = photo_url;
@@ -215,9 +233,19 @@ export async function upsertSeason(prevState: any, formData: FormData) {
     const year = parseInt(formData.get("year") as string);
     const coach = formData.get("coach") as string;
     const record = formData.get("record") as string;
-    const achievements = (formData.get("achievements") as string || '')
-      .split("\n")
-      .filter(Boolean);
+    const achievementsRaw = formData.get("achievements") as string || '';
+    let achievements: string[] = [];
+    try {
+      // Try parsing as JSON first (new format)
+      if (achievementsRaw.startsWith('[')) {
+        achievements = JSON.parse(achievementsRaw);
+      } else if (achievementsRaw) {
+        // Fallback to newline-separated (legacy format)
+        achievements = achievementsRaw.split("\n").filter(Boolean);
+      }
+    } catch (e) {
+      console.warn('Failed to parse achievements, using empty array');
+    }
     const summary = formData.get("summary") as string || '';
 
     const rosterRaw = formData.get("roster") as string;

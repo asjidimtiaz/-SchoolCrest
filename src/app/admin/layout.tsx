@@ -9,6 +9,7 @@ import { syncAdminIdentity } from '@/lib/syncAdmin'
 import AdminController from '@/components/AdminController'
 import AdminSidebarProfile from '@/components/AdminSidebarProfile'
 import AdminNav from '@/components/AdminNav'
+import SignOutButton from '@/components/SignOutButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,7 @@ export default async function AdminLayout({
   // Check if this is a Super Admin route first (these handle their own auth)
   const headersList = await headers()
   const pathname = headersList.get('x-current-path') || ''
+  const schoolSlug = headersList.get('x-school-slug')
   const isSuperAdminRoute = pathname.startsWith('/admin/super')
 
   if (isSuperAdminRoute) {
@@ -59,7 +61,37 @@ export default async function AdminLayout({
     }
   }
 
-  // Redirect Super Admins to their dashboard if they hit the root /admin
+  // STRICT DOMAIN BLOCK: If Super Admin is on a tenant domain, BLOCK THEM.
+  if (isSuperAdmin && schoolSlug !== 'schoolcrestinteractive') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-red-100">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Wrong Portal</h1>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            You are logged in as a <strong>Super Admin</strong>, but this is a school-specific portal.
+            <br /><br />
+            Please use the Global Super Admin Dashboard to manage schools.
+          </p>
+          <div className="space-y-4">
+            <a
+              href="https://schoolcrestinteractive.schoolcrestinteractive.com/admin/super"
+              className="block w-full py-3 px-4 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
+            >
+              Go to Super Admin Dashboard
+            </a>
+            <div className="flex justify-center">
+              <SignOutButton />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect Super Admins to their dashboard if they hit the root /admin (on the correct domain)
   // Now using the ROBUST isSuperAdmin check
   if (isSuperAdmin && !pathname.startsWith('/admin/super')) {
     redirect('/admin/super')
@@ -96,7 +128,7 @@ export default async function AdminLayout({
 
   // If no user, they need to sign in (Clerk will redirect)
   if (!user) {
-    return <AdminController>{children}</AdminController>
+    redirect('/sign-in')
   }
 
   const school = await getSchool()
@@ -113,10 +145,54 @@ export default async function AdminLayout({
           <p className="text-gray-500">
             Your admin account is not linked to any active school. Please contact support or your super admin.
           </p>
+          <div className="flex justify-center pt-2">
+            <SignOutButton />
+          </div>
         </div>
       </div>
     )
   }
+
+  // STRICT DOMAIN BLOCK (Regular Admin):
+  // If the admin's school (from profile) does not match the current domain slug, block them.
+  // Exception: 'schoolcrestinteractive' (root/demo/dev) allows accessing any school dashboard (or maybe not? strictly: NO).
+  // If I am Admin A, I can only access via a.schoolcrest.com?
+  // User said: "only login from this domian"
+  // Let's enforce: Request Slug MUST match School Slug, OR Request Slug is 'schoolcrestinteractive' (allow dev/demo fallback).
+  // Actually, if I am Admin A, accessing via 'schoolcrestinteractive' (localhost) is fine.
+  // But accessing via 'school-b' is NOT fine.
+
+  // NOTE: getSchool() currently returns user's school if logged in.
+  // So we just compare school.slug with schoolSlug header.
+  if (schoolSlug !== 'schoolcrestinteractive' && school.slug !== schoolSlug && !isSuperAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-orange-100">
+          <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="w-8 h-8 text-orange-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Wrong School Portal</h1>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            You are an admin for <strong>{school.name}</strong>, but you are trying to login from a different school's domain.
+            <br /><br />
+            Please use your school's official portal.
+          </p>
+          <div className="space-y-4">
+            <a
+              href={`https://${school.slug}.schoolcrestinteractive.com/admin`}
+              className="block w-full py-3 px-4 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
+            >
+              Go to {school.name} Portal
+            </a>
+            <div className="flex justify-center">
+              <SignOutButton />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
 
   const primaryColor = school.primary_color || '#000'
 

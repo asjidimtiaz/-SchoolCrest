@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { useBranding } from '@/context/BrandingContext'
 import BackButton from '@/components/BackButton'
 import KioskHeader from '@/components/KioskHeader'
-import { Trophy, Users, X, Film } from 'lucide-react'
+import { Trophy, Users, X, Film, FileText } from 'lucide-react'
 import { isVideoUrl } from '@/lib/mediaDetection'
+import RecordsViewModal from './RecordsViewModal'
 
 interface ProgramDetailContentProps {
     program: Program
@@ -21,6 +22,7 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
     const [activeSeason, setActiveSeason] = useState<ProgramSeason | null>(
         seasonYear ? seasons.find(s => s.year.toString() === seasonYear) || null : null
     )
+    const [showRecords, setShowRecords] = useState(false)
 
     // Close modal handler
     const closeSeason = () => {
@@ -88,6 +90,16 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
                     <h1 className="text-7xl lg:text-9xl font-black text-white tracking-tighter mb-8 leading-[0.9] drop-shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-8 duration-1000 uppercase">
                         {program.name}
                     </h1>
+
+                    {program.records && program.records.length > 0 && (
+                        <button
+                            onClick={() => setShowRecords(true)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md border-2 border-white/30 text-white font-black rounded-xl hover:bg-white/20 transition-all shadow-lg hover:scale-105 text-xs uppercase tracking-widest"
+                        >
+                            <FileText size={16} strokeWidth={3} />
+                            See Individual Records
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -362,15 +374,6 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <div className="font-black text-slate-950 text-lg truncate uppercase tracking-tight">{player.name}</div>
-                                                                <div className="flex items-center gap-2 mt-0.5">
-                                                                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold truncate">
-                                                                        {player.position || 'Athlete'}
-                                                                    </span>
-                                                                    <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                                                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold truncate">
-                                                                        {player.grade || '---'}
-                                                                    </span>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -390,6 +393,15 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
 
                     </div>
                 </div>
+            )}
+
+            {/* Records View Modal */}
+            {showRecords && program.records && (
+                <RecordsViewModal
+                    records={program.records}
+                    programName={program.name}
+                    onClose={() => setShowRecords(false)}
+                />
             )}
 
             {/* Floating Centered Back Button */}

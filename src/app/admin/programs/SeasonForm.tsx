@@ -266,7 +266,7 @@ export default function SeasonForm({ program_id, schoolId, season, suggestedYear
             </div>
 
             {/* Hidden fields to maintain compatibility with existing schema */}
-            <input type="hidden" name="achievements" value={achievements.join('\n')} />
+            <input type="hidden" name="achievements" value={JSON.stringify(achievements)} />
             <input type="hidden" name="roster" value={JSON.stringify(roster)} />
 
             {(actionState?.error || customError) && (

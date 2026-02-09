@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Plus, Edit, Trash2, UserPlus, Save, CheckCircle2 } from 'lucide-react'
+import { useState, useTransition, useRef } from 'react'
+import { Plus, Edit, Trash2, UserPlus, Save, CheckCircle2, Upload, FileText, X } from 'lucide-react'
 import { updateRoster } from './actions'
 
 interface Player {
@@ -48,6 +48,9 @@ export default function RosterManager({
     })
     const [isPending, startTransition] = useTransition()
     const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
+    const [showBulkAdd, setShowBulkAdd] = useState(false)
+    const [bulkText, setBulkText] = useState('')
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const [formData, setFormData] = useState({
         name: '',
         position: '',
@@ -106,6 +109,68 @@ export default function RosterManager({
         })
     }
 
+    const parseCSVLine = (line: string): string[] => {
+        // Handle both comma and tab-separated values
+        const separator = line.includes('\t') ? '\t' : ','
+        return line.split(separator).map(field => field.trim())
+    }
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            const text = event.target?.result as string
+            processBulkData(text)
+        }
+        reader.readAsText(file)
+
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+    }
+
+    const processBulkData = (text: string) => {
+        const lines = text.split('\n').filter(line => line.trim())
+
+        // Skip header if it looks like one (contains "name" or "player")
+        let startIndex = 0
+        if (lines[0] && (lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('player'))) {
+            startIndex = 1
+        }
+
+        const newPlayers: Player[] = []
+        for (let i = startIndex; i < lines.length; i++) {
+            const fields = parseCSVLine(lines[i])
+            const name = fields[0]?.trim()
+
+            if (!name) continue // Skip empty names
+
+            newPlayers.push({
+                id: Math.random().toString(36).substr(2, 9),
+                name: name,
+                position: fields[1]?.trim() || '',
+                grade: fields[2]?.trim() || '',
+                jersey_number: fields[3]?.trim() || ''
+            })
+        }
+
+        if (newPlayers.length > 0) {
+            const newRoster = [...roster, ...newPlayers]
+            setRoster(newRoster)
+            handleSaveRoster(newRoster)
+            setBulkText('')
+            setShowBulkAdd(false)
+        }
+    }
+
+    const handleBulkAdd = () => {
+        if (!bulkText.trim()) return
+        processBulkData(bulkText)
+    }
+
     return (
         <div className={`flex flex-col ${isInline ? '' : 'h-full'}`}>
             {/* Header Content (only if inline and needs context) */}
@@ -119,6 +184,75 @@ export default function RosterManager({
                     <p className="text-sm text-gray-500 font-medium">Add players to the {seasonYear} roster for {programName}.</p>
                 </div>
             )}
+
+            {/* Bulk Import Section */}
+            <div className={`space-y-3 ${isInline ? 'mb-4' : 'px-8 pt-4'}`}>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                    >
+                        <Upload size={14} strokeWidth={3} />
+                        Import CSV
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setShowBulkAdd(!showBulkAdd)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl hover:bg-purple-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                    >
+                        <FileText size={14} strokeWidth={3} />
+                        {showBulkAdd ? 'Cancel Bulk Add' : 'Bulk Add'}
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,.txt"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                    />
+                </div>
+
+                {showBulkAdd && (
+                    <div className="animate-slide-up bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                        <div className="space-y-2 mb-3">
+                            <label className="text-[10px] font-black text-purple-700 uppercase tracking-widest">
+                                Paste Player Data
+                            </label>
+                            <p className="text-[9px] text-purple-600 font-medium">
+                                Format: Name, Position, Grade, Jersey# (one player per line, comma or tab-separated)
+                            </p>
+                        </div>
+                        <textarea
+                            value={bulkText}
+                            onChange={(e) => setBulkText(e.target.value)}
+                            rows={6}
+                            className="w-full bg-white border-2 border-purple-200 focus:border-purple-500 rounded-xl px-4 py-3 text-sm font-mono text-gray-900 placeholder:text-purple-300 outline-none transition-all resize-none"
+                            placeholder="John Doe, Quarterback, Senior, 12&#10;Jane Smith, Running Back, Junior, 24&#10;..."
+                        />
+                        <div className="flex items-center justify-end gap-2 mt-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setBulkText('')
+                                    setShowBulkAdd(false)
+                                }}
+                                className="px-4 py-2 text-purple-600 hover:text-purple-800 font-black text-[9px] uppercase tracking-widest transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBulkAdd}
+                                disabled={!bulkText.trim()}
+                                className="px-6 py-2 bg-purple-600 text-white font-black rounded-lg hover:bg-purple-700 transition-all text-[9px] uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Add All Players
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Form Section - Clean institutional style */}
             <div className={`space-y-4 ${isInline ? 'bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 mb-6 shadow-inner' : 'px-8 py-4'}`}>

@@ -8,12 +8,21 @@ import AdminSidebarProfile from '@/components/AdminSidebarProfile'
 import SuperAdminNav from '@/components/SuperAdminNav'
 
 import AdminController from '@/components/AdminController'
+import { headers } from 'next/headers'
 
 export default async function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Domain Restriction: Super Admins can ONLY access this via the main domain
+  const headersList = await headers()
+  const schoolSlug = headersList.get('x-school-slug')
+
+  if (schoolSlug !== 'schoolcrestinteractive') {
+    redirect('/')
+  }
+
   let user = null
   let profile = null
   let clerkError = null

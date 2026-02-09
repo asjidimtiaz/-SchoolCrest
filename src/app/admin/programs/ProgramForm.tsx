@@ -7,6 +7,7 @@ import { Program } from '@/lib/getPrograms'
 import { Save, Users, ChevronRight, Film, Plus, ArrowRight } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 import SeasonsManager from './SeasonsManager'
+import RecordsManager from './RecordsManager'
 import { supabasePublic, uploadFileClient } from '@/lib/supabaseClient'
 
 interface ProgramFormProps {
@@ -35,6 +36,7 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
         photo_url: program?.photo_url || '',
         background_url: program?.background_url || '',
         media_type: program?.media_type || 'image' as 'image' | 'video',
+        records: program?.records || [] as any[],
 
         // New Season Fields (for Creation)
         create_season: false,
@@ -262,6 +264,15 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
                                         )}
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100 space-y-6">
+                                {/* Program Records Section */}
+                                <RecordsManager
+                                    initialRecords={formData.records}
+                                    onChange={(records) => setFormData(prev => ({ ...prev, records }))}
+                                />
+                                <input type="hidden" name="records" value={JSON.stringify(formData.records)} />
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 space-y-8">

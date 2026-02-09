@@ -116,7 +116,7 @@ export default async function RootLayout({
             }}
           >
             <SchoolProvider value={school}>
-              <div className="mx-auto w-full max-w-[1920px] min-h-screen relative flex flex-col shadow-2xl bg-background overflow-hidden">
+              <div className="mx-auto w-full max-w-[1920px] min-h-screen relative flex flex-col shadow-2xl bg-background">
                 {children}
               </div>
             </SchoolProvider>

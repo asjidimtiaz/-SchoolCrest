@@ -1,5 +1,11 @@
 import { supabasePublic } from './supabaseServer'
 
+export interface ProgramRecord {
+  id: string
+  name: string
+  description: string
+}
+
 export interface Program {
   id: string
   name: string
@@ -10,6 +16,7 @@ export interface Program {
   media_type?: 'image' | 'video'
   head_coach?: string
   school_id: string
+  records?: ProgramRecord[]
 }
 
 export interface ProgramSeason {
