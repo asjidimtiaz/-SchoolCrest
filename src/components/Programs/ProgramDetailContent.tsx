@@ -107,7 +107,7 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
                         {program.trophy_case_activated && program.trophy_case_items && program.trophy_case_items.length > 0 && (
                             <button
                                 onClick={() => setShowTrophyCase(true)}
-                                className="flex items-center gap-3 px-8 py-4 bg-emerald-500/20 backdrop-blur-md border border-emerald-400/40 text-emerald-50 font-black rounded-2xl hover:bg-emerald-500/30 transition-all shadow-xl hover:scale-105 text-xs uppercase tracking-[0.2em]"
+                                className="flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md border border-white/30 text-white font-black rounded-2xl hover:bg-white/20 transition-all shadow-xl hover:scale-105 text-xs uppercase tracking-[0.2em]"
                             >
                                 <LayoutGrid size={18} strokeWidth={3} />
                                 Digital Trophy Case
