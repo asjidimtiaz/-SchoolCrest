@@ -150,8 +150,8 @@ export default function CalendarForm({ school }: CalendarFormProps) {
                 <div className="mt-1 w-3 h-3 rounded bg-blue-500 flex items-center justify-center shrink-0">
                   <div className="w-1 h-1 bg-white rounded-full" />
                 </div>
-                <p className="text-[10px] text-blue-900 font-medium">
-                  Go to Calendar Settings {' > '} Access permissions {' > '} Check <strong>"Make available to public"</strong>.
+                <p className="text-[10px] text-blue-900 font-medium leading-relaxed">
+                  Go to Calendar Settings {' > '} Access permissions {' > '} Check <strong>"Make available to public"</strong> and ensure <strong>"See all event details"</strong> is selected in the dropdown.
                 </p>
               </li>
             </ul>

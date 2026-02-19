@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 import { useBranding } from '@/context/BrandingContext'
 import BackButton from '@/components/BackButton'
 import KioskHeader from '@/components/KioskHeader'
-import { Trophy, Users, X, Film, FileText } from 'lucide-react'
+import { Trophy, Users, X, Film, FileText, LayoutGrid } from 'lucide-react'
 import { isVideoUrl } from '@/lib/mediaDetection'
 import RecordsViewModal from './RecordsViewModal'
+import TrophyCaseModal from './TrophyCaseModal'
 
 interface ProgramDetailContentProps {
     program: Program
@@ -23,6 +24,7 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
         seasonYear ? seasons.find(s => s.year.toString() === seasonYear) || null : null
     )
     const [showRecords, setShowRecords] = useState(false)
+    const [showTrophyCase, setShowTrophyCase] = useState(false)
 
     // Close modal handler
     const closeSeason = () => {
@@ -37,7 +39,7 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
     const heroPhotoUrl = program.background_url || program.photo_url
 
     return (
-        <main className="min-h-screen bg-[#F8FAFC] flex flex-col relative overflow-hidden">
+        <main className="min-h-screen bg-[#F8FAFC] flex flex-col relative">
             <KioskHeader pageTitle="Program Archive" />
 
             {/* 🏆 High-Impact Hero Section */}
@@ -91,15 +93,27 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
                         {program.name}
                     </h1>
 
-                    {program.records && program.records.length > 0 && (
-                        <button
-                            onClick={() => setShowRecords(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md border-2 border-white/30 text-white font-black rounded-xl hover:bg-white/20 transition-all shadow-lg hover:scale-105 text-xs uppercase tracking-widest"
-                        >
-                            <FileText size={16} strokeWidth={3} />
-                            See Individual Records
-                        </button>
-                    )}
+                    <div className="flex flex-wrap items-center justify-center gap-4">
+                        {program.records && program.records.length > 0 && (
+                            <button
+                                onClick={() => setShowRecords(true)}
+                                className="flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md border border-white/30 text-white font-black rounded-2xl hover:bg-white/20 transition-all shadow-xl hover:scale-105 text-xs uppercase tracking-[0.2em]"
+                            >
+                                <FileText size={18} strokeWidth={3} />
+                                Record Board
+                            </button>
+                        )}
+
+                        {program.trophy_case_activated && program.trophy_case_items && program.trophy_case_items.length > 0 && (
+                            <button
+                                onClick={() => setShowTrophyCase(true)}
+                                className="flex items-center gap-3 px-8 py-4 bg-emerald-500/20 backdrop-blur-md border border-emerald-400/40 text-emerald-50 font-black rounded-2xl hover:bg-emerald-500/30 transition-all shadow-xl hover:scale-105 text-xs uppercase tracking-[0.2em]"
+                            >
+                                <LayoutGrid size={18} strokeWidth={3} />
+                                Digital Trophy Case
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -401,6 +415,15 @@ export default function ProgramDetailContent({ program, seasons, seasonYear }: P
                     records={program.records}
                     programName={program.name}
                     onClose={() => setShowRecords(false)}
+                />
+            )}
+
+            {/* Trophy Case Modal */}
+            {showTrophyCase && program.trophy_case_items && (
+                <TrophyCaseModal
+                    items={program.trophy_case_items}
+                    programName={program.name}
+                    onClose={() => setShowTrophyCase(false)}
                 />
             )}
 

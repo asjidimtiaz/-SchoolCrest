@@ -12,7 +12,7 @@ export default function BrandingBackground() {
         {branding.backgroundType === 'video' ? (
           <video
             src={branding.backgroundUrl}
-            className="fixed inset-0 w-full h-full object-cover"
+            className="fixed inset-0 w-full h-full object-cover pointer-events-none"
             autoPlay
             loop
             muted
@@ -21,7 +21,7 @@ export default function BrandingBackground() {
           />
         ) : (
           <div
-            className="fixed inset-0 bg-cover bg-center"
+            className="fixed inset-0 bg-cover bg-center pointer-events-none"
             style={{
               backgroundImage: `url(${branding.backgroundUrl})`,
               zIndex: 0,
@@ -29,15 +29,15 @@ export default function BrandingBackground() {
           />
         )}
         {/* Professional Cinematic Overlay */}
-        
+
         {/* 1. Brand Tint (Color Grading) - 'multiply' blends color naturally into video */}
-        <div 
-          className="fixed inset-0 z-[1] pointer-events-none" 
-          style={{ 
+        <div
+          className="fixed inset-0 z-[1] pointer-events-none"
+          style={{
             backgroundColor: branding.primaryColor,
             mixBlendMode: 'multiply',
             opacity: 0.8
-          }} 
+          }}
         />
 
         {/* 2. Text Legibility Vignette (Top/Bottom Subtle Darkening) */}
@@ -48,11 +48,11 @@ export default function BrandingBackground() {
 
   // 2. Fallback Pattern (if no background media)
   return (
-    <div className="fixed inset-0 z-0" style={{ backgroundColor: branding.primaryColor || '#f8fafc' }}>
-        <div className="absolute inset-0 bg-white/90" />
-        <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
-            <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:40px_40px]" />
-        </div>
+    <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundColor: branding.primaryColor || '#f8fafc' }}>
+      <div className="absolute inset-0 bg-white/90" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
+        <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:40px_40px]" />
+      </div>
     </div>
   )
 }

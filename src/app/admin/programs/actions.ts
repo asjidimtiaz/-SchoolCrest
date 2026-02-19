@@ -100,6 +100,8 @@ export async function createProgram(prevState: any, formData: FormData) {
         media_type,
         school_id,
         records,
+        trophy_case_activated: formData.get("trophy_case_activated") === 'on',
+        trophy_case_items: formData.get("trophy_case_items") ? JSON.parse(formData.get("trophy_case_items") as string) : [],
       }).select().single();
 
       if (createError) {
@@ -181,7 +183,9 @@ export async function updateProgram(prevState: any, formData: FormData) {
       sport_category,
       head_coach,
       media_type,
-      records
+      records,
+      trophy_case_activated: formData.get("trophy_case_activated") === 'on',
+      trophy_case_items: formData.get("trophy_case_items") ? JSON.parse(formData.get("trophy_case_items") as string) : [],
     };
 
     if (photo_url) updates.photo_url = photo_url;

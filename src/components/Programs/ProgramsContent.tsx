@@ -12,11 +12,11 @@ export default function ProgramsContent({ seasons }: { seasons: ProgramSeasonWit
     const branding = useBranding()
 
     return (
-        <main className="min-h-screen flex flex-col relative overflow-hidden">
+        <main className="min-h-screen flex flex-col relative">
             <BrandingBackground />
             <KioskHeader pageTitle={branding.navTeamsLabel} />
 
-            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-10 flex flex-col pt-0 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-10 flex flex-col pt-0">
                 {/* Grid Container */}
                 <div className="w-full flex-1 pb-32">
                     <ProgramsGrid seasons={seasons} />

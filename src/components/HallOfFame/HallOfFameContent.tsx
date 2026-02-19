@@ -8,13 +8,13 @@ import BackButton from '@/components/BackButton'
 
 export default function HallOfFameContent({ inductees }: { inductees: any[] }) {
     const branding = useBranding()
-    
+
     return (
-        <main className="min-h-screen flex flex-col relative overflow-hidden">
+        <main className="min-h-screen flex flex-col relative">
             <BrandingBackground />
             <KioskHeader pageTitle={branding.navHallOfFameLabel} />
 
-            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-20 flex flex-col pt-0 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 max-w-7xl mx-auto px-8 w-full relative z-20 flex flex-col pt-0">
                 {/* Content Wrapper */}
                 <div className="w-full flex-1 pb-32">
                     <HallOfFameGrid initialData={inductees} />

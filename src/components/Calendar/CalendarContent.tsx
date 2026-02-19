@@ -55,11 +55,11 @@ export default function CalendarContent({ school, events }: CalendarContentProps
     }
 
     return (
-        <main className="min-h-screen relative overflow-hidden flex flex-col">
+        <main className="min-h-screen relative flex flex-col">
             <BrandingBackground />
             <KioskHeader pageTitle={branding.navCalendarLabel} />
 
-            <div className="flex-1 max-w-7xl mx-auto px-10 w-full relative z-10 flex flex-col pt-8 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 max-w-7xl mx-auto px-10 w-full relative z-10 flex flex-col pt-8">
                 {/* Content Container */}
                 <div className="w-full max-w-7xl mx-auto pb-10 h-full flex flex-col">
 

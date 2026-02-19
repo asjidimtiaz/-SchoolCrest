@@ -48,7 +48,7 @@ export default function GoogleCalendarCard({ event, primaryColor }: GoogleCalend
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-3 py-1">
 
         <h3 className="text-2xl font-bold text-white leading-tight tracking-tight pr-4 drop-shadow-md break-words whitespace-normal line-clamp-2">
-          {event.summary}
+          {event.summary || (event.description ? (event.description.length > 50 ? event.description.substring(0, 50) + '...' : event.description) : 'Untitled Event')}
         </h3>
 
         <div className="flex items-center gap-4">

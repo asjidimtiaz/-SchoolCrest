@@ -37,7 +37,7 @@ export default function HomeContent() {
   ]
 
   return (
-    <main className="min-h-screen w-full flex flex-col relative overflow-hidden">
+    <main className="min-h-screen w-full flex flex-col relative">
       {/* 🎬 Dynamic Background Media */}
       <BrandingBackground />
 
@@ -45,7 +45,7 @@ export default function HomeContent() {
       <KioskHeader />
 
       {/* 📜 Navigation Cards */}
-      <div className="flex-1 flex items-center justify-center px-12 py-5 z-10 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex items-center justify-center px-12 py-5 z-10">
         <div className="grid grid-cols-2 gap-8 w-full max-w-5xl">
           {navItems.map((item, idx) => {
             const Icon = item.icon

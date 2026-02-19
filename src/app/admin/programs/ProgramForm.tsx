@@ -8,6 +8,7 @@ import { Save, Users, ChevronRight, Film, Plus, ArrowRight } from 'lucide-react'
 import MediaUpload from '@/components/MediaUpload'
 import SeasonsManager from './SeasonsManager'
 import RecordsManager from './RecordsManager'
+import TrophyCaseManager from './TrophyCaseManager'
 import { supabasePublic, uploadFileClient } from '@/lib/supabaseClient'
 
 interface ProgramFormProps {
@@ -37,6 +38,8 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
         background_url: program?.background_url || '',
         media_type: program?.media_type || 'image' as 'image' | 'video',
         records: program?.records || [] as any[],
+        trophy_case_activated: program?.trophy_case_activated || false,
+        trophy_case_items: program?.trophy_case_items || [] as any[],
 
         // New Season Fields (for Creation)
         create_season: false,
@@ -273,6 +276,34 @@ export default function ProgramForm({ program, schoolId, isEdit = false }: Progr
                                     onChange={(records) => setFormData(prev => ({ ...prev, records }))}
                                 />
                                 <input type="hidden" name="records" value={JSON.stringify(formData.records)} />
+                            </div>
+
+                            <div className="pt-6 border-t border-gray-100 space-y-6">
+                                {/* Digital Trophy Case Section */}
+                                <div className="flex items-center gap-3 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                                    <input
+                                        type="checkbox"
+                                        name="trophy_case_activated"
+                                        id="trophy_case_activated"
+                                        checked={formData.trophy_case_activated}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, trophy_case_activated: e.target.checked }))}
+                                        className="w-5 h-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                    />
+                                    <label htmlFor="trophy_case_activated" className="text-xs font-black text-emerald-950 uppercase tracking-widest cursor-pointer select-none">
+                                        Activate Digital Trophy Case?
+                                    </label>
+                                </div>
+
+                                {formData.trophy_case_activated && (
+                                    <div className="pt-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <TrophyCaseManager
+                                            initialItems={formData.trophy_case_items}
+                                            onChange={(items) => setFormData(prev => ({ ...prev, trophy_case_items: items }))}
+                                            schoolId={schoolId}
+                                        />
+                                        <input type="hidden" name="trophy_case_items" value={JSON.stringify(formData.trophy_case_items)} />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 space-y-8">

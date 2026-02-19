@@ -17,6 +17,8 @@ export interface Program {
   head_coach?: string
   school_id: string
   records?: ProgramRecord[]
+  trophy_case_activated?: boolean
+  trophy_case_items?: any[]
 }
 
 export interface ProgramSeason {

@@ -206,6 +206,7 @@ export default async function AdminLayout({
     { label: 'Programs', href: '/admin/programs', icon: 'Shapes' },
     { label: 'Events', href: '/admin/calendar', icon: 'Calendar' },
     { label: 'Calendar', href: '/admin/school-calendar', icon: 'Calendar' },
+    { label: 'Branding', href: '/admin/branding', icon: 'Palette' },
     { label: 'School Info', href: '/admin/info', icon: 'Info' },
     { label: 'My Profile', href: '/admin/profile', icon: 'UserCircle' },
   ]
